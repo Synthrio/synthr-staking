@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.19;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -12,6 +12,7 @@ contract GaugeController is AccessControl{
 
     bytes32 public constant POOL_ROLE = keccak256("POOL_ROLE");
     uint256 private constant ACC_REWARD_PRECISION = 1e18;
+    uint256 public constant MAX_REWARD_TOKEN = 8;
 
     /// @notice Info of each gauge controller user.
     /// `amount` LP token amount the user has provided.
@@ -39,7 +40,6 @@ contract GaugeController is AccessControl{
     }
 
     address public owner;
-    uint256 public maxRewardToken;
 
     /// @notice Info of each pool.
     PoolInfo[] public poolInfo;
@@ -53,7 +53,8 @@ contract GaugeController is AccessControl{
     event LogPoolAddition(uint256 indexed pid, IERC20 indexed lpToken);
     event LogSetPool(uint256 indexed pid, RewardInfo[] poolReward);
     event LogUpdatePool(uint256 indexed pid, uint64 lastRewardBlock, uint256 lpSupply, uint256 accSushiPerShare);
-    event setMaxRewardToken(uint256 newMaxRewardToken);
+    event EpochUpdated(uint256 indexed pid, uint256 newMaxRewardToken);
+    event SetMaxRewardToken(uint256 newMaxRewardToken);
 
     constructor() {
         owner = msg.sender;
@@ -82,7 +83,7 @@ contract GaugeController is AccessControl{
             index: _reward.length - 1
         }));
 
-        RewardInfo[8] storage _rewardInfo = reward[_pool];
+        RewardInfo[MAX_REWARD_TOKEN] storage _rewardInfo = reward[_pool];
         for (uint256 i = 0; i<_reward.length; ++i) {
             _rewardInfo[i] = _reward[i];
         }
@@ -98,11 +99,12 @@ contract GaugeController is AccessControl{
     /// @param _reward array of reward token info to add in pool
     function addRewardToken(uint256 _pid, RewardInfo[] memory _reward) public onlyOwner {
         PoolInfo memory _poolInfo = poolInfo[_pid];
-        RewardInfo[8] memory _rewardInfo = reward[_poolInfo.pool];
+        RewardInfo[MAX_REWARD_TOKEN] memory _rewardInfo = reward[_poolInfo.pool];
         uint256 _index =_poolInfo.index;
         for (uint256 i = _index; i< _reward.length; ++i) {
             _rewardInfo[i] = _reward[i - _index];
         }
+        poolInfo[_pid].index += _reward.length - 1;
         emit LogSetPool(_pid, _reward);
     }
 
@@ -113,9 +115,9 @@ contract GaugeController is AccessControl{
     function pendingReward(uint256 _pid, address _user) external view returns (uint256 pending_) {
         PoolInfo memory _poolInfo = poolInfo[_pid];
         UserInfo memory user = userInfo[_pid][_user];
-        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool];
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_poolInfo.pool];
 
-        for (uint256 i = 0; i< 8; ++i) {
+        for (uint256 i = 0; i< _poolInfo.index; ++i) {
             uint256 accRewardPerShare = rewardInfo[i].accRewardPerShare;
             uint256 lpSupply = lpToken[_pid].balanceOf(address(this));
             if (block.number > _poolInfo.lastRewardBlock && lpSupply != 0) {
@@ -127,6 +129,15 @@ contract GaugeController is AccessControl{
         }
     }
 
+    /// @notice update epoch for given pool 
+    /// @param _pids Pool IDs of pool to be updated. Make sure to update all active pools.
+    /// @param _newEpoch new epoch.
+    function updateEpoch(uint256 _pid, uint256 _newEpoch) external {
+        require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
+        poolInfo[_pid].epoch = _newEpoch;
+        emit EpochUpdated(_pid, _newEpoch);
+    }
+
     /// @notice Update reward variables for all pools. Be careful of gas spending!
     /// @param pids Pool IDs of all to be updated. Make sure to update all active pools.
     function massUpdatePools(uint256[] calldata pids) external {
@@ -136,17 +147,12 @@ contract GaugeController is AccessControl{
         }
     }
 
-    /// @notice Calculates and returns the `amount` of SUSHI per block.
-    function rewardPerBlock() public view returns (uint256 amount) {
-        
-    }
-
     /// @notice Update reward variables of the given pool.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @return poolInfo_ Returns the pool that was updated.
     function updatePool(uint256 pid) public returns (PoolInfo memory poolInfo_) {
         poolInfo_ = poolInfo[pid];
-        RewardInfo[8] memory rewardInfo = reward[poolInfo_.pool];
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[poolInfo_.pool];
         if (block.number > poolInfo_.lastRewardBlock) {
             uint256 lpSupply = lpToken[pid].balanceOf(poolInfo_.pool);
             uint256 _index = poolInfo_.index;
@@ -171,9 +177,9 @@ contract GaugeController is AccessControl{
         require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
         PoolInfo memory _poolInfo = updatePool(pid);
         UserInfo memory user = userInfo[pid][to];
-        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool]; 
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_poolInfo.pool]; 
 
-        int256[8] memory _rewardDebt = user.rewardDebt;
+        int256[MAX_REWARD_TOKEN] memory _rewardDebt = user.rewardDebt;
 
         // Effects
         if (_increase) {
@@ -200,9 +206,9 @@ contract GaugeController is AccessControl{
     function claim(uint256 pid, address to) public {
         PoolInfo memory _poolInfo = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
-        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool];
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_poolInfo.pool];
         uint256 _totalPendingReward;
-        for (uint256 i = 0; i< 8; ++i) {
+        for (uint256 i = 0; i< _poolInfo.index; ++i) {
             int256 accumulatedReward = int256(user.amount * (rewardInfo[i].accRewardPerShare) / ACC_REWARD_PRECISION);
             uint256 _pendingReward = uint256(accumulatedReward - (user.rewardDebt[i]));
             
@@ -226,9 +232,9 @@ contract GaugeController is AccessControl{
         require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
         PoolInfo memory _poolInfo = updatePool(pid);
         UserInfo memory _user = userInfo[pid][msg.sender];
-        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool];
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_poolInfo.pool];
         uint256 _totalPendingReward;
-        for (uint256 i = 0; i< 8; ++i) {
+        for (uint256 i = 0; i< _poolInfo.index; ++i) {
             int256 accumulatedReward = int256(_user.amount * (rewardInfo[i].accRewardPerShare) / ACC_REWARD_PRECISION);
             uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt[i]));
             
