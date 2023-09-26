@@ -82,7 +82,7 @@ contract GaugeController is AccessControl{
             index: _reward.length - 1
         }));
 
-        RewardInfo[8] memory _rewardInfo = reward[_pool];
+        RewardInfo[8] storage _rewardInfo = reward[_pool];
         for (uint256 i = 0; i<_reward.length; ++i) {
             _rewardInfo[i] = _reward[i];
         }
