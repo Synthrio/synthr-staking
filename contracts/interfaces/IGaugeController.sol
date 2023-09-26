@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 interface IGaugeController {
-    function updataReward(
+    function updateReward(
         uint256 index,
         uint256 amount,
         address user,

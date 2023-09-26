@@ -305,7 +305,6 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             unlockTime <= MAXTIME + block.timestamp,
             "VotingEscrow: Voting lock can be 4 years max"
         );
-
         _depositFor(msg.sender, _value, unlockTime, _locked, CREATE_LOCK_TYPE);
     }
 
@@ -337,7 +336,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         _checkpoint(msg.sender, oldLocked, _locked);
         IERC20(token).safeTransfer(msg.sender, _value);
-        IGaugeController(gaugeController).updataReward(
+        IGaugeController(gaugeController).updateReward(
             0,
             _value,
             msg.sender,
@@ -609,7 +608,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         _checkpoint(_user, oldLocked, _locked);
         if (_value != 0) {
             IERC20(token).safeTransferFrom(_user, address(this), _value);
-            IGaugeController(gaugeController).updataReward(
+            IGaugeController(gaugeController).updateReward(
                 0,
                 _value,
                 msg.sender,
