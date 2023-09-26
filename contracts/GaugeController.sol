@@ -11,22 +11,25 @@ contract GaugeController is AccessControl{
     using SafeERC20 for IERC20;
 
     bytes32 public constant POOL_ROLE = keccak256("POOL_ROLE");
+    uint256 private constant ACC_REWARD_PRECISION = 1e18;
 
     /// @notice Info of each gauge controller user.
     /// `amount` LP token amount the user has provided.
     /// `rewardDebt` The amount of reward token entitled to the user.
     struct UserInfo {
         uint256 amount;
-        int256[] rewardDebt;
+        int256[8] rewardDebt;
     }
 
     /// @notice Info of each gauge pool.
     struct PoolInfo {
+        uint256 index;
         uint256 epoch;
         uint64 lastRewardBlock;
-        address poolContractAddres;
-        RewardInfo[] reward;
+        address pool;
     }
+
+    mapping (address => RewardInfo[8]) public reward;
 
     /// @notice Info of each token in pool.
     struct RewardInfo{
@@ -36,8 +39,7 @@ contract GaugeController is AccessControl{
     }
 
     address public owner;
-
-    uint256 private constant ACC_REWARD_PRECISION = 1e18;
+    uint256 public maxRewardToken;
 
     /// @notice Info of each pool.
     PoolInfo[] public poolInfo;
@@ -51,7 +53,7 @@ contract GaugeController is AccessControl{
     event LogPoolAddition(uint256 indexed pid, IERC20 indexed lpToken);
     event LogSetPool(uint256 indexed pid, RewardInfo[] poolReward);
     event LogUpdatePool(uint256 indexed pid, uint64 lastRewardBlock, uint256 lpSupply, uint256 accSushiPerShare);
-
+    event setMaxRewardToken(uint256 newMaxRewardToken);
 
     constructor() {
         owner = msg.sender;
@@ -70,43 +72,58 @@ contract GaugeController is AccessControl{
     /// @notice Add a new LP to the pool. Can only be called by the owner.
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param _lpToken Address of the LP ERC-20 token.
-    function add(uint256 _epoch, IERC20 _lpToken, address _poolContractAddres, RewardInfo[] memory _rewardInfo) public onlyOwner {
-        uint256 lastRewardBlock = block.number;
+    function addPool(uint256 _epoch, IERC20 _lpToken, address _pool, RewardInfo[] memory _reward) public onlyOwner {
         lpToken.push(_lpToken);
 
         poolInfo.push(PoolInfo({
             epoch: _epoch,
-            lastRewardBlock: uint64(lastRewardBlock),
-            poolContractAddres: _poolContractAddres,
-            reward: _rewardInfo
+            lastRewardBlock: uint64(block.number),
+            pool: _pool,
+            index: _reward.length - 1
         }));
 
-        _grantRole(POOL_ROLE, _poolContractAddres);
+        RewardInfo[8] memory _rewardInfo = reward[_pool];
+        for (uint256 i = 0; i<_reward.length; ++i) {
+            _rewardInfo[i] = _reward[i];
+        }
+
+        reward[_pool] = _rewardInfo;
+
+        _grantRole(POOL_ROLE, _pool);
         emit LogPoolAddition(lpToken.length - 1, _lpToken);
     }
 
-    function set(uint256 _pid, RewardInfo[] memory _reward) public onlyOwner {
-        poolInfo[_pid].reward = _reward;
+    /// @notice function to add reward token in pool on frontend.
+    /// @param _pid The index of the pool. See `poolInfo`.
+    /// @param _reward array of reward token info to add in pool
+    function addRewardToken(uint256 _pid, RewardInfo[] memory _reward) public onlyOwner {
+        PoolInfo memory _poolInfo = poolInfo[_pid];
+        RewardInfo[8] memory _rewardInfo = reward[_poolInfo.pool];
+        uint256 _index =_poolInfo.index;
+        for (uint256 i = _index; i< _reward.length; ++i) {
+            _rewardInfo[i] = _reward[i - _index];
+        }
         emit LogSetPool(_pid, _reward);
     }
 
     /// @notice View function to see pending reward on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
-    /// @return pending reward for a given user.
-    function pendingSYNTH(uint256 _pid, address _user) external view returns (uint256 pending) {
-        PoolInfo memory pool = poolInfo[_pid];
+    /// @return pending_ reward for a given user.
+    function pendingReward(uint256 _pid, address _user) external view returns (uint256 pending_) {
+        PoolInfo memory _poolInfo = poolInfo[_pid];
         UserInfo memory user = userInfo[_pid][_user];
+        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool];
 
-        for (uint256 i = 0; i<pool.reward.length; ++i) {
-            uint256 accRewardPerShare = pool.reward[i].accRewardPerShare;
+        for (uint256 i = 0; i< 8; ++i) {
+            uint256 accRewardPerShare = rewardInfo[i].accRewardPerShare;
             uint256 lpSupply = lpToken[_pid].balanceOf(address(this));
-            if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-                uint256 blocks = block.number - (pool.lastRewardBlock);
-                uint256 rewardAmount = blocks * (pool.reward[i].rewardPerBlock);
+            if (block.number > _poolInfo.lastRewardBlock && lpSupply != 0) {
+                uint256 blocks = block.number - (_poolInfo.lastRewardBlock);
+                uint256 rewardAmount = blocks * (rewardInfo[i].rewardPerBlock);
                 accRewardPerShare = accRewardPerShare + (rewardAmount * (ACC_REWARD_PRECISION) / lpSupply);
             }
-            pending += (user.amount * (accRewardPerShare) / ACC_REWARD_PRECISION) - uint256(user.rewardDebt[i]);
+            pending_ += (user.amount * (accRewardPerShare) / ACC_REWARD_PRECISION) - uint256(user.rewardDebt[i]);
         }
     }
 
@@ -126,20 +143,22 @@ contract GaugeController is AccessControl{
 
     /// @notice Update reward variables of the given pool.
     /// @param pid The index of the pool. See `poolInfo`.
-    /// @return pool Returns the pool that was updated.
-    function updatePool(uint256 pid) public returns (PoolInfo memory pool) {
-        pool = poolInfo[pid];
-        if (block.number > pool.lastRewardBlock) {
-            uint256 lpSupply = lpToken[pid].balanceOf(pool.poolContractAddres);
-            for (uint256 i = 0; i<pool.reward.length; ++i) {
+    /// @return poolInfo_ Returns the pool that was updated.
+    function updatePool(uint256 pid) public returns (PoolInfo memory poolInfo_) {
+        poolInfo_ = poolInfo[pid];
+        RewardInfo[8] memory rewardInfo = reward[poolInfo_.pool];
+        if (block.number > poolInfo_.lastRewardBlock) {
+            uint256 lpSupply = lpToken[pid].balanceOf(poolInfo_.pool);
+            uint256 _index = poolInfo_.index;
+            for (uint256 i = 0; i<_index; ++i) {
                 if (lpSupply > 0) {
-                    uint256 blocks = block.number - (pool.lastRewardBlock);
-                    uint256 rewardAmount = blocks * (pool.reward[i].rewardPerBlock);
-                    pool.reward[i].accRewardPerShare = pool.reward[i].accRewardPerShare + uint128(rewardAmount * (ACC_REWARD_PRECISION) / lpSupply);
+                    uint256 blocks = block.number - (poolInfo_.lastRewardBlock);
+                    uint256 rewardAmount = blocks * (rewardInfo[i].rewardPerBlock);
+                    rewardInfo[i].accRewardPerShare = rewardInfo[i].accRewardPerShare + uint128(rewardAmount * (ACC_REWARD_PRECISION) / lpSupply);
                 }
-                pool.lastRewardBlock = uint64(block.number);
-                poolInfo[pid] = pool;
-            emit LogUpdatePool(pid, pool.lastRewardBlock, lpSupply, pool.reward[i].rewardPerBlock);
+                poolInfo_.lastRewardBlock = uint64(block.number);
+                poolInfo[pid] = poolInfo_;
+            emit LogUpdatePool(pid, poolInfo_.lastRewardBlock, lpSupply, rewardInfo[i].rewardPerBlock);
             }
         }
     }
@@ -148,87 +167,83 @@ contract GaugeController is AccessControl{
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to deposit.
     /// @param to The receiver of `amount` deposit benefit.
-    function increaseReward(uint256 pid, uint256 amount, address to) public {
+    function updateReward(uint256 pid, uint256 amount, address to, bool _increase) public {
         require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
-        PoolInfo memory pool = updatePool(pid);
+        PoolInfo memory _poolInfo = updatePool(pid);
         UserInfo memory user = userInfo[pid][to];
+        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool]; 
+
+        int256[8] memory _rewardDebt = user.rewardDebt;
 
         // Effects
-        user.amount = user.amount + (amount);
-        for (uint256 i = 0; i<pool.reward.length; ++i) {
-            user.rewardDebt[i] = user.rewardDebt[i] + (int256(amount * (pool.reward[i].accRewardPerShare) / ACC_REWARD_PRECISION));
+        if (_increase) {
+            user.amount = user.amount + (amount);
+            for (uint256 i = 0; i<rewardInfo.length; ++i) {
+                _rewardDebt[i] = _rewardDebt[i] + (int256(amount * (rewardInfo[i].accRewardPerShare) / ACC_REWARD_PRECISION));
+            }
+        }
+        else {
+            user.amount = user.amount - (amount);
+            for (uint256 i = 0; i<rewardInfo.length; ++i) {
+                _rewardDebt[i] = _rewardDebt[i] - (int256(amount * (rewardInfo[i].accRewardPerShare) / ACC_REWARD_PRECISION));
+            }
         }
 
+        user.rewardDebt = _rewardDebt;
         userInfo[pid][to] = user;
 
-    }
-
-    /// @notice Withdraw LP tokens from pool.
-    /// @param pid The index of the pool. See `poolInfo`.
-    /// @param amount LP token amount to withdraw.
-    /// @param to Receiver of the LP tokens.
-    function decreaseReward(uint256 pid, uint256 amount, address to) public {
-        require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
-        PoolInfo memory pool = updatePool(pid);
-        UserInfo memory _user = userInfo[pid][to];
-
-        // Effects
-        for (uint256 i = 0; i<pool.reward.length; ++i) {
-            _user.rewardDebt[i] = _user.rewardDebt[i] - (int256(amount * (pool.reward[i].accRewardPerShare) / ACC_REWARD_PRECISION));
-        }
-        
-        _user.amount = _user.amount - (amount);
-        userInfo[pid][to] = _user;
     }
 
     /// @notice Claim proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of syUSD rewards.
     function claim(uint256 pid, address to) public {
-        PoolInfo memory pool = updatePool(pid);
+        PoolInfo memory _poolInfo = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
-        uint256 _totalPendingSushi;
-        for (uint256 i = 0; i<pool.reward.length; ++i) {
-            int256 accumulatedReward = int256(user.amount * (pool.reward[i].accRewardPerShare) / ACC_REWARD_PRECISION);
-            uint256 _pendingSushi = uint256(accumulatedReward - (user.rewardDebt[i]));
+        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool];
+        uint256 _totalPendingReward;
+        for (uint256 i = 0; i< 8; ++i) {
+            int256 accumulatedReward = int256(user.amount * (rewardInfo[i].accRewardPerShare) / ACC_REWARD_PRECISION);
+            uint256 _pendingReward = uint256(accumulatedReward - (user.rewardDebt[i]));
             
             // Effects
             user.rewardDebt[i] = accumulatedReward;
 
             // Interactions
-            if (_pendingSushi != 0) {
-                IERC20(pool.reward[i].token).safeTransfer(to, _pendingSushi);
-                _totalPendingSushi += _pendingSushi;
-                // SYNTH.safeTransfer(to, _pendingSushi);
+            if (_pendingReward != 0) {
+                IERC20(rewardInfo[i].token).safeTransfer(to, _pendingReward);
+                _totalPendingReward += _pendingReward;
             }
         }
-        emit Claimed(msg.sender, pid, _totalPendingSushi);
+        emit Claimed(msg.sender, pid, _totalPendingReward);
     }
     
     /// @notice Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
-    /// @param amount LP token amount to withdraw.
+    /// @param _amount LP token amount to withdraw.
     /// @param to Receiver of the LP tokens and syUSD rewards.
-    function decreaseRewardAndClaim(uint256 pid, uint256 amount, address to) public {
+    function decreaseRewardAndClaim(uint256 pid, uint256 _amount, address to) public {
         require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
-        PoolInfo memory pool = updatePool(pid);
+        PoolInfo memory _poolInfo = updatePool(pid);
         UserInfo memory _user = userInfo[pid][msg.sender];
-        uint256 _totalPendingSushi;
-        for (uint256 i = 0; i<pool.reward.length; ++i) {
-            int256 accumulatedReward = int256(_user.amount * (pool.reward[i].accRewardPerShare) / ACC_REWARD_PRECISION);
-            uint256 _pendingSushi = uint256(accumulatedReward - (_user.rewardDebt[i]));
+        RewardInfo[8] memory rewardInfo = reward[_poolInfo.pool];
+        uint256 _totalPendingReward;
+        for (uint256 i = 0; i< 8; ++i) {
+            int256 accumulatedReward = int256(_user.amount * (rewardInfo[i].accRewardPerShare) / ACC_REWARD_PRECISION);
+            uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt[i]));
             
             // Effects
             _user.rewardDebt[i] = accumulatedReward;
+            _user.amount -= _amount;
             userInfo[pid][msg.sender] = _user;
             // Interactions
-            if (_pendingSushi != 0) {
-                IERC20(pool.reward[i].token).safeTransfer(to, _pendingSushi);
-                _totalPendingSushi += _pendingSushi;
+            if (_pendingReward != 0) {
+                IERC20(rewardInfo[i].token).safeTransfer(to, _pendingReward);
+                _totalPendingReward += _pendingReward;
             }
         }
 
-        emit Claimed(msg.sender, pid, _totalPendingSushi);
+        emit Claimed(msg.sender, pid, _totalPendingReward);
     }
 
 }

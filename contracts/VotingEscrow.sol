@@ -271,7 +271,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         _checkpoint(msg.sender, oldLocked, _locked);
         IERC20(token).safeTransfer(msg.sender, _value);
-        IGaugeController(gaugeController).decreaseReward(0, _value, msg.sender);
+        IGaugeController(gaugeController).updataReward(0, _value, msg.sender, false);
         emit Withdrew(msg.sender, _value, block.timestamp);
         emit Supply(supply + _value, supply);
     }
@@ -522,7 +522,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         _checkpoint(_user, oldLocked, _locked);
         if (_value != 0) {
             IERC20(token).safeTransferFrom(_user, address(this), _value);
-            IGaugeController(gaugeController).increaseReward(0, _value, msg.sender);
+            IGaugeController(gaugeController).updataReward(0, _value, msg.sender, true);
         }
         emit Deposited(_user, _value, _locked.end, _type, block.timestamp);
         emit Supply(supplyBefore, supplyBefore + _value);
