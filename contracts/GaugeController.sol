@@ -130,7 +130,7 @@ contract GaugeController is AccessControl{
     }
 
     /// @notice update epoch for given pool 
-    /// @param _pids Pool IDs of pool to be updated. Make sure to update all active pools.
+    /// @param _pid Pool ID of pool to be updated. Make sure to update all active pools.
     /// @param _newEpoch new epoch.
     function updateEpoch(uint256 _pid, uint256 _newEpoch) external {
         require(hasRole(POOL_ROLE, msg.sender), "VotingEscrow: pools only");
