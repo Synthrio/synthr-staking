@@ -213,17 +213,19 @@ describe("GaugeController", function () {
       let rewardAmount = (blockNum + 1 - lastRewardBlock) * rewardPerBlock;
       let pendingAccRewardPerShare =
         (rewardAmount * ACC_REWARD_PRECISION) / lpSupply;
-      let accRewardPerShare =
-        (await gaugeController.reward(votingEscrow.address, 0))
-          .accRewardPerShare + pendingAccRewardPerShare;
+      let accRewardPerShare = (
+        await gaugeController.reward(votingEscrow.address, 0)
+      ).accRewardPerShare.add(
+        BigNumber.from(pendingAccRewardPerShare.toString())
+      );
       let userAmount: any = parseUnits("1000", 18);
       let userRewardDebt = (
         await gaugeController.userRewards(votingEscrow.address, addr1.address)
       )[0];
-      let accumulatedReward =
-        (userAmount * accRewardPerShare) / ACC_REWARD_PRECISION;
-      let pendingReward = accumulatedReward - userRewardDebt;
-
+      let accumulatedReward = userAmount
+        .mul(accRewardPerShare)
+        .div(ACC_REWARD_PRECISION);
+      let pendingReward = accumulatedReward.sub(userRewardDebt);
       expect(
         await gaugeController
           .connect(addr1)
@@ -231,7 +233,9 @@ describe("GaugeController", function () {
       )
         .to.emit(gaugeController, "Claimed")
         .withArgs(addr1.address, votingEscrow.address, pendingReward);
-
+      expect(await rewardToken.balanceOf(addr1.address)).to.equal(
+        pendingReward
+      );
       expect(
         await gaugeController.pendingReward(votingEscrow.address, addr1.address)
       ).to.equal(0);
