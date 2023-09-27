@@ -230,7 +230,6 @@ contract GaugeController is AccessControl {
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
         uint256 _totalPendingReward;
         for (uint256 i = 0; i <= _poolInfo.index; ++i) {
-
             int256 accumulatedReward = _calAccReward(
                 rewardInfo[i].accRewardPerShare,
                 _user.amount
@@ -260,7 +259,10 @@ contract GaugeController is AccessControl {
         uint256 _amount,
         address to
     ) external {
-        require(hasRole(POOL_ROLE, msg.sender), "GaugeController: not authorized");
+        require(
+            hasRole(POOL_ROLE, msg.sender),
+            "GaugeController: not authorized"
+        );
         PoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][to];
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
