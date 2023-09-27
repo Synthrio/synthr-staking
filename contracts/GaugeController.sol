@@ -126,7 +126,8 @@ contract GaugeController is AccessControl {
         RewardInfo[MAX_REWARD_TOKEN] storage _rewardInfo = reward[
             _pool
         ];
-        for (uint256 i = _index; i < _reward.length; ++i) {
+        uint256 _len =  _index + _reward.length;
+        for (uint256 i = _index; i < _len; ++i) {
             _rewardInfo[i] = _reward[i - _index];
         }
         poolInfo[_pool].index += _reward.length;
