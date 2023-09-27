@@ -163,26 +163,26 @@ contract GaugeController is AccessControl {
     ) external {
         require(hasRole(CONTROLLER_ROLE, msg.sender), "VotingEscrow: pools only");
         PoolInfo memory _poolInfo = updatePool(_pool);
-        UserInfo memory user = userInfo[_pool][_to];
+        UserInfo memory _user = userInfo[_pool][_to];
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
 
-        int256[MAX_REWARD_TOKEN] memory _rewardDebt = user.rewardDebt;
+        int256[MAX_REWARD_TOKEN] memory _rewardDebt = _user.rewardDebt;
 
         // Effects
         for (uint256 i = 0; i <= _poolInfo.index; ++i) {
             int256 _calRewardDebt = _calAccReward(rewardInfo[i].accRewardPerShare, _amount);
             if (_increase) {
-                user.amount += _amount;
+                _user.amount += _amount;
                 _rewardDebt[i] += _calRewardDebt;
             }
             else {
-                user.amount -= _amount;
+                _user.amount -= _amount;
                 _rewardDebt[i] = _calRewardDebt;
             }
         }
 
-        user.rewardDebt = _rewardDebt;
-        userInfo[_pool][_to] = user;
+        _user.rewardDebt = _rewardDebt;
+        userInfo[_pool][_to] = _user;
     }
 
     /// @notice Claim proceeds for transaction sender to `to`.
@@ -190,17 +190,17 @@ contract GaugeController is AccessControl {
     /// @param to Receiver of syUSD rewards.
     function claim(address _pool, address to) external {
         PoolInfo memory _poolInfo = updatePool(_pool);
-        UserInfo storage user = userInfo[_pool][msg.sender];
+        UserInfo memory _user = userInfo[_pool][msg.sender];
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
         uint256 _totalPendingReward;
         for (uint256 i = 0; i <= _poolInfo.index; ++i) {
-            int256 accumulatedReward = _calAccReward(rewardInfo[i].accRewardPerShare, user.amount);
+            int256 accumulatedReward = _calAccReward(rewardInfo[i].accRewardPerShare, _user.amount);
             uint256 _pendingReward = uint256(
-                accumulatedReward - (user.rewardDebt[i])
+                accumulatedReward - (_user.rewardDebt[i])
             );
 
             // Effects
-            user.rewardDebt[i] = accumulatedReward;
+            _user.rewardDebt[i] = accumulatedReward;
 
             // Interactions
             if (_pendingReward != 0) {
@@ -208,6 +208,7 @@ contract GaugeController is AccessControl {
                 _totalPendingReward += _pendingReward;
             }
         }
+        userInfo[_pool][msg.sender] = _user;
         emit Claimed(msg.sender, _pool, _totalPendingReward);
     }
 
@@ -231,14 +232,15 @@ contract GaugeController is AccessControl {
 
             // Effects
             _user.rewardDebt[i] = accumulatedReward;
-            _user.amount -= _amount;
-            userInfo[_pool][to] = _user;
             // Interactions
             if (_pendingReward != 0) {
                 IERC20(rewardInfo[i].token).safeTransfer(to, _pendingReward);
                 _totalPendingReward += _pendingReward;
             }
         }
+        
+        _user.amount -= _amount;
+        userInfo[_pool][to] = _user;
 
         emit Claimed(to, _pool, _totalPendingReward);
     }
