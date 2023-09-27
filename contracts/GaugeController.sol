@@ -58,7 +58,11 @@ contract GaugeController is AccessControl {
     event SetMaxRewardToken(uint256 newMaxRewardToken);
 
     constructor(address _admin) {
-        _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+        _grantRole(CONTROLLER_ROLE, _admin);
+    }
+
+    function userRewards(address _pool, address _user) external view  returns(int256[MAX_REWARD_TOKEN] memory) {
+        return userInfo[_pool][_user].rewardDebt;
     }
 
     /// @notice View function to see pending reward on frontend.
@@ -90,7 +94,7 @@ contract GaugeController is AccessControl {
         address _pool,
         RewardInfo[] memory _reward
     ) external {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "GaugeController: not authorized");
+        require(hasRole(CONTROLLER_ROLE, msg.sender), "GaugeController: not authorized");
         lpToken[_pool] = IERC20(_lpToken);
 
         poolInfo[_pool] = PoolInfo({
@@ -115,7 +119,7 @@ contract GaugeController is AccessControl {
         address _pool,
         RewardInfo[] memory _reward
     ) external {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "GaugeController: not authorized");
+        require(hasRole(CONTROLLER_ROLE, msg.sender), "GaugeController: not authorized");
         PoolInfo memory _poolInfo = poolInfo[_pool];
         uint256 _index = _poolInfo.index + 1;
         require(_index + _reward.length <= MAX_REWARD_TOKEN, "GaugeController: excced reward tokens ");
