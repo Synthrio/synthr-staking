@@ -1,0 +1,291 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+/// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
+contract DexLpFarming is Ownable2Step {
+    using SafeERC20 for IERC20;
+
+    /// @notice Info of each DexLpFarming user.
+    /// `amount` LP token amount the user has provided.
+    /// `rewardDebt` The amount of reward token entitled to the user.
+    struct UserInfo {
+        uint256 amount;
+        int256 rewardDebt;
+    }
+
+    /// @notice Info of each DexLpFarming pool.
+    /// `allocPoint` The amount of allocation points assigned to the pool.
+    /// Also known as the amount of reward token to distribute per block.
+    struct PoolInfo {
+        uint128 accRewardPerShare;
+        uint64 lastRewardBlock;
+        uint64 allocPoint;
+    }
+
+    /// @notice Address of reward token contract.
+    IERC20 public immutable REWARD_TOKEN;
+
+    /// @notice Info of each DexLpFarming pool.
+    PoolInfo[] public poolInfo;
+    /// @notice Address of the LP token for each DexLpFarming pool.
+    IERC721[] public lpToken;
+
+    /// @notice Info of each user that stakes LP tokens.
+    mapping(uint256 => mapping(address => UserInfo)) public userInfo;
+    /// @dev Total allocation points. Must be the sum of all allocation points in all pools.
+    uint256 public totalAllocPoint;
+
+    uint256 public rewardPerBlock;
+    uint256 private constant ACC_REWARD_PRECISION = 1e18;
+
+    event Deposit(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        address indexed to
+    );
+    event Withdraw(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        address indexed to
+    );
+    event EmergencyWithdraw(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        address indexed to
+    );
+    event Harvest(address indexed user, uint256 indexed pid, uint256 amount);
+    event LogPoolAddition(
+        uint256 indexed pid,
+        uint256 allocPoint,
+        IERC721 indexed lpToken
+    );
+    event LogSetPool(uint256 indexed pid, uint256 allocPoint);
+    event LogUpdatePool(
+        uint256 indexed pid,
+        uint64 lastRewardBlock,
+        uint256 lpSupply,
+        uint256 accRewardPerShare
+    );
+    event LogRewardPerBlock(uint256 rewardPerBlock);
+
+    /// @param _rewardToken The REWARD token contract address.
+    constructor(IERC20 _rewardToken) {
+        REWARD_TOKEN = _rewardToken;
+    }
+
+    /// @notice Returns the number of DexLpFarming pools.
+    function poolLength() public view returns (uint256 pools) {
+        pools = poolInfo.length;
+    }
+
+    /// @notice Add a new LP to the pool. Can only be called by the owner.
+    /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
+    /// @param allocPoint AP of the new pool.
+    /// @param _lpToken Address of the LP ERC-20 token.
+    function add(uint256 allocPoint, IERC721 _lpToken) public onlyOwner {
+        totalAllocPoint = totalAllocPoint + allocPoint;
+        lpToken.push(_lpToken);
+
+        poolInfo.push(
+            PoolInfo({
+                allocPoint: uint64(allocPoint),
+                lastRewardBlock: uint64(block.number),
+                accRewardPerShare: 0
+            })
+        );
+        emit LogPoolAddition(lpToken.length - 1, allocPoint, _lpToken);
+    }
+
+    /// @notice Update the given pool's reward token allocation point. Can only be called by the owner.
+    /// @param _pid The index of the pool. See `poolInfo`.
+    /// @param _allocPoint New AP of the pool.
+    function set(uint256 _pid, uint256 _allocPoint) public onlyOwner {
+        totalAllocPoint -= (poolInfo[_pid].allocPoint + _allocPoint);
+        poolInfo[_pid].allocPoint = uint64(_allocPoint);
+        emit LogSetPool(_pid, _allocPoint);
+    }
+
+    /// @notice Sets the reward per second to be distributed. Can only be called by the owner.
+    /// @param _rewardPerBlock The amount of reward token to be distributed per block number.
+    function setRewardPerBlock(uint256 _rewardPerBlock) public onlyOwner {
+        rewardPerBlock = _rewardPerBlock;
+        emit LogRewardPerBlock(_rewardPerBlock);
+    }
+
+    /// @notice View function to see pending reward on frontend.
+    /// @param _pid The index of the pool. See `poolInfo`.
+    /// @param _user Address of user.
+    /// @return pending REWARD_TOKEN reward for a given user.
+    function pendingReward(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256 pending) {
+        PoolInfo memory pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][_user];
+        uint256 accRewardPerShare = pool.accRewardPerShare;
+        uint256 lpSupply = lpToken[_pid].balanceOf(address(this));
+        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
+            uint256 blocks = block.number - (pool.lastRewardBlock);
+            uint256 rewardAmount = (blocks *
+                (rewardPerBlock) *
+                (pool.allocPoint)) / totalAllocPoint;
+            accRewardPerShare += ((rewardAmount * (ACC_REWARD_PRECISION)) /
+                lpSupply);
+        }
+        pending = uint256(
+            int256((user.amount * accRewardPerShare) / ACC_REWARD_PRECISION) -
+                user.rewardDebt
+        );
+    }
+
+    /// @notice Update reward variables for all pools. Be careful of gas spending!
+    /// @param pids Pool IDs of all to be updated. Make sure to update all active pools.
+    function massUpdatePools(uint256[] calldata pids) external {
+        uint256 len = pids.length;
+        for (uint256 i = 0; i < len; ++i) {
+            updatePool(pids[i]);
+        }
+    }
+
+    /// @notice Update reward variables of the given pool.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @return pool Returns the pool that was updated.
+    function updatePool(uint256 pid) public returns (PoolInfo memory pool) {
+        pool = poolInfo[pid];
+        if (block.number > pool.lastRewardBlock) {
+            uint256 lpSupply = lpToken[pid].balanceOf(address(this));
+            if (lpSupply > 0) {
+                uint256 blocks = block.number - pool.lastRewardBlock;
+                uint256 rewardAmount = (blocks *
+                    rewardPerBlock *
+                    pool.allocPoint) / totalAllocPoint;
+                pool.accRewardPerShare += uint128(
+                    (rewardAmount * ACC_REWARD_PRECISION) / lpSupply
+                );
+            }
+            pool.lastRewardBlock = uint64(block.number);
+            poolInfo[pid] = pool;
+            emit LogUpdatePool(
+                pid,
+                pool.lastRewardBlock,
+                lpSupply,
+                pool.accRewardPerShare
+            );
+        }
+    }
+
+    /// @notice Deposit LP tokens to DexLpFarming for REWARD_TOKEN allocation.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param amount LP token amount to deposit.
+    /// @param to The receiver of `amount` deposit benefit.
+    function deposit(uint256 pid, uint256 amount, address to) public {
+        PoolInfo memory pool = updatePool(pid);
+        UserInfo storage user = userInfo[pid][to];
+
+        // Effects
+        user.amount += amount;
+        user.rewardDebt += int256(
+            (amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+        );
+
+        // Interactions
+        lpToken[pid].safeTransferFrom(msg.sender, address(this), amount);
+
+        emit Deposit(msg.sender, pid, amount, to);
+    }
+
+    /// @notice Withdraw LP tokens from DexLpFarming.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param amount LP token amount to withdraw.
+    /// @param to Receiver of the LP tokens.
+    function withdraw(uint256 pid, uint256 amount, address to) public {
+        PoolInfo memory pool = updatePool(pid);
+        UserInfo storage user = userInfo[pid][msg.sender];
+
+        // Effects
+        user.rewardDebt -= int256(
+            (amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+        );
+        user.amount -= amount;
+
+        // Interactions
+        lpToken[pid].transferFrom(address(this), to, amount);
+
+        emit Withdraw(msg.sender, pid, amount, to);
+    }
+
+    /// @notice Harvest proceeds for transaction sender to `to`.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param to Receiver of REWARD_TOKEN rewards.
+    function harvest(uint256 pid, address to) public {
+        PoolInfo memory pool = updatePool(pid);
+        UserInfo storage user = userInfo[pid][msg.sender];
+        int256 accumulatedReward = int256(
+            (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+        );
+        uint256 _pendingReward = uint256(accumulatedReward - user.rewardDebt);
+
+        // Effects
+        user.rewardDebt = accumulatedReward;
+
+        // Interactions
+        if (_pendingReward != 0) {
+            REWARD_TOKEN.safeTransfer(to, _pendingReward);
+        }
+
+        emit Harvest(msg.sender, pid, _pendingReward);
+    }
+
+    /// @notice Withdraw LP tokens from DexLpFarming and harvest proceeds for transaction sender to `to`.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param amount LP token amount to withdraw.
+    /// @param to Receiver of the LP tokens and REWARD_TOKEN rewards.
+    function withdrawAndHarvest(
+        uint256 pid,
+        uint256 amount,
+        address to
+    ) public {
+        PoolInfo memory pool = updatePool(pid);
+        UserInfo storage user = userInfo[pid][msg.sender];
+        int256 accumulatedReward = int256(
+            (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+        );
+        uint256 _pendingReward = uint256(accumulatedReward - user.rewardDebt);
+
+        // Effects
+        user.rewardDebt =
+            accumulatedReward -
+            int256((amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION);
+        user.amount -= amount;
+
+        // Interactions
+        REWARD_TOKEN.safeTransfer(to, _pendingReward);
+
+        lpToken[pid].safeTransferFrom(address(this), to, amount);
+
+        emit Withdraw(msg.sender, pid, amount, to);
+        emit Harvest(msg.sender, pid, _pendingReward);
+    }
+
+    /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param to Receiver of the LP tokens.
+    function emergencyWithdraw(uint256 pid, address to) public {
+        UserInfo storage user = userInfo[pid][msg.sender];
+        uint256 amount = user.amount;
+        user.amount = 0;
+        user.rewardDebt = 0;
+
+        // Note: transfer can fail or succeed if `amount` is zero.
+        lpToken[pid].safeTransferFrom(address(this), to, amount);
+
+        emit EmergencyWithdraw(msg.sender, pid, amount, to);
+    }
+}
