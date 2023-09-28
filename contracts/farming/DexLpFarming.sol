@@ -44,18 +44,8 @@ contract DexLpFarming is Ownable2Step {
     uint256 public rewardPerBlock;
     uint256 private constant ACC_REWARD_PRECISION = 1e18;
 
-    event Deposit(
-        address indexed user,
-        uint256 indexed pid,
-        uint256 amount,
-        address indexed to
-    );
-    event Withdraw(
-        address indexed user,
-        uint256 indexed pid,
-        uint256 amount,
-        address indexed to
-    );
+    event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
+    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(
         address indexed user,
         uint256 indexed pid,
@@ -88,7 +78,10 @@ contract DexLpFarming is Ownable2Step {
     }
 
     /// @notice Returns the number of user tokens ids in the pool.
-    function userTokenIds(uint256 pid, address user) public view returns(uint256[] memory){
+    function userTokenIds(
+        uint256 pid,
+        address user
+    ) public view returns (uint256[] memory) {
         return userToken[pid][user];
     }
 
@@ -185,53 +178,52 @@ contract DexLpFarming is Ownable2Step {
     /// @notice Deposit LP tokens to DexLpFarming for REWARD_TOKEN allocation.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param id LP token id to deposit.
-    /// @param to The receiver of `amount` deposit benefit.
-    function deposit(uint256 pid, uint256 id, address to) public {
+    function deposit(uint256 pid, uint256 id) public {
         PoolInfo memory pool = updatePool(pid);
-        UserInfo memory user = userInfo[pid][to];
+        UserInfo memory user = userInfo[pid][msg.sender];
+
+        _deposit(pid, id, user, pool.accRewardPerShare);
+    }
+
+    /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param id LP token ids to deposit.
+    function depositBatch(uint256 pid, uint256[] memory id) public {
+        PoolInfo memory pool = updatePool(pid);
+        UserInfo memory user = userInfo[pid][msg.sender];
 
         // Effects
-        user.amount += 1;
-        userToken[pid][to].push(id);
-        user.rewardDebt += int256(
-            (pool.accRewardPerShare) / ACC_REWARD_PRECISION
-        );
-        userInfo[pid][msg.sender] = user;
+        for (uint256 i = 0; i < id.length; i++) {
+            _deposit(pid, id[i], user, pool.accRewardPerShare);
+        }
+    }
 
-        // Interactions
-        lpToken[pid].transferFrom(msg.sender, address(this), id);
+    /// @notice Withdraw LP tokens from DexLpFarming.
+    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param id LP token ids to withdraw.
+    function withdrawBatch(uint256 pid, uint256[] memory id) public {
+        PoolInfo memory pool = updatePool(pid);
+        UserInfo memory user = userInfo[pid][msg.sender];
+        require(user.amount != 0, "DexLpFarming: can not withdraw");
 
-        emit Deposit(msg.sender, pid, id, to);
+        uint256[] memory _userTokenIds = userToken[pid][msg.sender];
+
+        for (uint256 i = 0; i < id.length; i++) {
+            _withdraw(pid, id[i], user, pool.accRewardPerShare, _userTokenIds);
+        }
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param id LP token id to withdraw.
-    /// @param to Receiver of the LP tokens.
-    function withdraw(uint256 pid, uint256 id, address to) public {
+    function withdraw(uint256 pid, uint256 id) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo memory user = userInfo[pid][msg.sender];
-        uint256[] memory _userTokenIds = userToken[pid][to];
+        require(user.amount != 0, "DexLpFarming: can not withdraw");
 
-        // Effects
-        user.rewardDebt -= int256(
-            (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
-        );
-        for (uint256 i = 0; i< _userTokenIds.length; i++) {
-            if (_userTokenIds[i] == id) {
-                _userTokenIds[i] = _userTokenIds[_userTokenIds.length - 1];
-                break;
-            }
-        }
+        uint256[] memory _userTokenIds = userToken[pid][msg.sender];
 
-        user.amount -= 1;
-        userInfo[pid][msg.sender] = user;
-        userToken[pid][to] = _userTokenIds;
-
-        // Interactions
-        lpToken[pid].transferFrom(address(this), to, id);
-
-        emit Withdraw(msg.sender, pid, id, to);
+        _withdraw(pid, id, user, pool.accRewardPerShare, _userTokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -259,14 +251,11 @@ contract DexLpFarming is Ownable2Step {
     /// @notice Withdraw LP tokens from DexLpFarming and harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param id LP token id to withdraw.
-    /// @param to Receiver of the LP tokens and REWARD_TOKEN rewards.
-    function withdrawAndHarvest(
-        uint256 pid,
-        uint256 id,
-        address to
-    ) public {
+    function withdrawAndHarvest(uint256 pid, uint256 id, address to) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo memory user = userInfo[pid][msg.sender];
+        require(user.amount != 0, "DexLpFarming: can not withdraw");
+
         int256 accumulatedReward = int256(
             (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
         );
@@ -275,7 +264,9 @@ contract DexLpFarming is Ownable2Step {
         // Effects
         user.rewardDebt =
             accumulatedReward -
-            int256((user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION);
+            int256(
+                (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+            );
         user.amount -= 1;
 
         userInfo[pid][msg.sender] = user;
@@ -284,7 +275,7 @@ contract DexLpFarming is Ownable2Step {
 
         lpToken[pid].transferFrom(address(this), to, id);
 
-        emit Withdraw(msg.sender, pid, id, to);
+        emit Withdraw(msg.sender, pid, id);
         emit Harvest(msg.sender, pid, _pendingReward);
     }
 
@@ -295,16 +286,61 @@ contract DexLpFarming is Ownable2Step {
         UserInfo memory user = userInfo[pid][msg.sender];
         uint256[] memory _userTokenIds = userToken[pid][msg.sender];
         uint256 amount = user.amount;
-        user.amount = 0;
-        user.rewardDebt = 0;
 
-        userInfo[pid][msg.sender] = user;
         // Note: transfer can fail or succeed if `amount` is zero.
-        for (uint256 i = 0; i<_userTokenIds.length; i++)
-        lpToken[pid].transferFrom(address(this), to, _userTokenIds[i]);
+        for (uint256 i = 0; i < _userTokenIds.length; i++)
+            lpToken[pid].transferFrom(address(this), to, _userTokenIds[i]);
 
+        delete userInfo[pid][msg.sender];
         delete userToken[pid][msg.sender];
-
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
+    }
+
+    function _deposit(
+        uint _pid,
+        uint256 _id,
+        UserInfo memory _user,
+        uint256 _accRewardPerShare
+    ) internal {
+        _user.amount += 1;
+        userToken[_pid][msg.sender].push(_id);
+        _user.rewardDebt += int256(_accRewardPerShare / ACC_REWARD_PRECISION);
+        userInfo[_pid][msg.sender] = _user;
+
+        // Interactions
+        lpToken[_pid].transferFrom(msg.sender, address(this), _id);
+
+        emit Deposit(msg.sender, _pid, _id);
+    }
+
+    function _withdraw(
+        uint _pid,
+        uint256 _id,
+        UserInfo memory _user,
+        uint256 _accRewardPerShare,
+        uint256[] memory _userTokenIds
+    ) internal {
+        _user.rewardDebt -= int256(
+            (_user.amount * _accRewardPerShare) / ACC_REWARD_PRECISION
+        );
+        for (uint256 i = 0; i < _userTokenIds.length; i++) {
+            if (_userTokenIds[i] == _id) {
+                _userTokenIds[i] = _userTokenIds[_userTokenIds.length - 1];
+                break;
+            }
+        }
+
+        _user.amount -= 1;
+        if (_user.amount != 0) {
+            userToken[_pid][msg.sender] = _userTokenIds;
+        } else {
+            delete userToken[_pid][msg.sender];
+        }
+        userInfo[_pid][msg.sender] = _user;
+
+        // Interactions
+        lpToken[_pid].transferFrom(address(this), msg.sender, _id);
+
+        emit Withdraw(msg.sender, _pid, _id);
     }
 }
