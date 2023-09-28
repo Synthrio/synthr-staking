@@ -92,7 +92,7 @@ describe("GaugeController", function () {
       await lpTtoken
         .connect(addr1)
         .approve(votingEscrow.address, parseUnits("1000", 18));
-      await time.increaseTo(10000000000);
+      await time.increaseTo(17959052396);
       const blockNum = await ethers.provider.getBlockNumber();
       const block = await ethers.provider.getBlock(blockNum);
       const timestamp = block.timestamp;
