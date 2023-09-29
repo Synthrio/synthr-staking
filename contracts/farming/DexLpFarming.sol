@@ -42,6 +42,7 @@ contract DexLpFarming is Ownable2Step {
     uint256 public totalAllocPoint;
 
     uint256 public rewardPerBlock;
+    uint256 public currentEpoch;
     uint256 private constant ACC_REWARD_PRECISION = 1e18;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -65,7 +66,7 @@ contract DexLpFarming is Ownable2Step {
         uint256 lpSupply,
         uint256 accRewardPerShare
     );
-    event LogRewardPerBlock(uint256 rewardPerBlock);
+    event LogRewardPerBlock(uint256 rewardPerBlock, uint256 indexed currentEpoch, uint256 amount);
 
     /// @param _rewardToken The REWARD token contract address.
     constructor(IERC20 _rewardToken) {
@@ -117,9 +118,13 @@ contract DexLpFarming is Ownable2Step {
 
     /// @notice Sets the reward per second to be distributed. Can only be called by the owner.
     /// @param _rewardPerBlock The amount of reward token to be distributed per block number.
-    function setRewardPerBlock(uint256 _rewardPerBlock) public onlyOwner {
+    /// @param _user address from which reward is to be distributed.
+    /// @param _amount The amount of reward token to be deposit in dexLpFarmin.
+    function setRewardPerBlock(uint256 _rewardPerBlock, address _user, uint256 _amount) public onlyOwner {
         rewardPerBlock = _rewardPerBlock;
-        emit LogRewardPerBlock(_rewardPerBlock);
+        ++currentEpoch;
+        REWARD_TOKEN.safeTransferFrom(_user, address(this), _amount);
+        emit LogRewardPerBlock(_rewardPerBlock, currentEpoch, _amount);
     }
 
     /// @notice View function to see pending reward on frontend.
@@ -264,9 +269,7 @@ contract DexLpFarming is Ownable2Step {
         // Effects
         user.rewardDebt =
             accumulatedReward -
-            int256(
-                (pool.accRewardPerShare) / ACC_REWARD_PRECISION
-            );
+            int256((pool.accRewardPerShare) / ACC_REWARD_PRECISION);
         user.amount -= 1;
 
         userInfo[pid][msg.sender] = user;
@@ -320,9 +323,7 @@ contract DexLpFarming is Ownable2Step {
         uint256 _accRewardPerShare,
         uint256[] memory _userTokenIds
     ) internal {
-        _user.rewardDebt -= int256(
-            (_accRewardPerShare) / ACC_REWARD_PRECISION
-        );
+        _user.rewardDebt -= int256((_accRewardPerShare) / ACC_REWARD_PRECISION);
         for (uint256 i = 0; i < _userTokenIds.length; i++) {
             if (_userTokenIds[i] == _id) {
                 _userTokenIds[i] = _userTokenIds[_userTokenIds.length - 1];
