@@ -22,12 +22,13 @@ describe("DexLpFarming", function () {
 
     [owner] = await ethers.getSigners();
     await this.rewardToken.mint(
-      this.chef.address,
+      owner.address,
       parseUnits("100000000000000000000000000000000000", 18)
     );
     await this.lp.safeMint(owner.address, getBigNumber(1));
+    await this.rewardToken.approve(this.chef.address, parseUnits("403", 18));
     await this.lp.approve(this.chef.address, getBigNumber(1));
-    await this.chef.setRewardPerBlock("10000000000000000");
+    await this.chef.setRewardPerBlock("10000000000000000", owner.address, parseUnits("403", 18));
   });
 
   describe("PoolLength", function () {
@@ -68,7 +69,7 @@ describe("DexLpFarming", function () {
       await this.chef.add(10, this.lp.address);
       await this.lp.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(0, getBigNumber(1));
-      await time.increaseTo(30000000275);
+      await time.increaseTo(30000000279);
       let log2 = await this.chef.updatePool(0);
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
@@ -176,12 +177,15 @@ describe("DexLpFarming", function () {
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
         block2 - block
       );
+      console.log(expectedrewardToken);
       expect(
         (await this.chef.userInfo(0, owner.address)).rewardDebt
-      ).to.be.equal("-" + expectedrewardToken);
-      await this.chef.harvest(0, this.alice.address);
-      expect(await this.rewardToken.balanceOf(this.alice.address)).to.be.equal(
-        expectedrewardToken
+        ).to.be.equal("-" + expectedrewardToken);
+        let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
+        await this.chef.harvest(0, this.alice.address);
+        let afterBalance = await this.rewardToken.balanceOf(this.alice.address);
+      expect(afterBalance).to.be.equal(
+        expectedrewardToken.add(beforeBalance)
       );
     });
     it("Harvest with empty user balance", async function () {
@@ -204,9 +208,10 @@ describe("DexLpFarming", function () {
       expect(
         (await this.chef.userInfo(0, owner.address)).rewardDebt
       ).to.be.equal("-" + expectedrewardToken);
+      let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
       await this.chef.harvest(0, this.alice.address);
       expect(await this.rewardToken.balanceOf(this.alice.address)).to.be.equal(
-        expectedrewardToken
+        expectedrewardToken.add(beforeBalance)
       );
     });
   });
