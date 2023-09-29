@@ -144,7 +144,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         address _user,
         uint256 _block
     ) external view returns (uint256) {
-        require(_block <= block.number, "VotingEscrow: Wrong cond");
+        require(_block <= block.number, "VotingEscrow: Wrong condition");
         uint256 _min;
         uint256 _max = userPointEpoch[_user];
         for (uint256 i; i < 128; ++i) {

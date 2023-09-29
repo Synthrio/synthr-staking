@@ -209,14 +209,16 @@ contract GaugeController is AccessControl {
                 _amount
             );
             if (_increase) {
-                _user.amount += _amount;
                 _rewardDebt[i] += _calRewardDebt;
             } else {
-                _user.amount -= _amount;
                 _rewardDebt[i] -= _calRewardDebt;
             }
         }
-
+        if (_increase) {
+            _user.amount += _amount;
+        } else {
+            _user.amount -= _amount;
+        }
         _user.rewardDebt = _rewardDebt;
         userInfo[_pool][_to] = _user;
     }
@@ -248,47 +250,6 @@ contract GaugeController is AccessControl {
         }
         userInfo[_pool][msg.sender] = _user;
         emit Claimed(msg.sender, _pool, _totalPendingReward);
-    }
-
-    /// @notice Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`.
-    /// @param _pool The address of the pool. See `poolInfo`.
-    /// @param _amount LP token amount to withdraw.
-    /// @param to Receiver of the LP tokens and syUSD rewards.
-    function decreaseRewardAndClaim(
-        address _pool,
-        uint256 _amount,
-        address to
-    ) external {
-        require(
-            hasRole(POOL_ROLE, msg.sender),
-            "GaugeController: not authorized"
-        );
-        PoolInfo memory _poolInfo = updatePool(_pool);
-        UserInfo memory _user = userInfo[_pool][to];
-        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
-        uint256 _totalPendingReward;
-        for (uint256 i = 0; i <= _poolInfo.index; ++i) {
-            int256 accumulatedReward = _calAccReward(
-                _user.amount,
-                rewardInfo[i].accRewardPerShare
-            );
-            uint256 _pendingReward = uint256(
-                accumulatedReward - (_user.rewardDebt[i])
-            );
-
-            // Effects
-            _user.rewardDebt[i] = accumulatedReward;
-            // Interactions
-            if (_pendingReward != 0) {
-                IERC20(rewardInfo[i].token).safeTransfer(to, _pendingReward);
-                _totalPendingReward += _pendingReward;
-            }
-        }
-
-        _user.amount -= _amount;
-        userInfo[_pool][to] = _user;
-
-        emit Claimed(to, _pool, _totalPendingReward);
     }
 
     /// @notice Update reward variables of the given pool.

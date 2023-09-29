@@ -22,12 +22,12 @@ async function setUp() {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   gaugeController = await GaugeController.deploy(owner.address);
 
-  const LpToken = await ethers.getContractFactory("MyToken");
+  const LpToken = await ethers.getContractFactory("MockToken");
   lpTtoken = await LpToken.deploy();
 
-  const RewardToken = await ethers.getContractFactory("MyToken");
+  const RewardToken = await ethers.getContractFactory("MockToken");
   rewardToken = await RewardToken.deploy();
-  const RewardToken1 = await ethers.getContractFactory("MyToken");
+  const RewardToken1 = await ethers.getContractFactory("MockToken");
   rewardToken1 = await RewardToken1.deploy();
   await lpTtoken.mint(addr1.address, parseUnits("100000", 18));
   await lpTtoken.mint(addr2.address, parseUnits("100000", 18));
@@ -92,7 +92,7 @@ describe("GaugeController", function () {
       await lpTtoken
         .connect(addr1)
         .approve(votingEscrow.address, parseUnits("1000", 18));
-      await time.increaseTo(10000000000);
+      await time.increaseTo(17959052396);
       const blockNum = await ethers.provider.getBlockNumber();
       const block = await ethers.provider.getBlock(blockNum);
       const timestamp = block.timestamp;
