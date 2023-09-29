@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, run } from "hardhat";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -11,8 +11,14 @@ async function main() {
 
   await gaugeController.deployed();
 
-  gaugeController;
   console.log(`GaugeController deployed to ${gaugeController.address}`);
+
+  await run("verify:verify", {
+    address: gaugeController.address,
+    constructorArguments: [
+        admin,
+    ],
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -40,11 +40,15 @@ const config: HardhatUserConfig = {
     polygon:{
       accounts:[`0x${process.env.PRIVATE_KEY}`],
       url: process.env.POLYGON_URL
+    },
+    arbitrum:{
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.ARBITRUM_URL
     }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  },
+    apiKey: process.env.POLYGON_URL,
+  }
 };
 
 export default config;
