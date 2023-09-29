@@ -265,7 +265,7 @@ contract DexLpFarming is Ownable2Step {
         user.rewardDebt =
             accumulatedReward -
             int256(
-                (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+                (pool.accRewardPerShare) / ACC_REWARD_PRECISION
             );
         user.amount -= 1;
 
@@ -321,7 +321,7 @@ contract DexLpFarming is Ownable2Step {
         uint256[] memory _userTokenIds
     ) internal {
         _user.rewardDebt -= int256(
-            (_user.amount * _accRewardPerShare) / ACC_REWARD_PRECISION
+            (_accRewardPerShare) / ACC_REWARD_PRECISION
         );
         for (uint256 i = 0; i < _userTokenIds.length; i++) {
             if (_userTokenIds[i] == _id) {
