@@ -22,12 +22,12 @@ async function setUp() {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   gaugeController = await GaugeController.deploy(owner.address);
 
-  const LpToken = await ethers.getContractFactory("MyToken");
+  const LpToken = await ethers.getContractFactory("MockToken");
   lpTtoken = await LpToken.deploy();
 
-  const RewardToken = await ethers.getContractFactory("MyToken");
+  const RewardToken = await ethers.getContractFactory("MockToken");
   rewardToken = await RewardToken.deploy();
-  const RewardToken1 = await ethers.getContractFactory("MyToken");
+  const RewardToken1 = await ethers.getContractFactory("MockToken");
   rewardToken1 = await RewardToken1.deploy();
   await lpTtoken.mint(addr1.address, parseUnits("100000", 18));
   await lpTtoken.mint(addr2.address, parseUnits("100000", 18));

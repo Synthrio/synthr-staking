@@ -7,16 +7,16 @@ import { parseUnits } from "ethers/lib/utils";
 
 describe("DexLpFarming", function () {
   before(async function () {
-    await prepare(this, ["DexLpFarming", "MyToken", "LpToken"]);
+    await prepare(this, ["DexLpFarming", "MockToken", "LpToken"]);
   });
 
   let owner: any;
   beforeEach(async function () {
-    await deploy(this, [["rewardToken", this.MyToken]]);
+    await deploy(this, [["rewardToken", this.MockToken]]);
 
     await deploy(this, [
       ["lp", this.LpToken, []],
-      ["dummy", this.MyToken, []],
+      ["dummy", this.MockToken, []],
       ["chef", this.DexLpFarming, [this.rewardToken.address]],
     ]);
 
