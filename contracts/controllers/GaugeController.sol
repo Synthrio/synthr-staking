@@ -209,14 +209,16 @@ contract GaugeController is AccessControl {
                 _amount
             );
             if (_increase) {
-                _user.amount += _amount;
                 _rewardDebt[i] += _calRewardDebt;
             } else {
-                _user.amount -= _amount;
                 _rewardDebt[i] -= _calRewardDebt;
             }
         }
-
+        if (_increase) {
+            _user.amount += _amount;
+        } else {
+            _user.amount -= _amount;
+        }
         _user.rewardDebt = _rewardDebt;
         userInfo[_pool][_to] = _user;
     }
