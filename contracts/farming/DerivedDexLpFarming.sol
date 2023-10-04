@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "../interfaces/ITokenTracker.sol";
 import "./BaseDexLpFarming.sol";
 
@@ -10,8 +9,6 @@ import "./BaseDexLpFarming.sol";
 contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
     using SafeERC20 for IERC20;
 
-    /// @notice Address of the LP token for each DexLpFarming pool.
-    IERC721[] public lpToken;
     ITokenTracker public tokenTracker;
 
     uint256 private constant ACC_REWARD_PRECISION = 1e18;
@@ -21,8 +18,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
 
     event LogPoolAddition(
         uint256 indexed pid,
-        uint256 allocPoint,
-        IERC721 indexed lpToken
+        uint256 allocPoint
     );
 
     /// @param _rewardToken The REWARD token contract address.
@@ -37,16 +33,14 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
         nativeToken = _nativeToken;
     }
 
-    /// @notice Add a new LP to the pool. Can only be called by the owner.
+    /// @notice Add a new pool. Can only be called by the owner.
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param allocPoint AP of the new pool.
-    /// @param _lpToken Address of the LP ERC-20 token.
-    function add(uint256 allocPoint, IERC721 _lpToken) public onlyOwner {
-        lpToken.push(_lpToken);
+    function add(uint256 allocPoint) public onlyOwner {
 
         _addPool(allocPoint);
 
-        emit LogPoolAddition(lpToken.length - 1, allocPoint, _lpToken);
+        emit LogPoolAddition(poolInfo.length - 1, allocPoint);
     }
 
 
@@ -161,7 +155,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
         _withdrawAndHarvest(pid, pool, tokenId,1, to, tokensOwed1, _user);
 
         // Interactions
-        lpToken[pid].transferFrom(address(this), to, tokenId);
+        tokenTracker.transferFrom(address(this), to, tokenId);
     }
 
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -172,7 +166,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
 
         // Note: transfer can fail or succeed if `amount` is zero.
         for (uint256 i = 0; i < _userTokenIds.length; i++)
-            lpToken[pid].transferFrom(address(this), to, _userTokenIds[i]);
+            tokenTracker.transferFrom(address(this), to, _userTokenIds[i]);
         
         _emergencyWithdraw(pid, to);
     }
@@ -189,7 +183,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
         _depositLiquidity(_pid,_tokenId, _user, _accRewardPerShare, tokensOwed1);
 
         // Interactions
-        lpToken[_pid].transferFrom(msg.sender, address(this), _tokenId);
+        tokenTracker.transferFrom(msg.sender, address(this), _tokenId);
         emit Deposit(msg.sender, _pid, _tokenId);
     }
 
@@ -207,7 +201,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
             }
         }
 
-        if (_user.amount!= 0) {
+        if (_user.amount != 0) {
             userToken[_pid][msg.sender] = _userTokenIds;
             userToken[_pid][msg.sender].pop();
         } else {
@@ -220,7 +214,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming{
         _withdrawLiquidity(_pid, _tokenId, _user, _accRewardPerShare, tokensOwed1);
 
         // Interactions
-        lpToken[_pid].transferFrom(address(this), msg.sender, _tokenId);
+       tokenTracker.transferFrom(address(this), msg.sender, _tokenId);
 
         emit Withdraw(msg.sender, _pid, _tokenId);
     }
