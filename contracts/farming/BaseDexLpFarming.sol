@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "hardhat/console.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
 contract BaseDexLpFarming is Ownable2Step {
@@ -42,7 +41,7 @@ contract BaseDexLpFarming is Ownable2Step {
 
     uint256 public rewardPerBlock;
     uint256 public currentEpoch;
-    uint256 private constant ACC_REWARD_PRECISION = 1e18;
+    uint256 public constant ACC_REWARD_PRECISION = 1e18;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -55,6 +54,7 @@ contract BaseDexLpFarming is Ownable2Step {
     event Harvest(address indexed user, uint256 indexed pid, uint256 amount);
 
     event LogSetPool(uint256 indexed pid, uint256 allocPoint);
+    event LogPoolAddition(uint256 indexed pid, uint256 allocPoint);
     event LogUpdatePool(
         uint256 indexed pid,
         uint64 lastRewardBlock,
@@ -93,7 +93,9 @@ contract BaseDexLpFarming is Ownable2Step {
         int256 accumulatedReward = int256(
             (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
         );
-        uint256 _pendingRewardAmount = uint256(accumulatedReward - user.rewardDebt);
+        uint256 _pendingRewardAmount = uint256(
+            accumulatedReward - user.rewardDebt
+        );
 
         // Effects
         user.rewardDebt = accumulatedReward;
@@ -115,22 +117,22 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 tokenId,
         uint256 tokenAmount,
         address to,
-        uint256 liquidtyAmount,
+        uint256 userAmount,
         UserInfo memory user
     ) internal {
-        require(user.amount != 0, "DexLpFarming: can not withdraw");
-
         int256 accumulatedReward = int256(
-            (user.amount * _pool.accRewardPerShare) / ACC_REWARD_PRECISION
+            (userAmount * _pool.accRewardPerShare) / ACC_REWARD_PRECISION
         );
-        uint256 _pendingRewardAmount = uint256(accumulatedReward - user.rewardDebt);
+        uint256 _pendingRewardAmount = uint256(
+            accumulatedReward - user.rewardDebt
+        );
 
         // Effects
         user.rewardDebt =
             accumulatedReward -
-            int256((tokenAmount * _pool.accRewardPerShare) / ACC_REWARD_PRECISION);
-
-        user.amount -= liquidtyAmount;
+            int256(
+                (tokenAmount * _pool.accRewardPerShare) / ACC_REWARD_PRECISION
+            );
 
         userInfo[pid][msg.sender] = user;
         // Interactions
@@ -146,7 +148,6 @@ contract BaseDexLpFarming is Ownable2Step {
     function _emergencyWithdraw(uint256 pid, address to) internal {
         UserInfo memory user = userInfo[pid][msg.sender];
         uint256 amount = user.amount;
-
         delete userInfo[pid][msg.sender];
         delete userToken[pid][msg.sender];
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
@@ -155,7 +156,7 @@ contract BaseDexLpFarming is Ownable2Step {
     /// @notice Add a new LP to the pool. Can only be called by the owner.
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param allocPoint AP of the new pool.
-    function _addPool(uint256 allocPoint) internal onlyOwner {
+    function add(uint256 allocPoint) public onlyOwner {
         totalAllocPoint += allocPoint;
 
         poolInfo.push(
@@ -165,6 +166,7 @@ contract BaseDexLpFarming is Ownable2Step {
                 accRewardPerShare: 0
             })
         );
+        emit LogPoolAddition(poolInfo.length - 1, allocPoint);
     }
 
     /// @notice View function to see pending reward on frontend.
@@ -196,7 +198,10 @@ contract BaseDexLpFarming is Ownable2Step {
     /// @notice Update reward variables of the given pool.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @return pool Returns the pool that was updated.
-    function _updatePool(uint256 pid, uint256 lpSupply) internal returns (PoolInfo memory pool) {
+    function _updatePool(
+        uint256 pid,
+        uint256 lpSupply
+    ) internal returns (PoolInfo memory pool) {
         pool = poolInfo[pid];
         if (block.number > pool.lastRewardBlock) {
             if (lpSupply > 0) {
@@ -228,7 +233,9 @@ contract BaseDexLpFarming is Ownable2Step {
     ) internal {
         _user.amount += _liquidityAmount;
         userToken[_pid][msg.sender].push(_tokenId);
-        _user.rewardDebt += int256((_liquidityAmount * _accRewardPerShare) / ACC_REWARD_PRECISION);
+        _user.rewardDebt += int256(
+            (_liquidityAmount * _accRewardPerShare) / ACC_REWARD_PRECISION
+        );
         userInfo[_pid][msg.sender] = _user;
 
         emit Deposit(msg.sender, _pid, _tokenId);
@@ -241,9 +248,9 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 _accRewardPerShare,
         uint256 _liquidityAmount
     ) internal {
-
-        _user.amount -= _liquidityAmount;
-        _user.rewardDebt -= int256((_liquidityAmount * _accRewardPerShare) / ACC_REWARD_PRECISION);
+        _user.rewardDebt -= int256(
+            (_liquidityAmount * _accRewardPerShare) / ACC_REWARD_PRECISION
+        );
         userInfo[_pid][msg.sender] = _user;
 
         emit Withdraw(msg.sender, _pid, _tokenId);
