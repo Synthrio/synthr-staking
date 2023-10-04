@@ -73,51 +73,67 @@ describe("VotingEscrow", function () {
 
   describe("Funtions", function () {
     it("Should create lock", async function () {
-        await addPoolFunc();
-        
-        await lpTtoken
+      await addPoolFunc();
+
+      await lpTtoken
         .connect(addr1)
         .approve(votingEscrow.address, parseUnits("1000", 18));
 
-        const blockNum = await ethers.provider.getBlockNumber();
+      const blockNum = await ethers.provider.getBlockNumber();
       const block = await ethers.provider.getBlock(blockNum);
       const timestamp = block.timestamp;
-      let time1= timestamp + 1000000;
-        expect(await votingEscrow
-            .connect(addr1)
-            .createLock(parseUnits("1000", 18), time1));
-            let userLockedInfo = await votingEscrow.locked(addr1.address);
-        expect(userLockedInfo.amount).to.equal(parseUnits("1000", 18));
+      let time1 = timestamp + 1000000;
+      expect(
+        await votingEscrow
+          .connect(addr1)
+          .createLock(parseUnits("1000", 18), time1)
+      );
+      let userLockedInfo = await votingEscrow.locked(addr1.address);
+      let calUnlockTime = (BigNumber.from(time1).div(BigNumber.from(604800))).mul(BigNumber.from(604800));
+
+      expect(userLockedInfo.end).to.equal(calUnlockTime);
+      expect(userLockedInfo.amount).to.equal(parseUnits("1000", 18));
       expect(
         await gaugeController.userInfo(votingEscrow.address, addr1.address)
       ).to.equal(parseUnits("1000", 18));
-      });
+    });
 
-      it.only("Should increase lock amount and unlock time", async function () {
-        await addPoolFunc();
-        
-        await lpTtoken
+    it("Should increase lock amount and unlock time", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
         .connect(addr1)
         .approve(votingEscrow.address, parseUnits("2000", 18));
 
-        const blockNum = await ethers.provider.getBlockNumber();
+      const blockNum = await ethers.provider.getBlockNumber();
       const block = await ethers.provider.getBlock(blockNum);
       const timestamp = block.timestamp;
-      let time1= timestamp + 1000000;
-        expect(await votingEscrow
-            .connect(addr1)
-            .createLock(parseUnits("1000", 18), time1));
-        expect(await votingEscrow.lockedEnd(addr1.address)).to.not.equal(0);
+      let time1 = timestamp + 1000000;
+      expect(
+        await votingEscrow
+        .connect(addr1)
+        .createLock(parseUnits("1000", 18), time1)
+        );
+
+        let calUnlockTime = (BigNumber.from(time1).div(BigNumber.from(604800))).mul(BigNumber.from(604800));
+
+      expect(await votingEscrow.lockedEnd(addr1.address)).to.equal(calUnlockTime);
+
       expect(
         await gaugeController.userInfo(votingEscrow.address, addr1.address)
       ).to.equal(parseUnits("1000", 18));
-     await votingEscrow.connect(addr1).increaseAmountAndUnlockTime(parseUnits("1000", 18), time1 + 1000000);
-     let userLockedInfo = await votingEscrow.locked(addr1.address);
-     expect(userLockedInfo.amount).to.equal(parseUnits("2000", 18));
-     expect(
+      await votingEscrow
+        .connect(addr1)
+        .increaseAmountAndUnlockTime(parseUnits("1000", 18), time1 + 1000000);
+
+        let calUnlockTime1 = ((BigNumber.from(time1).add(1000000)).div(BigNumber.from(604800))).mul(BigNumber.from(604800));
+        let userLockedInfo = await votingEscrow.locked(addr1.address);
+
+      expect(userLockedInfo.end).to.equal(calUnlockTime1);
+      expect(userLockedInfo.amount).to.equal(parseUnits("2000", 18));
+      expect(
         await gaugeController.userInfo(votingEscrow.address, addr1.address)
       ).to.equal(parseUnits("2000", 18));
-
-      });
+    });
   });
 });
