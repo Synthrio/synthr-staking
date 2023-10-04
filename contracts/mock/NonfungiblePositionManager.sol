@@ -4,8 +4,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NonfungiblePositionManager is ERC721, ERC721Burnable, Ownable{
-
+contract NonfungiblePositionManager is ERC721, ERC721Burnable, Ownable {
     constructor() ERC721("MyToken", "MTK") {}
 
     function safeMint(address to, uint256 tokenId) public onlyOwner {
@@ -32,7 +31,6 @@ contract NonfungiblePositionManager is ERC721, ERC721Burnable, Ownable{
             uint128 tokensOwed1
         )
     {
-        tokensOwed1 = 54e18;
+        liquidity = 54e18;
     }
-
 }
