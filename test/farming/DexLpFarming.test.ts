@@ -14,7 +14,7 @@ describe("DerivedDexLpFarming", function () {
     ]);
   });
 
-  let owner: any, addr1:any, addr2:any;
+  let owner: any, addr1: any, addr2: any;
   beforeEach(async function () {
     await deploy(this, [["rewardToken", this.MockToken]]);
     await deploy(this, [["tokenTracker", this.NonfungiblePositionManager]]);
@@ -25,7 +25,12 @@ describe("DerivedDexLpFarming", function () {
       [
         "chef",
         this.DerivedDexLpFarming,
-        [this.rewardToken.address, this.tokenTracker.address, addr1.address, this.nativeToken.address],
+        [
+          this.rewardToken.address,
+          this.tokenTracker.address,
+          addr1.address,
+          this.nativeToken.address,
+        ],
       ],
     ]);
 
@@ -94,8 +99,12 @@ describe("DerivedDexLpFarming", function () {
       );
       let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
       let lpSupply = await this.nativeToken.balanceOf(addr1.address);
-      expectedrewardToken = expectedrewardToken.mul(parseUnits("10",18)).div(lpSupply);
-      expectedrewardToken = (expectedrewardToken.mul(liqAmount.tokensOwed1)).div(parseUnits("10",18));
+      expectedrewardToken = expectedrewardToken
+        .mul(parseUnits("1", 18))
+        .div(lpSupply);
+      expectedrewardToken = expectedrewardToken
+        .mul(liqAmount.liquidity)
+        .div(parseUnits("1", 18));
       let pendingrewardToken = await this.chef.pendingReward(
         0,
         this.alice.address
@@ -116,8 +125,12 @@ describe("DerivedDexLpFarming", function () {
       );
       let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
       let lpSupply = await this.nativeToken.balanceOf(addr1.address);
-      expectedrewardToken = expectedrewardToken.mul(parseUnits("10",18)).div(lpSupply);
-      expectedrewardToken = (expectedrewardToken.mul(liqAmount.tokensOwed1)).div(parseUnits("10",18));
+      expectedrewardToken = expectedrewardToken
+        .mul(parseUnits("1", 18))
+        .div(lpSupply);
+      expectedrewardToken = expectedrewardToken
+        .mul(liqAmount.liquidity)
+        .div(parseUnits("1", 18));
       let pendingrewardToken = await this.chef.pendingReward(
         0,
         this.alice.address
@@ -159,15 +172,19 @@ describe("DerivedDexLpFarming", function () {
     it("Depositing amount", async function () {
       await this.chef.add(10);
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
-      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(owner.address);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
       await expect(this.chef.deposit(0, getBigNumber(1)))
         .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, 0, getBigNumber(1));
-        let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
+      let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
       expect((await this.chef.userInfo(0, this.alice.address)).amount).to.equal(
-        liqAmount.tokensOwed1
+        liqAmount.liquidity
       );
-      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(this.chef.address);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        this.chef.address
+      );
     });
 
     it("Depositing into non-existent pool should fail", async function () {
@@ -196,14 +213,22 @@ describe("DerivedDexLpFarming", function () {
     it("Withdraw amount", async function () {
       await this.chef.add(10);
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
-      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(owner.address);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
       await expect(this.chef.deposit(0, getBigNumber(1)))
         .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, 0, getBigNumber(1));
 
-        expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(this.chef.address);
-      await expect(this.chef.withdraw(0, getBigNumber(1))).to.emit(this.chef, "Withdraw").withArgs(owner.address, 0, getBigNumber(1));
-      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(owner.address);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        this.chef.address
+      );
+      await expect(this.chef.withdraw(0, getBigNumber(1)))
+        .to.emit(this.chef, "Withdraw")
+        .withArgs(owner.address, 0, getBigNumber(1));
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
     });
   });
 
@@ -214,6 +239,8 @@ describe("DerivedDexLpFarming", function () {
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(0, getBigNumber(1));
       await time.increaseTo(30000021280);
+
+      let precision = await this.chef.ACC_REWARD_PRECISION();
       let log2 = await this.chef.withdraw(0, getBigNumber(1));
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
@@ -222,8 +249,11 @@ describe("DerivedDexLpFarming", function () {
       );
       let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
       let lpSupply = await this.nativeToken.balanceOf(addr1.address);
-      expectedrewardToken = expectedrewardToken.mul(parseUnits("10",18)).div(lpSupply);
-      expectedrewardToken = (expectedrewardToken.mul(liqAmount.tokensOwed1)).div(parseUnits("10",18));
+      expectedrewardToken = expectedrewardToken.mul(precision).div(lpSupply);
+
+      expectedrewardToken = expectedrewardToken
+        .mul(liqAmount.liquidity)
+        .div(precision);
       expect(
         (await this.chef.userInfo(0, owner.address)).rewardDebt
       ).to.be.equal("-" + expectedrewardToken);
@@ -251,8 +281,12 @@ describe("DerivedDexLpFarming", function () {
       );
       let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
       let lpSupply = await this.nativeToken.balanceOf(addr1.address);
-      expectedrewardToken = expectedrewardToken.mul(parseUnits("10",18)).div(lpSupply);
-      expectedrewardToken = (expectedrewardToken.mul(liqAmount.tokensOwed1)).div(parseUnits("10",18));
+      expectedrewardToken = expectedrewardToken
+        .mul(parseUnits("1", 18))
+        .div(lpSupply);
+      expectedrewardToken = expectedrewardToken
+        .mul(liqAmount.liquidity)
+        .div(parseUnits("1", 18));
       expect(
         (await this.chef.userInfo(0, owner.address)).rewardDebt
       ).to.be.equal("-" + expectedrewardToken);
@@ -271,15 +305,59 @@ describe("DerivedDexLpFarming", function () {
       await this.tokenTracker.approve(this.chef.address, getBigNumber(2));
       await this.chef.deposit(0, getBigNumber(2));
       expect(await this.tokenTracker.balanceOf(owner.address)).to.equal(1);
-      expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(this.chef.address);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(
+        this.chef.address
+      );
       let liqAmount = await this.tokenTracker.positions(getBigNumber(2));
       //await this.chef.emergencyWithdraw(0, this.alice.address)
       await expect(this.chef.emergencyWithdraw(0, owner.address))
         .to.emit(this.chef, "EmergencyWithdraw")
-        .withArgs(owner.address, 0, liqAmount.tokensOwed1, owner.address);
-        expect(await this.tokenTracker.balanceOf(owner.address)).to.equal(2);
-        expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(owner.address);
+        .withArgs(owner.address, 0, liqAmount.liquidity, owner.address);
+      expect(await this.tokenTracker.balanceOf(owner.address)).to.equal(2);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(
+        owner.address
+      );
+    });
+  });
 
+  describe("Withdraw and Harvest", function () {
+    it("Should transfer and reward and deposited token", async function () {
+      await this.chef.add(10);
+      this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
+      await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
+      let log = await this.chef.deposit(0, getBigNumber(1));
+      await time.increaseTo(30000121310);
+
+      let beforeBalance = await this.rewardToken.balanceOf(owner.address);
+      expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
+        parseUnits("403", 18)
+      );
+      let log2 = await this.chef.withdrawAndHarvest(
+        0,
+        getBigNumber(1),
+        owner.address
+      );
+
+      let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
+      let block = (await ethers.provider.getBlock(log.blockNumber)).number;
+      let expectedrewardToken = BigNumber.from("10000000000000000").mul(
+        block2 - block
+      );
+      let liqAmount = await this.tokenTracker.positions(getBigNumber(1));
+      let lpSupply = await this.nativeToken.balanceOf(addr1.address);
+      expectedrewardToken = expectedrewardToken
+        .mul(parseUnits("1", 18))
+        .div(lpSupply);
+      expectedrewardToken = expectedrewardToken
+        .mul(liqAmount.liquidity)
+        .div(parseUnits("1", 18));
+
+      expect(await this.rewardToken.balanceOf(owner.address)).to.be.equal(
+        expectedrewardToken.add(beforeBalance)
+      );
+      expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
+        parseUnits("403", 18).sub(expectedrewardToken)
+      );
     });
   });
 });
