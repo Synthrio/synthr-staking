@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "../interfaces/ILBPair.sol";
 import "./BaseDexLpFarming.sol";
 
@@ -12,8 +11,6 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
 
     uint256 private constant ACC_REWARD_PRECISION = 1e18;
 
-    /// @notice Address of the LP token for each DexLpFarming pool.
-    IERC1155[] public lpToken;
     /// @notice token ids of user in pool.
     mapping(uint256 => mapping(address => uint256[])) public amountOfId;
 
@@ -21,8 +18,7 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
 
     event LogPoolAddition(
         uint256 indexed pid,
-        uint256 allocPoint,
-        IERC1155 indexed lpToken
+        uint256 allocPoint
     );
 
     /// @param _rewardToken The REWARD token contract address.
@@ -36,13 +32,11 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
     /// @notice Add a new LP to the pool. Can only be called by the owner.
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param allocPoint AP of the new pool.
-    /// @param _lpToken Address of the LP ERC-20 token.
-    function add(uint256 allocPoint, IERC1155 _lpToken) public onlyOwner {
-        lpToken.push(_lpToken);
+    function add(uint256 allocPoint) public onlyOwner {
 
         _addPool(allocPoint);
 
-        emit LogPoolAddition(lpToken.length - 1, allocPoint, _lpToken);
+        emit LogPoolAddition(poolInfo.length ,allocPoint);
     }
 
 
@@ -66,15 +60,6 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
         pool = _updatePool(pid, lpSupply);
     }
 
-    /// @notice Deposit LP tokens to DexLpFarming for REWARD_TOKEN allocation.
-    /// @param pid The index of the pool. See `poolInfo`.
-    /// @param tokenId LP token id to deposit.
-    function deposit(uint256 pid, uint256 tokenId, uint256 tokenAmount) public {
-        PoolInfo memory pool = updatePool(pid);
-        UserInfo memory user = userInfo[pid][msg.sender];
-        _deposit(pid, tokenId,tokenAmount, user, pool.accRewardPerShare);
-    }
-
     /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param tokenIds LP token ids to deposit.
@@ -86,6 +71,8 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
         for (uint256 i = 0; i < tokenIds.length; i++) {
             _deposit(pid, tokenIds[i],tokenAmounts[i], user, pool.accRewardPerShare);
         }
+        // Interactions
+        LBPair.batchTransferFrom(msg.sender, address(this), tokenIds, tokenAmounts);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -105,17 +92,7 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
                 pool.accRewardPerShare
             );
         }
-    }
-
-    /// @notice Withdraw LP tokens from DexLpFarming.
-    /// @param pid The index of the pool. See `poolInfo`.
-    /// @param tokenId LP token id to withdraw.
-    function withdraw(uint256 pid, uint256 tokenId, uint256 tokenAmount) public {
-        PoolInfo memory pool = updatePool(pid);
-        UserInfo memory user = userInfo[pid][msg.sender];
-        require(user.amount != 0, "DexLpFarming: can not withdraw");
-
-        _withdraw(pid, tokenId,tokenAmount, user, pool.accRewardPerShare);
+        LBPair.batchTransferFrom(address(this), msg.sender, tokenIds, tokenAmounts);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -131,35 +108,26 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
     /// @param tokenId LP token id to withdraw.
     function withdrawAndHarvest(
         uint256 pid,
-        uint256 tokenId,
+        uint256[] memory tokenId,
         address to,
-        uint256 tokensAmount
+        uint256[] memory tokensAmount
     ) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo memory _user = userInfo[pid][msg.sender];
-        uint256[] memory _userTokenIds = userToken[pid][msg.sender];
-        uint256[] memory _tokenAmounts = amountOfId[pid][msg.sender];
-        for (uint256 i = 0; i < _userTokenIds.length; i++) {
-            if (_userTokenIds[i] == tokenId) {
-                _tokenAmounts[i] -= tokensAmount;
-                break;
-            }
+        require(_user.amount != 0, "DexLpFarming: can not withdraw");
+        for (uint256 i = 0; i < tokenId.length; i++) {
+            _withdraw(
+                pid,
+                tokenId[i],
+                tokensAmount[i],
+                _user,
+                pool.accRewardPerShare
+            );
+        (,uint256 userAmount) = LBPair.getBin(uint24(tokenId[i]));
+        _withdrawAndHarvest(pid, pool, tokenId[i],tokensAmount[i], to, userAmount, _user);
         }
-
-        if (_user.amount!= 0) {
-            amountOfId[pid][msg.sender] = _tokenAmounts;
-
-        } else {
-            delete userToken[pid][msg.sender];
-            delete amountOfId[pid][msg.sender];
-        }
-
-        // Effects
-        (,uint256 userAmount) = LBPair.getBin(uint24(tokenId));
-        _withdrawAndHarvest(pid, pool, tokenId,tokensAmount, to, userAmount, _user);
-
         // Interactions
-        lpToken[pid].safeTransferFrom(address(this), to, tokenId, tokensAmount, "");
+        LBPair.batchTransferFrom(address(this), to, tokenId, tokensAmount);
     }
 
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -170,11 +138,11 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
         uint256[] memory _tokensAmount = amountOfId[pid][msg.sender];
 
         // Note: transfer can fail or succeed if `amount` is zero.
-        for (uint256 i = 0; i < _userTokenIds.length; i++)
-            lpToken[pid].safeTransferFrom(address(this), to, _userTokenIds[i], _tokensAmount[i], "");
         
         delete amountOfId[pid][msg.sender];
         _emergencyWithdraw(pid, to);
+
+        LBPair.batchTransferFrom(address(this), to, _userTokenIds, _tokensAmount);
     }
 
     function _deposit(
@@ -188,8 +156,6 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
         (,uint256 userAmount) = LBPair.getBin(uint24(_tokenId));
         _depositLiquidity(_pid,_tokenId, _user, _accRewardPerShare, userAmount);
 
-        // Interactions
-        lpToken[_pid].safeTransferFrom(msg.sender, address(this), _tokenId, _tokenAmount, "");
         emit Deposit(msg.sender, _pid, _tokenId);
     }
 
@@ -210,7 +176,7 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
             }
         }
 
-        if (_user.amount!= 0) {
+        if (_user.amount != 0) {
             amountOfId[_pid][msg.sender] = _tokenAmounts;
 
         } else {
@@ -222,8 +188,6 @@ contract DerivedDexLpFarming1155 is Ownable2Step, BaseDexLpFarming{
         
         _withdrawLiquidity(_pid, _tokenId, _user, _accRewardPerShare, userAmount);
 
-        // Interactions
-        lpToken[_pid].safeTransferFrom(address(this), msg.sender, _tokenId, _tokenAmount, "");
 
         emit Withdraw(msg.sender, _pid, _tokenId);
     }
