@@ -223,7 +223,7 @@ describe("DerivedDexLpFarming", function () {
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
         this.chef.address
       );
-      await expect(this.chef.withdraw(0, getBigNumber(1)))
+      await expect(this.chef.withdraw(0, 0))
         .to.emit(this.chef, "Withdraw")
         .withArgs(owner.address, 0, getBigNumber(1));
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
@@ -241,7 +241,7 @@ describe("DerivedDexLpFarming", function () {
       await time.increaseTo(30000021280);
 
       let precision = await this.chef.ACC_REWARD_PRECISION();
-      let log2 = await this.chef.withdraw(0, getBigNumber(1));
+      let log2 = await this.chef.withdraw(0, 0);
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
@@ -273,7 +273,7 @@ describe("DerivedDexLpFarming", function () {
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(0, getBigNumber(1));
       await time.increaseTo(30000121280);
-      let log2 = await this.chef.withdraw(0, getBigNumber(1));
+      let log2 = await this.chef.withdraw(0, 0);
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
@@ -332,11 +332,7 @@ describe("DerivedDexLpFarming", function () {
       expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
         parseUnits("403", 18)
       );
-      let log2 = await this.chef.withdrawAndHarvest(
-        0,
-        getBigNumber(1),
-        owner.address
-      );
+      let log2 = await this.chef.withdrawAndHarvest(0, 0, owner.address);
 
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
