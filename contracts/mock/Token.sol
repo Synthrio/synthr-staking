@@ -2,12 +2,11 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MockToken is ERC20, Ownable {
+contract MockToken is ERC20 {
     constructor() ERC20("Mock SYNTH", "SYNTH") {}
 
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
 }

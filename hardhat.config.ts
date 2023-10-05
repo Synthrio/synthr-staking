@@ -27,10 +27,27 @@ const config: HardhatUserConfig = {
       accounts: [/* will be provided by ganache */],
       gas: 8000000,
       gasPrice: 1,
+    },
+    sepolia:{
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.SEPOLIA_URL,
+    },
+    goerli: {
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.GOERLI_URL,
+      chainId: 5,
+    },
+    polygon:{
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.POLYGON_URL
+    },
+    arbitrum:{
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.ARBITRUM_URL
     }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.POLYGON_API_KEY,
   },
 };
 
