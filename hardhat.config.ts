@@ -47,8 +47,8 @@ const config: HardhatUserConfig = {
     }
   },
   etherscan: {
-    apiKey: process.env.POLYGON_URL,
-  }
+    apiKey: process.env.POLYGON_API_KEY,
+  },
 };
 
 export default config;
