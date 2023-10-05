@@ -88,10 +88,14 @@ contract BaseDexLpFarming is Ownable2Step {
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of REWARD_TOKEN rewards.
-    function _harvest(uint256 pid, PoolInfo memory pool, address to) internal {
+    function _harvest(
+        uint256 pid,
+        uint256 accRewardPerShare,
+        address to
+    ) internal {
         UserInfo memory user = userInfo[pid][msg.sender];
         int256 accumulatedReward = int256(
-            (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
+            (user.amount * accRewardPerShare) / ACC_REWARD_PRECISION
         );
         uint256 _pendingRewardAmount = uint256(
             accumulatedReward - user.rewardDebt
@@ -113,15 +117,15 @@ contract BaseDexLpFarming is Ownable2Step {
     /// @param tokenId LP token id to withdraw.
     function _withdrawAndHarvest(
         uint256 pid,
-        PoolInfo memory _pool,
+        uint256 accRewardPerShare,
         uint256 tokenId,
-        uint256 tokenAmount,
+        uint256 liquidity,
         address to,
         uint256 userAmount,
         UserInfo memory user
     ) internal {
         int256 accumulatedReward = int256(
-            (userAmount * _pool.accRewardPerShare) / ACC_REWARD_PRECISION
+            (userAmount * accRewardPerShare) / ACC_REWARD_PRECISION
         );
         uint256 _pendingRewardAmount = uint256(
             accumulatedReward - user.rewardDebt
@@ -130,9 +134,7 @@ contract BaseDexLpFarming is Ownable2Step {
         // Effects
         user.rewardDebt =
             accumulatedReward -
-            int256(
-                (tokenAmount * _pool.accRewardPerShare) / ACC_REWARD_PRECISION
-            );
+            int256((liquidity * accRewardPerShare) / ACC_REWARD_PRECISION);
 
         userInfo[pid][msg.sender] = user;
         // Interactions
