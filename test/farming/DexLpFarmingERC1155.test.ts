@@ -270,9 +270,9 @@ describe("DerivedDexLpFarmingERC1155", function () {
   describe("Withdraw", function () {
     it("Withdraw 0 amount", async function () {
       await this.chef.add(10);
-      await expect(
-        this.chef.withdrawBatch(0, [getBigNumber(1)], [parseUnits("100", 18)])
-      ).to.revertedWith("DexLpFarming: can not withdraw");
+      await expect(this.chef.withdrawBatch(0, [0])).to.revertedWith(
+        "DexLpFarming: can not withdraw"
+      );
     });
 
     it("Withdraw amount", async function () {
@@ -298,7 +298,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("100", 18)
       );
 
-      await expect(this.chef.withdrawBatch(0, [1], [parseUnits("100", 18)]))
+      await expect(this.chef.withdrawBatch(0, [0]))
         .to.emit(this.chef, "Withdraw")
         .withArgs(owner.address, 0, 1);
     });
@@ -322,7 +322,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
       let pricision = await this.chef.ACC_REWARD_PRECISION();
       let log = await this.chef.depositBatch(0, [1], [parseUnits("100", 18)]);
       await time.increaseTo(30000125431);
-      let log2 = await this.chef.withdrawBatch(0, [1], [parseUnits("100", 18)]);
+      let log2 = await this.chef.withdrawBatch(0, [0]);
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
@@ -368,7 +368,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
       let log = await this.chef.depositBatch(0, [1], [parseUnits("100", 18)]);
       await time.increaseTo(30000126431);
 
-      let log2 = await this.chef.withdrawBatch(0, [1], [parseUnits("100", 18)]);
+      let log2 = await this.chef.withdrawBatch(0, [0]);
 
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
@@ -446,12 +446,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
       expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
         parseUnits("403", 18)
       );
-      let log2 = await this.chef.withdrawAndHarvest(
-        0,
-        [1],
-        [parseUnits("100", 18)],
-        owner.address
-      );
+      let log2 = await this.chef.withdrawAndHarvest(0, [0], owner.address);
       let precision = await this.chef.ACC_REWARD_PRECISION();
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
