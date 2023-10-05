@@ -278,29 +278,58 @@ describe("DerivedDexLpFarmingERC1155", function () {
     it("Withdraw amount", async function () {
       await this.chef.add(10);
       await this.lbPair.mint(owner.address, 1, parseUnits("1000", 18));
+      await this.lbPair.mint(owner.address, 2, parseUnits("1000", 18));
       await this.lbPair.approveForAll(this.chef.address, true);
       await this.lbPair.setBin(
         1,
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
+      await this.lbPair.setBin(
+        2,
+        parseUnits("1200", 18),
+        parseUnits("1400", 18)
+      );
       await this.lbPair.setReserve(
         parseUnits("12000", 18),
-        parseUnits("13000", 18)
+        parseUnits("2000", 18)
       );
-      await expect(this.chef.depositBatch(0, [1], [parseUnits("100", 18)]))
+      await expect(
+        this.chef.depositBatch(
+          0,
+          [1, 2],
+          [parseUnits("100", 18), parseUnits("100", 18)]
+        )
+      )
         .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, 0, 1);
+
       expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
         parseUnits("900", 18)
       );
       expect(await this.lbPair.balanceOf(this.chef.address, 1)).to.equal(
         parseUnits("100", 18)
       );
+      expect(await this.lbPair.balanceOf(owner.address, 2)).to.equal(
+        parseUnits("900", 18)
+      );
+      expect(await this.lbPair.balanceOf(this.chef.address, 2)).to.equal(
+        parseUnits("100", 18)
+      );
 
-      await expect(this.chef.withdrawBatch(0, [0]))
+      await expect(this.chef.withdrawBatch(0, [0, 1]))
         .to.emit(this.chef, "Withdraw")
         .withArgs(owner.address, 0, 1);
+
+      expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
+        parseUnits("1000", 18)
+      );
+      expect(await this.lbPair.balanceOf(this.chef.address, 1)).to.equal(0);
+
+      expect(await this.lbPair.balanceOf(owner.address, 2)).to.equal(
+        parseUnits("1000", 18)
+      );
+      expect(await this.lbPair.balanceOf(this.chef.address, 2)).to.equal(0);
     });
   });
 
