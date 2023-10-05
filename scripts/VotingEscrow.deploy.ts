@@ -5,14 +5,16 @@ import { ADDRESS_ZERO } from "../test/utilities";
 dotenv.config();
 
 async function main() {
+
   let gaugeControllerAddress = process.env.GAUGE_CONTROLLER_ADDRESS;
 
-  const Token = await ethers.getContractFactory("MockToken");
-  const token = await Token.deploy();
+  const MockToken = await ethers.getContractFactory("MockToken");
+  const mockToken = await MockToken.deploy();
+  await mockToken.deployed();
 
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await VotingEscrow.deploy(
-    token.address,
+    mockToken.address,
     `${gaugeControllerAddress}`,
     "Vote Escrowed SYNTH",
     "veSYNTH",
@@ -21,12 +23,12 @@ async function main() {
 
   await votingEscrow.deployed();
   console.log(`VotingEscrow deployed to ${votingEscrow.address}`);
-  console.log(`Token deployed to ${token.address}`);
+  console.log(`MockToken deployed to ${mockToken.address}`);
 
   await run("verify:verify", {
     address: votingEscrow.address,
     constructorArguments: [
-      token.address,
+      mockToken.address,
       `${gaugeControllerAddress}`,
       "Vote Escrowed SYNTH",
       "veSYNTH",
@@ -35,7 +37,7 @@ async function main() {
   });
 
   await run("verify:verify", {
-    address: token.address,
+    address: mockToken.address,
     constructorArguments: [
     ],
   });
