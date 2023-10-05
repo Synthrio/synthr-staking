@@ -85,6 +85,20 @@ contract BaseDexLpFarming is Ownable2Step {
         return userToken[pid][user];
     }
 
+    /// @notice Returns the index of tokenId in user token array.
+    function getIndex(
+        uint256 _pid,
+        uint256 _tokenId
+    ) external view returns (uint256) {
+        uint256[] memory tokenIds = userToken[_pid][msg.sender];
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            if (tokenIds[i] == _tokenId) {
+                return i;
+            }
+        }
+        revert("token id not present");
+    }
+
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of REWARD_TOKEN rewards.
