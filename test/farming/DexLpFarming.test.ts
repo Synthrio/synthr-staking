@@ -212,21 +212,43 @@ describe("DerivedDexLpFarming", function () {
 
     it("Withdraw amount", async function () {
       await this.chef.add(10);
+      await this.tokenTracker.safeMint(owner.address, getBigNumber(2));
+    await this.tokenTracker.approve(this.chef.address, getBigNumber(2));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
+      expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(
         owner.address
       );
       await expect(this.chef.deposit(0, getBigNumber(1)))
         .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, 0, getBigNumber(1));
+        await expect(this.chef.deposit(0, getBigNumber(2)))
+        .to.emit(this.chef, "Deposit")
+        .withArgs(owner.address, 0, getBigNumber(2));
 
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
         this.chef.address
       );
-      await expect(this.chef.withdraw(0, 0))
+      expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(
+        this.chef.address
+      );
+      await expect(this.chef.withdrawBatch(0, [0,1]))
         .to.emit(this.chef, "Withdraw")
         .withArgs(owner.address, 0, getBigNumber(1));
+
+      // await expect(this.chef.withdraw(0, 0))
+      //   .to.emit(this.chef, "Withdraw")
+      //   .withArgs(owner.address, 0, getBigNumber(1));
+      //   await expect(this.chef.withdraw(0, 0))
+      //   .to.emit(this.chef, "Withdraw")
+      //   .withArgs(owner.address, 0, getBigNumber(2));
+
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
+      expect(await this.tokenTracker.ownerOf(getBigNumber(2))).to.equal(
         owner.address
       );
     });
@@ -238,10 +260,16 @@ describe("DerivedDexLpFarming", function () {
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(0, getBigNumber(1));
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        this.chef.address
+      );
       await time.increaseTo(30000021280);
 
       let precision = await this.chef.ACC_REWARD_PRECISION();
       let log2 = await this.chef.withdraw(0, 0);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
@@ -271,9 +299,18 @@ describe("DerivedDexLpFarming", function () {
       await this.chef.add(10);
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
       let log = await this.chef.deposit(0, getBigNumber(1));
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        this.chef.address
+      );
       await time.increaseTo(30000121280);
       let log2 = await this.chef.withdraw(0, 0);
+      expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
+        owner.address
+      );
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
