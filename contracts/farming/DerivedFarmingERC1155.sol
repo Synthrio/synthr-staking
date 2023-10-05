@@ -22,19 +22,6 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         LBPair = _LBPair;
     }
 
-    function getIndex(
-        uint256 _pid,
-        uint256 _tokenId
-    ) external view returns (uint256) {
-        uint256[] memory tokenIds = userToken[_pid][msg.sender];
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (tokenIds[i] == _tokenId) {
-                return i;
-            }
-        }
-        revert("token id not present");
-    }
-
     /// @notice View function to see pending reward on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
@@ -107,19 +94,15 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             tokenAmount[i] = _tokenAmounts[tokenIdsIndex[i]];
 
             _tokenAmounts[tokenIdsIndex[i]] = _tokenAmounts[
-                _tokenAmounts.length - 1
+                _tokenAmounts.length - i - 1
             ];
             _userTokenIds[tokenIdsIndex[i]] = _userTokenIds[
-                _userTokenIds.length - 1
+                _userTokenIds.length - i - 1
             ];
 
             user.amount -= _liquidity;
-            if (user.amount != 0) {
-                amountOfId[pid][msg.sender] = _tokenAmounts;
-                amountOfId[pid][msg.sender].pop();
-                userToken[pid][msg.sender] = _userTokenIds;
-                userToken[pid][msg.sender].pop();
-            } else {
+
+            if (user.amount == 0) {
                 delete userToken[pid][msg.sender];
                 delete amountOfId[pid][msg.sender];
             }
@@ -133,6 +116,14 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             );
 
             emit Withdraw(msg.sender, pid, _tokenId);
+        }
+        if (userToken[pid][msg.sender].length != 0) {
+            userToken[pid][msg.sender] = _userTokenIds;
+            amountOfId[pid][msg.sender] = _tokenAmounts;
+            for (uint256 i = 0; i < tokenIdsIndex.length; i++) {
+                userToken[pid][msg.sender].pop();
+                amountOfId[pid][msg.sender].pop();
+            }
         }
 
         LBPair.batchTransferFrom(address(this), msg.sender, ids, tokenAmount);
