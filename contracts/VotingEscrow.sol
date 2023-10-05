@@ -323,7 +323,10 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         _depositFor(msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
     }
 
-    function increaseAmountAndUnlockTime(uint256 _value, uint256 _unlockTime) external nonReentrant {
+    function increaseAmountAndUnlockTime(
+        uint256 _value,
+        uint256 _unlockTime
+    ) external nonReentrant {
         _assertNotContract(msg.sender);
         LockedBalance storage _locked = locked[msg.sender];
         uint256 unlockTime = (_unlockTime / WEEK) * WEEK;
@@ -343,7 +346,13 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             "VotingEscrow: Voting lock can be 4 years max"
         );
 
-        _depositFor(msg.sender, _value, unlockTime, _locked, INCREASE_UNLOCK_TIME_AND_LOCK_AMOUNT);
+        _depositFor(
+            msg.sender,
+            _value,
+            unlockTime,
+            _locked,
+            INCREASE_UNLOCK_TIME_AND_LOCK_AMOUNT
+        );
     }
 
     function withdraw() external nonReentrant {
