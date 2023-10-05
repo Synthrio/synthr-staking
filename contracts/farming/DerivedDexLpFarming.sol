@@ -26,19 +26,6 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         nativeToken = _nativeToken;
     }
 
-    function getIndex(
-        uint256 _pid,
-        uint256 _tokenId
-    ) external view returns (uint256) {
-        uint256[] memory tokenIds = userToken[_pid][msg.sender];
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (tokenIds[i] == _tokenId) {
-                return i;
-            }
-        }
-        revert("token id not present");
-    }
-
     /// @notice View function to see pending reward on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
@@ -90,8 +77,23 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         UserInfo memory user = userInfo[pid][msg.sender];
         require(user.amount != 0, "DexLpFarming: can not withdraw");
 
-        for (uint256 i = 0; i < tokenIdsIndex.length; i++) {
-            _withdraw(pid, tokenIdsIndex[i], user, pool.accRewardPerShare);
+        uint256 count = tokenIdsIndex.length - 1;
+        uint256[] memory _usertokenId;
+        for (uint256 i = 0; i < tokenIdsIndex.length; ++i) {
+            _usertokenId = _withdraw(
+                pid,
+                i,
+                tokenIdsIndex[i],
+                user,
+                pool.accRewardPerShare
+            );
+        }
+
+        if (userToken[pid][msg.sender].length != 0) {
+            userToken[pid][msg.sender] = _usertokenId;
+            for (uint256 i = 0; i < count; i++) {
+                userToken[pid][msg.sender].pop();
+            }
         }
     }
 
@@ -103,7 +105,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         UserInfo memory user = userInfo[pid][msg.sender];
         require(user.amount != 0, "DexLpFarming: can not withdraw");
 
-        _withdraw(pid, tokenIdIndex, user, pool.accRewardPerShare);
+        _withdraw(pid, 0, tokenIdIndex, user, pool.accRewardPerShare);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -189,15 +191,18 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     function _withdraw(
         uint _pid,
+        uint _iteratIndex,
         uint256 _tokenIdIndex,
         UserInfo memory _user,
         uint256 _accRewardPerShare
-    ) internal {
+    ) internal returns (uint256[] memory) {
         uint256[] memory _userTokenIds = userToken[_pid][msg.sender];
 
         uint256 _tokenId = _userTokenIds[_tokenIdIndex];
 
-        _userTokenIds[_tokenIdIndex] = _userTokenIds[_userTokenIds.length - 1];
+        _userTokenIds[_tokenIdIndex] = _userTokenIds[
+            _userTokenIds.length - _iteratIndex - 1
+        ];
 
         (, , , , , , , uint256 liquidity, , , , ) = tokenTracker.positions(
             _tokenId
@@ -205,10 +210,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
         _user.amount -= liquidity;
 
-        if (_user.amount != 0) {
-            userToken[_pid][msg.sender] = _userTokenIds;
-            userToken[_pid][msg.sender].pop();
-        } else {
+        if (_user.amount == 0) {
             delete userToken[_pid][msg.sender];
         }
 
@@ -224,5 +226,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         tokenTracker.transferFrom(address(this), msg.sender, _tokenId);
 
         emit Withdraw(msg.sender, _pid, _tokenId);
+
+        return _userTokenIds;
     }
 }
