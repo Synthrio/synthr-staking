@@ -2,12 +2,13 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
-contract BaseDexLpFarming is Ownable2Step {
+contract BaseDexLpFarming is NonblockingLzApp {
     using SafeERC20 for IERC20;
 
+    uint16 public constant SEND_MESSAGE = 1;
     uint256 public constant ACC_REWARD_PRECISION = 1e18;
 
     /// @notice Address of reward token contract.
@@ -33,6 +34,7 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 currentEpoch;
     }
 
+    uint16 public dstChainId;
 
     /// @notice Info of each DexLpFarming pool.
     PoolInfo public pool;
@@ -66,8 +68,11 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 amount
     );
 
+    event SendPacket(address indexed account, bytes path, uint16 indexed packetType, uint16 indexed dstChainId, uint64 nonce);
+
+
     /// @param _rewardToken The REWARD token contract address.
-    constructor(IERC20 _rewardToken) {
+    constructor(IERC20 _rewardToken, address _lzEndPoint) NonblockingLzApp(_lzEndPoint) {
         REWARD_TOKEN = _rewardToken;
     }
 
@@ -82,6 +87,12 @@ contract BaseDexLpFarming is Ownable2Step {
             return true;
         }
         return false;
+    }
+
+    /// @notice update Destination chain id.
+    /// @param _dst desitnation chain id to update
+    function setDstChainId(uint256 _dst) external {
+        dstChainId = uint16(_dst);
     }
 
     /// @notice Sets the reward per second to be distributed. Can only be called by the owner.
@@ -142,7 +153,8 @@ contract BaseDexLpFarming is Ownable2Step {
         userInfo[msg.sender] = _user;
         // Interactions
         if (_pendingRewardAmount != 0) {
-            REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
+            // REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
+            _sendMessage(_to, _pendingRewardAmount);
         }
 
         emit Harvest(msg.sender, _pendingRewardAmount);
@@ -173,7 +185,9 @@ contract BaseDexLpFarming is Ownable2Step {
         userTokenAmount[msg.sender][_tokenId] = 0;
 
         // Interactions
-        REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
+        // REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
+        _sendMessage(_to, _pendingRewardAmount);
+        
         emit WithdrawAndHarvest(msg.sender, _tokenId,_pendingRewardAmount);
 
     }
@@ -242,4 +256,34 @@ contract BaseDexLpFarming is Ownable2Step {
     function _calAccPerShare(uint256 _rewardAmount, uint256 _lpSupply) internal pure returns(uint256) {
         return (_rewardAmount * ACC_REWARD_PRECISION) / _lpSupply;
     }
+
+    //////////////////////////////
+    //  cross chain function    //
+    //////////////////////////////
+
+    function _sendMessage(address _account, uint256 _amount) internal {
+        bytes memory lzPayload = abi.encode(SEND_MESSAGE, _account,_amount);
+        bytes memory adapterParam = _lzAdapterParam(SEND_MESSAGE);
+
+        ILayerZeroEndpoint iEndpoint = ILayerZeroEndpoint(lzEndpoint);
+
+        _lzSend(dstChainId, lzPayload, payable(msg.sender), address(0x0), adapterParam, msg.value);
+
+        uint64 outBoundNonce = iEndpoint.getOutboundNonce(dstChainId, address(this));
+
+        {
+            bytes memory path = trustedRemoteLookup[dstChainId];
+            emit SendPacket(_account, path, SEND_MESSAGE, dstChainId, outBoundNonce);
+        }
+    }
+
+    function _lzAdapterParam(uint16 packetType) internal view returns (bytes memory) {
+        uint16 version = 1;
+        uint expectedGas = minDstGasLookup[dstChainId][packetType];
+
+        return abi.encodePacked(version, expectedGas);
+    }
+
+    function _nonblockingLzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) internal override {}
+
 }
