@@ -20,6 +20,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         ITokenTracker _tokenTracker,
         address _liquidityPool,
         address _nativeToken
+
     ) BaseDexLpFarming(_rewardToken) {
         tokenTracker = _tokenTracker;
         liquidityPool = _liquidityPool;
@@ -158,9 +159,11 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
     }
 
     function _getLiquidity(uint256 _tokenId) internal view returns(uint256) {
+        
         (, , , , , , , uint256 _liquidity, , , , ) = tokenTracker.positions(
             _tokenId
         );
+
         return _liquidity;
     }
 }

@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "hardhat/console.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
 contract BaseDexLpFarming is Ownable2Step {
@@ -47,6 +46,7 @@ contract BaseDexLpFarming is Ownable2Step {
 
     event Deposit(address indexed user, uint256 tokenId);
     event Withdraw(address indexed user, uint256 tokenId);
+    event WithdrawAndHarvest(address indexed user, uint256 tokenId, uint256 amount);
     event EmergencyWithdraw(
         address indexed user,
         uint256 amount,
@@ -174,9 +174,8 @@ contract BaseDexLpFarming is Ownable2Step {
 
         // Interactions
         REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
+        emit WithdrawAndHarvest(msg.sender, _tokenId,_pendingRewardAmount);
 
-        emit Withdraw(msg.sender, _tokenId);
-        emit Harvest(msg.sender, _pendingRewardAmount);
     }
 
     function _updatePool(
@@ -217,9 +216,6 @@ contract BaseDexLpFarming is Ownable2Step {
 
         userInfo[msg.sender] = _user;
         userTokenAmount[msg.sender][_tokenId] += _tokenAmount;
-        // console.log(userTokenAmount[msg.sender][_tokenId]);
-
-        emit Deposit(msg.sender, _tokenId);
     }
 
     function _withdrawLiquidity(
@@ -237,8 +233,6 @@ contract BaseDexLpFarming is Ownable2Step {
 
         userInfo[msg.sender] = _user;
         userTokenAmount[msg.sender][_tokenId] = 0; // withdraw all its token from farming
-
-        emit Withdraw(msg.sender, _tokenId);
     }
 
     function _calAccumulatedReward(uint256 _amount, uint256 _accRewardPerShare) internal pure returns(uint256) {
