@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
+// todo verify dex lp farming of erc1155 in arbitrum goerli
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "../interfaces/ILBPair.sol";
@@ -99,6 +100,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
                 _user
             );
 
+            // todo for all batch method add add batch withdraw and deposit event after the for loop complete.
             emit Withdraw(msg.sender, _tokenIds[i]);
         }
 
