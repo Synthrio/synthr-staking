@@ -2,12 +2,11 @@
 pragma solidity 0.8.19;
 // todo verify dex lp farming of erc1155 in arbitrum goerli
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "../interfaces/ILBPair.sol";
 import "./BaseDexLpFarming.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
-contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
+contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
     using SafeERC20 for IERC20;
 
     ILBPair public LBPair;
@@ -18,8 +17,9 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
     /// @param _rewardToken The REWARD token contract address.
     constructor(
         IERC20 _rewardToken,
-        ILBPair _LBPair
-    ) BaseDexLpFarming(_rewardToken) {
+        ILBPair _LBPair,
+        address _lzPoint
+    ) BaseDexLpFarming(_rewardToken, _lzPoint) {
         LBPair = _LBPair;
     }
 
@@ -114,7 +114,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param to Receiver of REWARD_TOKEN rewards.
-    function harvest(address to) external {
+    function harvest(address to) external payable {
         PoolInfo memory pool = updatePool();
         _harvest(pool.accRewardPerShare, to);
     }
@@ -124,7 +124,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
     function withdrawAndHarvest(
         uint256[] memory _tokenIds,
         address _to
-    ) external {
+    ) external payable {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
 
