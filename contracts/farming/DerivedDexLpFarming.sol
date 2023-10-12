@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "../interfaces/ITokenTracker.sol";
 import "./BaseDexLpFarming.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
-contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
+contract DerivedDexLpFarming is BaseDexLpFarming {
     using SafeERC20 for IERC20;
 
     address public liquidityPool;
@@ -19,9 +18,10 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         IERC20 _rewardToken,
         ITokenTracker _tokenTracker,
         address _liquidityPool,
-        address _nativeToken
+        address _nativeToken,
+        address _lzPoint
 
-    ) BaseDexLpFarming(_rewardToken) {
+    ) BaseDexLpFarming(_rewardToken,_lzPoint) {
         tokenTracker = _tokenTracker;
         liquidityPool = _liquidityPool;
         nativeToken = _nativeToken;
@@ -90,7 +90,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param _to Receiver of REWARD_TOKEN rewards.
-    function harvest(address _to) external {
+    function harvest(address _to) external payable {
         PoolInfo memory pool = updatePool();
         _harvest(pool.accRewardPerShare, _to);
     }
@@ -100,7 +100,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
     function withdrawAndHarvest(
         uint256 _tokenId,
         address _to
-    ) external {
+    ) external payable {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
         require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
