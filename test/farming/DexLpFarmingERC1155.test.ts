@@ -3,27 +3,44 @@ import { prepare, deploy, getBigNumber } from "../utilities";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
-import { parseUnits } from "ethers/lib/utils";
+import { parseUnits, parseEther } from "ethers/lib/utils";
 import { get } from "http";
 
 describe("DerivedDexLpFarmingERC1155", function () {
   before(async function () {
-    await prepare(this, ["DerivedDexLpFarmingERC1155", "LBPair", "MockToken"]);
+    await prepare(this, ["DerivedDexLpFarmingERC1155", "LBPair", "MockToken", "LZEndpointMock1","LZEndpointMock1",
+    "CrossClaim"]);
   });
 
   let owner: any, addr1: any, addr2: any;
+  let srcChainId = 1;
+  let dstChainId = 2;
   beforeEach(async function () {
     await deploy(this, [["rewardToken", this.MockToken]]);
     await deploy(this, [["lbPair", this.LBPair]]);
+    await deploy(this, [["lzEndPoint", this.LZEndpointMock1,[srcChainId]]]);
+    await deploy(this, [["lzEndPointDst", this.LZEndpointMock1,[dstChainId]]]);
+    await deploy(this, [["crossClaim", this.CrossClaim,[this.lzEndPointDst.address]]]);
 
     [owner, addr1, addr2] = await ethers.getSigners();
     await deploy(this, [
       [
         "chef",
         this.DerivedDexLpFarmingERC1155,
-        [this.rewardToken.address, this.lbPair.address],
+        [this.rewardToken.address, this.lbPair.address, this.lzEndPoint.address],
       ],
     ]);
+
+    let mockEstimatedNativeFee = parseEther("0.001");
+        let mockEstimatedZroFee = parseEther("0.00025");
+        await this.lzEndPoint.setEstimatedFees(mockEstimatedNativeFee,  mockEstimatedZroFee);
+        await this.lzEndPointDst.setEstimatedFees( mockEstimatedNativeFee,  mockEstimatedZroFee);
+        await this.chef.setDstChainId( dstChainId);
+        await this.chef.setTrustedRemote( dstChainId, this.crossClaim.address);
+        await this.chef.setMinDstGas(dstChainId, 1 , parseUnits("1",18));
+        await this.crossClaim.setTrustedRemote( srcChainId, this.chef.address);
+        await this.lzEndPoint.setDestLzEndpoint( this.crossClaim.address,  this.lzEndPointDst.address);
+        await this.lzEndPointDst.setDestLzEndpoint( this.chef.address,  this.lzEndPoint.address);
 
     await this.rewardToken.mint(
       owner.address,
@@ -42,6 +59,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
       owner.address
     );
   });
+
 
   describe("PoolInfo", function () {
     it("Should set pool info", async function () {
@@ -337,15 +355,13 @@ describe("DerivedDexLpFarmingERC1155", function () {
         (await this.chef.userInfo(owner.address)).rewardDebt
       ).to.be.equal("-" + expectedrewardToken);
 
-      let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
-      let afterBalance = await this.rewardToken.balanceOf(this.alice.address);
-      expect(afterBalance).to.be.equal(expectedrewardToken.add(beforeBalance));
+      await this.chef.harvest(this.alice.address,{value: parseEther("0.1")});
+      expect(await this.crossClaim.balanceOf(owner.address)).to.equal(expectedrewardToken);
     });
 
     it("Harvest with empty user balance", async function () {
       let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
+      await this.chef.harvest(this.alice.address,{value: parseEther("0.1")});
       expect(await this.rewardToken.balanceOf(this.alice.address)).to.equal(beforeBalance);
     });
 
@@ -381,10 +397,9 @@ describe("DerivedDexLpFarmingERC1155", function () {
         (await this.chef.userInfo(owner.address)).rewardDebt
       ).to.be.equal("-" + expectedrewardToken);
       let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
-      expect(await this.rewardToken.balanceOf(this.alice.address)).to.be.equal(
-        expectedrewardToken.add(beforeBalance)
-      );
+      await this.chef.harvest(this.alice.address,{value: parseEther("0.1")});
+      expect(await this.crossClaim.balanceOf(owner.address)).to.equal(expectedrewardToken);
+
     });
   });
 
@@ -408,7 +423,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
       expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
         parseUnits("403", 18)
       );
-      let log2 = await this.chef.withdrawAndHarvest([1], owner.address);
+      let log2 = await this.chef.withdrawAndHarvest([1], owner.address,{value: parseEther("0.1")});
       let precision = await this.chef.ACC_REWARD_PRECISION();
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
@@ -420,12 +435,15 @@ describe("DerivedDexLpFarmingERC1155", function () {
       expectedrewardToken = expectedrewardToken.mul(precision).div(lpSupply);
       expectedrewardToken = expectedrewardToken.mul(liqAmount).div(precision);
 
-      expect(await this.rewardToken.balanceOf(this.alice.address)).to.be.equal(
-        expectedrewardToken.add(beforeBalance)
-      );
-      expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
-        parseUnits("403", 18).sub(expectedrewardToken)
-      );
+      expect(await this.crossClaim.balanceOf(owner.address)).to.equal(expectedrewardToken);
+
+      expect(log2).to.emit(this.chef, "WithdrawAndHarvest")
+        .withArgs(
+          owner.address,
+          getBigNumber(1),
+          expectedrewardToken
+        );
+
     });
   });
 });

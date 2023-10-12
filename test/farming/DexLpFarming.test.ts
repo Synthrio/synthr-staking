@@ -3,8 +3,9 @@ import { prepare, deploy, getBigNumber } from "../utilities";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
-import { parseUnits } from "ethers/lib/utils";
+import { parseUnits, parseEther } from "ethers/lib/utils";
 import { get } from "http";
+
 
 describe("DerivedDexLpFarming", function () {
   before(async function () {
@@ -12,15 +13,23 @@ describe("DerivedDexLpFarming", function () {
       "DerivedDexLpFarming",
       "MockToken",
       "NonfungiblePositionManager",
+      "LZEndpointMock1",
+      "LZEndpointMock1",
+      "CrossClaim"
     ]);
   });
-
+  
   let owner: any, addr1: any, addr2: any;
+  let srcChainId = 1;
+  let dstChainId = 2;
   beforeEach(async function () {
     await deploy(this, [["rewardToken", this.MockToken]]);
     await deploy(this, [["tokenTracker",  this.NonfungiblePositionManager]]);
     await deploy(this, [["nativeToken", this.MockToken]]);
-
+    await deploy(this, [["lzEndPoint", this.LZEndpointMock1,[srcChainId]]]);
+    await deploy(this, [["lzEndPointDst", this.LZEndpointMock1,[dstChainId]]]);
+    await deploy(this, [["crossClaim", this.CrossClaim,[this.lzEndPointDst.address]]]);
+    
     [owner, addr1, addr2] = await ethers.getSigners();
     await deploy(this, [
       [
@@ -31,9 +40,22 @@ describe("DerivedDexLpFarming", function () {
           this.tokenTracker.address,
           addr1.address,
           this.nativeToken.address,
+          this.lzEndPoint.address
         ],
       ],
     ]);
+
+      let mockEstimatedNativeFee = ethers.utils.parseEther("0.001");
+      let mockEstimatedZroFee = ethers.utils.parseEther("0.00025");
+      await this.lzEndPoint.setEstimatedFees(mockEstimatedNativeFee,  mockEstimatedZroFee);
+      await this.lzEndPointDst.setEstimatedFees( mockEstimatedNativeFee,  mockEstimatedZroFee);
+      await this.chef.setDstChainId( dstChainId);
+      await this.chef.setTrustedRemote( dstChainId, this.crossClaim.address);
+      await this.chef.setMinDstGas(dstChainId, 1 , parseUnits("1",18));
+      await this.crossClaim.setTrustedRemote( srcChainId, this.chef.address);
+      await this.lzEndPoint.setDestLzEndpoint( this.crossClaim.address,  this.lzEndPointDst.address);
+      await this.lzEndPointDst.setDestLzEndpoint( this.chef.address,  this.lzEndPoint.address);
+
 
     await this.rewardToken.mint(
       owner.address,
@@ -216,6 +238,7 @@ describe("DerivedDexLpFarming", function () {
 
   describe("Harvest", function () {
     it("Should give back the correct amount of rewardToken and reward", async function () {
+      
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(getBigNumber(1));
@@ -244,18 +267,18 @@ describe("DerivedDexLpFarming", function () {
       expect(
         (await this.chef.userInfo(owner.address)).rewardDebt
       ).to.be.equal("-" + expectedrewardToken);
-      let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
-      let afterBalance = await this.rewardToken.balanceOf(this.alice.address);
-      expect(afterBalance).to.be.equal(expectedrewardToken.add(beforeBalance));
+      await this.chef.harvest(this.alice.address,{value: parseEther("0.1")});
+      expect(await this.crossClaim.balanceOf(owner.address)).to.equal(expectedrewardToken);
     });
     it("Harvest with empty user balance", async function () {
+      
       let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
+      await this.chef.harvest(this.alice.address, {value: parseEther("0.1")});
       expect(await this.rewardToken.balanceOf(this.alice.address)).to.equal(beforeBalance);
     });
 
     it("Harvest for rewardToken-only pool", async function () {
+      
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
@@ -283,19 +306,14 @@ describe("DerivedDexLpFarming", function () {
       expectedrewardToken = expectedrewardToken
         .mul(liqAmount.liquidity)
         .div(parseUnits("1", 18));
-      expect(
-        (await this.chef.userInfo(owner.address)).rewardDebt
-      ).to.be.equal("-" + expectedrewardToken);
-      let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
-      expect(await this.rewardToken.balanceOf(this.alice.address)).to.be.equal(
-        expectedrewardToken.add(beforeBalance)
-      );
+          await this.chef.harvest(this.alice.address,{value: parseEther("0.1")});
+          expect(await this.crossClaim.balanceOf(owner.address)).to.equal(expectedrewardToken);
     });
   });
 
   describe("Withdraw and Harvest", function () {
     it("Should transfer and reward and deposited token", async function () {
+
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(getBigNumber(1));
@@ -305,7 +323,7 @@ describe("DerivedDexLpFarming", function () {
       expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
         parseUnits("403", 18)
       );
-      let log2 = await this.chef.withdrawAndHarvest(getBigNumber(1), owner.address);
+      let log2 = await this.chef.withdrawAndHarvest(getBigNumber(1), owner.address, {value: parseEther("0.101")})
 
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
@@ -321,12 +339,14 @@ describe("DerivedDexLpFarming", function () {
         .mul(liqAmount.liquidity)
         .div(parseUnits("1", 18));
 
-      expect(await this.rewardToken.balanceOf(owner.address)).to.be.equal(
-        expectedrewardToken.add(beforeBalance)
-      );
-      expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
-        parseUnits("403", 18).sub(expectedrewardToken)
-      );
+        expect(await this.crossClaim.balanceOf(owner.address)).to.equal(expectedrewardToken);
+
+        expect(log2).to.emit(this.chef, "WithdrawAndHarvest")
+        .withArgs(
+          owner.address,
+          getBigNumber(1),
+          expectedrewardToken
+        );
     });
   });
 });
