@@ -16,6 +16,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@layerzerolabs/solidity-examples": "^1.0.0",
     "@openzeppelin/contracts": "^4.9.3",
     "@uniswap/v3-periphery": "^1.4.4",
     "dotenv": "^16.3.1"

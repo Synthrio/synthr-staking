@@ -44,10 +44,18 @@ const config: HardhatUserConfig = {
     arbitrum:{
       accounts:[`0x${process.env.PRIVATE_KEY}`],
       url: process.env.ARBITRUM_URL
+    },
+    bsc:{
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.BSC_URL
+    },
+    fuji:{
+      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.FUJI_URL
     }
   },
   etherscan: {
-    apiKey: process.env.POLYGON_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
 };
 
