@@ -174,9 +174,8 @@ contract GaugeController is AccessControl {
             );
         }
 
-        uint256 epoch = poolInfo[_pool].epoch;
-        poolInfo[_pool].epoch = epoch + 1;
-        emit EpochUpdated(_pool, epoch + 1);
+        poolInfo[_pool].epoch++;
+        emit EpochUpdated(_pool, poolInfo[_pool].epoch);
     }
 
     /// @notice Deposit LP tokens to pool for syUSD allocation.
