@@ -20,7 +20,6 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         ITokenTracker _tokenTracker,
         address _liquidityPool,
         address _nativeToken
-
     ) BaseDexLpFarming(_rewardToken) {
         tokenTracker = _tokenTracker;
         liquidityPool = _liquidityPool;
@@ -50,7 +49,8 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         PoolInfo memory _pool = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
-        _deposit(_tokenId, _pool.accRewardPerShare,_user);
+        _deposit(_tokenId, _pool.accRewardPerShare, _user);
+        emit Deposit(msg.sender, _tokenId);
     }
 
     /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
@@ -63,6 +63,8 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _deposit(_tokenIds[i], _pool.accRewardPerShare, _user);
         }
+
+        emit DepositBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -73,6 +75,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         PoolInfo memory _pool = updatePool();
 
         _withdraw(_tokenId, _pool.accRewardPerShare, _user);
+        emit Withdraw(msg.sender, _tokenId);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -84,8 +87,9 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         PoolInfo memory _pool = updatePool();
 
         for (uint256 i = 0; i < _tokenIds.length; i++) {
-            _withdraw(_tokenIds[i], _pool.accRewardPerShare,_user);
+            _withdraw(_tokenIds[i], _pool.accRewardPerShare, _user);
         }
+        emit WithdrawBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -97,13 +101,13 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     /// @notice Withdraw LP tokens from DexLpFarming and harvest proceeds for transaction sender to `_to`.
     /// @param _tokenId LP token id index to withdraw.
-    function withdrawAndHarvest(
-        uint256 _tokenId,
-        address _to
-    ) external {
+    function withdrawAndHarvest(uint256 _tokenId, address _to) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
-        require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
+        require(
+            userTokenAmount[msg.sender][_tokenId] != 0,
+            "Farming: can not withdraw"
+        );
 
         PoolInfo memory _pool = updatePool();
 
@@ -127,39 +131,38 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         uint256 _accRewardPerShare,
         UserInfo memory _user
     ) internal {
-
         uint256 _liquidity = _getLiquidity(_tokenId);
 
-        _depositLiquidity(_tokenId, 1, int256(_liquidity), _accRewardPerShare, _user);
+        _depositLiquidity(
+            _tokenId,
+            1,
+            int256(_liquidity),
+            _accRewardPerShare,
+            _user
+        );
 
         // Interactions
         tokenTracker.transferFrom(msg.sender, address(this), _tokenId);
-        emit Deposit(msg.sender, _tokenId);
     }
 
     function _withdraw(
         uint256 _tokenId,
         uint256 _accRewardPerShare,
         UserInfo memory _user
-    ) internal  {
-        require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
+    ) internal {
+        require(
+            userTokenAmount[msg.sender][_tokenId] != 0,
+            "Farming: can not withdraw"
+        );
         uint256 _liquidity = _getLiquidity(_tokenId);
 
-        _withdrawLiquidity(
-            _tokenId,
-            _liquidity,
-            _accRewardPerShare,
-            _user
-        );
+        _withdrawLiquidity(_tokenId, _liquidity, _accRewardPerShare, _user);
 
         // Interactions
         tokenTracker.transferFrom(address(this), msg.sender, _tokenId);
-
-        emit Withdraw(msg.sender, _tokenId);
     }
 
-    function _getLiquidity(uint256 _tokenId) internal view returns(uint256) {
-        
+    function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
         (, , , , , , , uint256 _liquidity, , , , ) = tokenTracker.positions(
             _tokenId
         );

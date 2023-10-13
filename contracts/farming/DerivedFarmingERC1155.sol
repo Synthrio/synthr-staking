@@ -52,10 +52,10 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
 
         // Effects
         for (uint256 i = 0; i < _tokenIds.length; i++) {
-
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
-            int256 _liquidityDifference = int256(_liquidity) - int256(liqudityOfId[msg.sender][_tokenIds[i]]);
+            int256 _liquidityDifference = int256(_liquidity) -
+                int256(liqudityOfId[msg.sender][_tokenIds[i]]);
 
             _depositLiquidity(
                 _tokenIds[i],
@@ -64,8 +64,6 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
                 _pool.accRewardPerShare,
                 _user
             );
-
-            emit Deposit(msg.sender, _tokenIds[i]);
         }
 
         // Interactions
@@ -75,6 +73,8 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokenIds,
             _tokenAmounts
         );
+
+        emit DepositBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -99,9 +99,6 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
                 _pool.accRewardPerShare,
                 _user
             );
-
-            // todo for all batch method add add batch withdraw and deposit event after the for loop complete.
-            emit Withdraw(msg.sender, _tokenIds[i]);
         }
 
         LBPair.batchTransferFrom(
@@ -110,6 +107,8 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokenIds,
             _tokensAmount
         );
+
+        emit WithdrawBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -151,7 +150,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         LBPair.batchTransferFrom(address(this), _to, _tokenIds, _tokensAmount);
     }
 
-    function _getLiquidity(uint256 _tokenId) internal view returns(uint256) {
+    function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
         (, uint256 _liquidity) = LBPair.getBin(uint24(_tokenId));
         return _liquidity;
     }
