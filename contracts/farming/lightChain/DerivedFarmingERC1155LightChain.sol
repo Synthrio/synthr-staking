@@ -63,7 +63,6 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
                 _user
             );
 
-            emit Deposit(msg.sender, _tokenIds[i]);
         }
 
         // Interactions
@@ -73,6 +72,8 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
             _tokenIds,
             _tokenAmounts
         );
+
+        emit DepositBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -97,9 +98,6 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
                 _pool.accRewardPerShare,
                 _user
             );
-
-            // todo for all batch method add add batch withdraw and deposit event after the for loop complete.
-            emit Withdraw(msg.sender, _tokenIds[i]);
         }
 
         LBPair.batchTransferFrom(
@@ -108,6 +106,8 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
             _tokenIds,
             _tokensAmount
         );
+
+        emit WithdrawBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.

@@ -46,6 +46,8 @@ contract BaseDexLpFarming is NonblockingLzApp {
 
     event Deposit(address indexed user, uint256 tokenId);
     event Withdraw(address indexed user, uint256 tokenId);
+    event DepositBatch(address indexed user, uint256[] tokenId);
+    event WithdrawBatch(address indexed user, uint256[] tokenId);
     event WithdrawAndHarvest(address indexed user, uint256 tokenId, uint256 amount);
     event EmergencyWithdraw(
         address indexed user,
@@ -244,10 +246,6 @@ contract BaseDexLpFarming is NonblockingLzApp {
     function _calAccPerShare(uint256 _rewardAmount, uint256 _lpSupply) internal pure returns(uint256) {
         return (_rewardAmount * ACC_REWARD_PRECISION) / _lpSupply;
     }
-
-    //////////////////////////////
-    //  cross chain function    //
-    //////////////////////////////
 
     function _nonblockingLzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) internal override {
         uint16 packetType;

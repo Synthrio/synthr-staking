@@ -51,6 +51,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
         UserInfo memory _user = userInfo[msg.sender];
 
         _deposit(_tokenId, _pool.accRewardPerShare,_user);
+        emit Deposit(msg.sender, _tokenId);
     }
 
     /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
@@ -63,6 +64,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _deposit(_tokenIds[i], _pool.accRewardPerShare, _user);
         }
+        emit DepositBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -73,6 +75,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
         PoolInfo memory _pool = updatePool();
 
         _withdraw(_tokenId, _pool.accRewardPerShare, _user);
+        emit Withdraw(msg.sender, _tokenId);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -86,6 +89,8 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _withdraw(_tokenIds[i], _pool.accRewardPerShare,_user);
         }
+
+        emit WithdrawBatch(msg.sender, _tokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -134,7 +139,6 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
 
         // Interactions
         tokenTracker.transferFrom(msg.sender, address(this), _tokenId);
-        emit Deposit(msg.sender, _tokenId);
     }
 
     function _withdraw(
@@ -154,8 +158,6 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
 
         // Interactions
         tokenTracker.transferFrom(address(this), msg.sender, _tokenId);
-
-        emit Withdraw(msg.sender, _tokenId);
     }
 
     function _getLiquidity(uint256 _tokenId) internal view returns(uint256) {

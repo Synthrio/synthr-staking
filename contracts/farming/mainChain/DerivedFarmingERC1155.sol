@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
-// todo verify dex lp farming of erc1155 in arbitrum goerli
 
 import "../../interfaces/ILBPair.sol";
 import "./BaseDexLpFarming.sol";
