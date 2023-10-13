@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../interfaces/ITokenTracker.sol";
+import "../../interfaces/ITokenTracker.sol";
 import "./BaseDexLpFarming.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
@@ -13,7 +13,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
 
     ITokenTracker public tokenTracker;
 
-    /// @param _rewardToken The REWARD token contract address.
+    /// @param _lzPoint LayerZero EndPoint contract address.
     constructor(
         IERC20 _rewardToken,
         ITokenTracker _tokenTracker,
@@ -90,7 +90,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param _to Receiver of REWARD_TOKEN rewards.
-    function harvest(address _to) external payable {
+    function harvest(address _to) external {
         PoolInfo memory pool = updatePool();
         _harvest(pool.accRewardPerShare, _to);
     }
@@ -100,7 +100,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
     function withdrawAndHarvest(
         uint256 _tokenId,
         address _to
-    ) external payable {
+    ) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
         require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
@@ -130,7 +130,7 @@ contract DerivedDexLpFarming is BaseDexLpFarming {
 
         uint256 _liquidity = _getLiquidity(_tokenId);
 
-        _depositLiquidity(_tokenId, 1, int256(_liquidity), _accRewardPerShare, _user);
+        _depositLiquidity(_tokenId, 1, int256(_liquidity), _accRewardPerShare, _user);      // amount of token is one.
 
         // Interactions
         tokenTracker.transferFrom(msg.sender, address(this), _tokenId);

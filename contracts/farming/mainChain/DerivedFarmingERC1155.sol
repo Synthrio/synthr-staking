@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 // todo verify dex lp farming of erc1155 in arbitrum goerli
 
-import "../interfaces/ILBPair.sol";
+import "../../interfaces/ILBPair.sol";
 import "./BaseDexLpFarming.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
@@ -14,7 +14,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
     /// @notice liquidity amount of user corresponds to token id in pool.
     mapping(address => mapping(uint256 => uint256)) public liqudityOfId;
 
-    /// @param _rewardToken The REWARD token contract address.
+    /// @param _lzPoint LayerZero EndPoint contract address.
     constructor(
         IERC20 _rewardToken,
         ILBPair _LBPair,
@@ -114,7 +114,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param to Receiver of REWARD_TOKEN rewards.
-    function harvest(address to) external payable {
+    function harvest(address to) external {
         PoolInfo memory pool = updatePool();
         _harvest(pool.accRewardPerShare, to);
     }
@@ -124,7 +124,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
     function withdrawAndHarvest(
         uint256[] memory _tokenIds,
         address _to
-    ) external payable {
+    ) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
 

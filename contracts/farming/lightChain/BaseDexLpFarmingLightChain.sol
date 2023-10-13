@@ -5,14 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
-contract BaseDexLpFarming is NonblockingLzApp {
+contract BaseDexLpFarmingLightChain is NonblockingLzApp {
     using SafeERC20 for IERC20;
 
-    uint16 public constant SEND_MESSAGE = 1;
     uint256 public constant ACC_REWARD_PRECISION = 1e18;
-
-    /// @notice Address of reward token contract.
-    IERC20 public immutable REWARD_TOKEN;
+    uint16 internal constant SEND_MESSAGE = 1;
 
     /// @notice Info of each DexLpFarming user.
     /// `amount` Liquidity amount the user has provided.
@@ -71,10 +68,8 @@ contract BaseDexLpFarming is NonblockingLzApp {
     event SendPacket(address indexed account, bytes path, uint16 indexed packetType, uint16 indexed dstChainId, uint64 nonce);
 
 
-    /// @param _rewardToken The REWARD token contract address.
-    constructor(IERC20 _rewardToken, address _lzEndPoint) NonblockingLzApp(_lzEndPoint) {
-        REWARD_TOKEN = _rewardToken;
-    }
+    /// @param _lzEndPoint The Layer Zero EndPoint contract address.
+    constructor(address _lzEndPoint) NonblockingLzApp(_lzEndPoint) {}
 
     /// @notice Returns if token id deposited by user.
     /// @param _user depositer address
@@ -98,19 +93,15 @@ contract BaseDexLpFarming is NonblockingLzApp {
     /// @notice Sets the reward per second to be distributed. Can only be called by the owner.
     /// @param _rewardPerBlock The amount of reward token to be distributed per block number.
     /// @param _amount The amount of reward token to be deposit in dexLpFarmin.
-    /// @param _user address from which reward is to be distributed.
     function setRewardPerBlock(
         uint256 _rewardPerBlock,
-        uint256 _amount,
-        address _user
+        uint256 _amount
     ) external onlyOwner {
 
         PoolInfo memory _pool = pool;
         _pool.rewardPerBlock = _rewardPerBlock;
         ++_pool.currentEpoch;
         pool = _pool;
-
-        REWARD_TOKEN.safeTransferFrom(_user, address(this), _amount);
 
         emit LogRewardPerBlock(_rewardPerBlock, _pool.currentEpoch, _amount);
     }
@@ -153,7 +144,6 @@ contract BaseDexLpFarming is NonblockingLzApp {
         userInfo[msg.sender] = _user;
         // Interactions
         if (_pendingRewardAmount != 0) {
-            // REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
             _sendMessage(_to, _pendingRewardAmount);
         }
 
@@ -185,7 +175,6 @@ contract BaseDexLpFarming is NonblockingLzApp {
         userTokenAmount[msg.sender][_tokenId] = 0;
 
         // Interactions
-        // REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
         _sendMessage(_to, _pendingRewardAmount);
         
         emit WithdrawAndHarvest(msg.sender, _tokenId,_pendingRewardAmount);
