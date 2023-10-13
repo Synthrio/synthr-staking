@@ -16,7 +16,6 @@ let gaugeController: any,
   rewardToken: any,
   rewardToken1: any;
 async function setUp() {
-  // Contracts are deployed using the first signer/account by default
   [owner, addr1, addr2] = await ethers.getSigners();
 
   const GaugeController = await ethers.getContractFactory("GaugeController");
@@ -66,9 +65,6 @@ async function addPoolFunc() {
 }
 
 describe("GaugeController", function () {
-  // We define a fixture to reuse the same setup in every test.
-  // We use loadFixture to run this setup once, snapshot that state,
-  // and reset Hardhat Network to that snapshot in every test.
 
   beforeEach(async () => {
     await setUp();
