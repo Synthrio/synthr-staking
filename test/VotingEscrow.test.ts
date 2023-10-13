@@ -89,7 +89,9 @@ describe("VotingEscrow", function () {
           .createLock(parseUnits("1000", 18), time1)
       );
       let userLockedInfo = await votingEscrow.locked(addr1.address);
-      let calUnlockTime = (BigNumber.from(time1).div(BigNumber.from(604800))).mul(BigNumber.from(604800));
+      let calUnlockTime = BigNumber.from(time1)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(parseUnits("1000", 18));
@@ -111,13 +113,17 @@ describe("VotingEscrow", function () {
       let time1 = timestamp + 1000000;
       expect(
         await votingEscrow
-        .connect(addr1)
-        .createLock(parseUnits("1000", 18), time1)
-        );
+          .connect(addr1)
+          .createLock(parseUnits("1000", 18), time1)
+      );
 
-        let calUnlockTime = (BigNumber.from(time1).div(BigNumber.from(604800))).mul(BigNumber.from(604800));
+      let calUnlockTime = BigNumber.from(time1)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
 
-      expect(await votingEscrow.lockedEnd(addr1.address)).to.equal(calUnlockTime);
+      expect(await votingEscrow.lockedEnd(addr1.address)).to.equal(
+        calUnlockTime
+      );
 
       expect(
         await gaugeController.userInfo(votingEscrow.address, addr1.address)
@@ -126,8 +132,11 @@ describe("VotingEscrow", function () {
         .connect(addr1)
         .increaseAmountAndUnlockTime(parseUnits("1000", 18), time1 + 1000000);
 
-        let calUnlockTime1 = ((BigNumber.from(time1).add(1000000)).div(BigNumber.from(604800))).mul(BigNumber.from(604800));
-        let userLockedInfo = await votingEscrow.locked(addr1.address);
+      let calUnlockTime1 = BigNumber.from(time1)
+        .add(1000000)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
+      let userLockedInfo = await votingEscrow.locked(addr1.address);
 
       expect(userLockedInfo.end).to.equal(calUnlockTime1);
       expect(userLockedInfo.amount).to.equal(parseUnits("2000", 18));

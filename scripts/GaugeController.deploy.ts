@@ -15,9 +15,7 @@ async function main() {
 
   await run("verify:verify", {
     address: gaugeController.address,
-    constructorArguments: [
-        admin,
-    ],
+    constructorArguments: [admin],
   });
 }
 

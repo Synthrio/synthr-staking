@@ -1,11 +1,10 @@
-import { ethers , run} from "hardhat"
+import { ethers, run } from "hardhat";
 
 import dotenv from "dotenv";
 import { ADDRESS_ZERO } from "../test/utilities";
 dotenv.config();
 
 async function main() {
-
   let gaugeControllerAddress = process.env.GAUGE_CONTROLLER_ADDRESS;
 
   const MockToken = await ethers.getContractFactory("MockToken");
@@ -32,14 +31,13 @@ async function main() {
       `${gaugeControllerAddress}`,
       "Vote Escrowed SYNTH",
       "veSYNTH",
-      "1"
+      "1",
     ],
   });
 
   await run("verify:verify", {
     address: mockToken.address,
-    constructorArguments: [
-    ],
+    constructorArguments: [],
   });
 }
 

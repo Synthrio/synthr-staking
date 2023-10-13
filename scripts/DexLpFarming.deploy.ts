@@ -1,4 +1,4 @@
-import { ethers, run} from "hardhat";
+import { ethers, run } from "hardhat";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -14,7 +14,12 @@ async function main() {
   await mockToken.deployed();
 
   const DexLpFarming = await ethers.getContractFactory("DerivedDexLpFarming");
-  const dexLpFarming = await DexLpFarming.deploy(mockToken.address,`${tokenTracker}`,`${liquidityPool}`,`${nativeToken}`);
+  const dexLpFarming = await DexLpFarming.deploy(
+    mockToken.address,
+    `${tokenTracker}`,
+    `${liquidityPool}`,
+    `${nativeToken}`
+  );
 
   await dexLpFarming.deployed();
   console.log(`DexLpFarming deployed to ${dexLpFarming.address}`);
@@ -31,7 +36,7 @@ async function main() {
       mockToken.address,
       `${tokenTracker}`,
       `${liquidityPool}`,
-      `${nativeToken}`
+      `${nativeToken}`,
     ],
   });
 }
