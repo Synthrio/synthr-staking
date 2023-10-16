@@ -51,10 +51,10 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 tokenId,
         uint256 amount
     );
-    event EmergencyWithdraw(
+    event WithdrawAndHarvestBatch(
         address indexed user,
-        uint256 amount,
-        address indexed to
+        uint256[] tokenId,
+        uint256 amount
     );
     event Harvest(address indexed user, uint256 amount);
 
@@ -151,7 +151,7 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 _accRewardPerShare,
         UserInfo memory _user,
         address _to
-    ) internal {
+    ) internal returns(uint256){
         int256 accumulatedReward = int256(
             _calAccumulatedReward(_user.amount, _accRewardPerShare)
         );
@@ -170,7 +170,7 @@ contract BaseDexLpFarming is Ownable2Step {
 
         // Interactions
         REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
-        emit WithdrawAndHarvest(msg.sender, _tokenId, _pendingRewardAmount);
+        return _pendingRewardAmount;
     }
 
     function _updatePool(

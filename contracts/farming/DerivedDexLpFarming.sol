@@ -114,7 +114,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         uint256 _liquidity = _getLiquidity(_tokenId);
 
         // Effects
-        _withdrawAndHarvest(
+        uint256 _pendingAmount = _withdrawAndHarvest(
             _tokenId,
             _liquidity,
             _pool.accRewardPerShare,
@@ -124,6 +124,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
         // Interactions
         tokenTracker.transferFrom(address(this), _to, _tokenId);
+        emit WithdrawAndHarvest(msg.sender,_tokenId, _pendingAmount);
     }
 
     function _deposit(

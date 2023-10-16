@@ -130,7 +130,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         PoolInfo memory pool = updatePool();
 
         uint256[] memory _tokensAmount = new uint256[](_tokenIds.length);
-
+        uint256 _totalPendingAmount;
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             uint256 _amount = userTokenAmount[msg.sender][_tokenIds[i]];
             require(_amount != 0, "Farming: token not deposited");
@@ -138,7 +138,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
 
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
-            _withdrawAndHarvest(
+            _totalPendingAmount += _withdrawAndHarvest(
                 _tokenIds[i],
                 _liquidity,
                 pool.accRewardPerShare,
@@ -148,6 +148,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         }
         // Interactions
         LBPair.batchTransferFrom(address(this), _to, _tokenIds, _tokensAmount);
+        emit WithdrawAndHarvestBatch(msg.sender, _tokenIds, _totalPendingAmount);
     }
 
     function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
