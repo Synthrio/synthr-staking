@@ -2,31 +2,33 @@
 pragma solidity 0.8.19;
 
 interface IVoter {
+
     error AlreadyVotedOrDeposited();
     error DistributeWindow();
-    error GaugeDoesNotExist();
-    error GaugeNotAlive();
+    error GaugeAlreadyKilled();
+    error GaugeAlreadyRevived();
+    error GaugeExists();
+    error GaugeDoesNotExist(address _pool);
+    error GaugeNotAlive(uint16 _gauge);
     error MaximumVotingNumberTooLow();
     error NonZeroVotes();
     error NotGovernor();
     error NotEmergencyCouncil();
-    error NotWhitelistedNFT();
+    error NotWhitelistedUser();
     error SameValue();
     error TooManyPools();
     error UnequalLengths();
     error ZeroBalance();
     error ZeroAddress();
 
-    event PoolSet(
-        address indexed pool,
-        address indexed creator
-    );
-    event GaugeSet(address indexed gauge, address indexed governor);
+    event GaugeKilled(uint16 indexed gauge);
+    event GaugeRevived(uint16 indexed gauge);
+    event GaugeSet(uint16 indexed gauge, address indexed pool, address indexed governor);
 
     event Voted(
         address indexed voter,
         address indexed pool,
-        uint256 indexed tokenId,
+        address indexed user,
         uint256 weight,
         uint256 totalWeight,
         uint256 timestamp
@@ -34,29 +36,25 @@ interface IVoter {
     event Abstained(
         address indexed voter,
         address indexed pool,
-        uint256 indexed tokenId,
+        address indexed user,
         uint256 weight,
         uint256 totalWeight,
         uint256 timestamp
     );
-    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool indexed _bool);
+    event WhitelistUser(address indexed whitelister, address indexed user, bool indexed _bool);
+    
 
     /// @notice Called by users to vote for pools. Votes distributed proportionally based on weights.
-    ///         Can only vote or deposit into a managed NFT once per epoch.
     ///         Can only vote for gauges that have not been killed.
     /// @dev Weights are distributed proportional to the sum of the weights in the array.
     ///      Throws if length of _poolVote and _weights do not match.
-    /// @param _tokenId     Id of veNFT you are voting with.
     /// @param _poolVote    Array of pools you are voting for.
     /// @param _weights     Weights of pools.
-    function vote(uint256 _tokenId, address[] calldata _poolVote, uint256[] calldata _weights) external;
+    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external;
 
-    /// @notice Called by users to reset voting state. Required if you wish to make changes to
-    ///         veNFT state (e.g. merge, split, deposit into managed etc).
+    /// @notice Called by users to reset voting state.
     ///         Cannot reset in the same epoch that you voted in.
-    ///         Can vote or deposit into a managed NFT again after reset.
-    /// @param _tokenId Id of veNFT you are reseting.
-    function reset(uint256 _tokenId) external;
+    function reset() external;
 
     /// @notice Set new governor.
     /// @dev Throws if not called by governor.
@@ -75,10 +73,10 @@ interface IVoter {
     /// @param _maxVotingNum .
     function setMaxVotingNum(uint256 _maxVotingNum) external;
 
-    /// @notice Whitelist (or unwhitelist) token id for voting in last hour prior to epoch flip.
+    /// @notice Whitelist (or unwhitelist) user for voting in last hour prior to epoch flip.
     /// @dev Throws if not called by governor.
     ///      Throws if already whitelisted.
-    /// @param _tokenId .
+    /// @param _user .
     /// @param _bool .
-    function whitelistNFT(uint256 _tokenId, bool _bool) external;
+    function whitelistUser(address _user, bool _bool) external;
 }
