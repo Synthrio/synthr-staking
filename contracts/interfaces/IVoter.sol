@@ -52,6 +52,9 @@ interface IVoter {
     /// @param _weights     Weights of pools.
     function vote(address[] calldata _poolVote, uint256[] calldata _weights) external;
 
+    /// @notice Called by users to update voting balances in voting rewards contracts.
+    function poke() external;
+
     /// @notice Called by users to reset voting state.
     ///         Cannot reset in the same epoch that you voted in.
     function reset() external;
