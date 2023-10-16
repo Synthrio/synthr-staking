@@ -148,7 +148,11 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         }
         // Interactions
         LBPair.batchTransferFrom(address(this), _to, _tokenIds, _tokensAmount);
-        emit WithdrawAndHarvestBatch(msg.sender, _tokenIds, _totalPendingAmount);
+        emit WithdrawAndHarvestBatch(
+            msg.sender,
+            _tokenIds,
+            _totalPendingAmount
+        );
     }
 
     function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {

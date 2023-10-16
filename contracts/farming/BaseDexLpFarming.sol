@@ -151,7 +151,7 @@ contract BaseDexLpFarming is Ownable2Step {
         uint256 _accRewardPerShare,
         UserInfo memory _user,
         address _to
-    ) internal returns(uint256){
+    ) internal returns (uint256) {
         int256 accumulatedReward = int256(
             _calAccumulatedReward(_user.amount, _accRewardPerShare)
         );
