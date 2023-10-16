@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 interface IVoter {
-
     error AlreadyVotedOrDeposited();
     error DistributeWindow();
     error GaugeAlreadyKilled();
@@ -23,7 +22,11 @@ interface IVoter {
 
     event GaugeKilled(uint16 indexed gauge);
     event GaugeRevived(uint16 indexed gauge);
-    event GaugeSet(uint16 indexed gauge, address indexed pool, address indexed governor);
+    event GaugeSet(
+        uint16 indexed gauge,
+        address indexed pool,
+        address indexed governor
+    );
 
     event Voted(
         address indexed voter,
@@ -41,8 +44,11 @@ interface IVoter {
         uint256 totalWeight,
         uint256 timestamp
     );
-    event WhitelistUser(address indexed whitelister, address indexed user, bool indexed _bool);
-    
+    event WhitelistUser(
+        address indexed whitelister,
+        address indexed user,
+        bool indexed _bool
+    );
 
     /// @notice Called by users to vote for pools. Votes distributed proportionally based on weights.
     ///         Can only vote for gauges that have not been killed.
@@ -50,7 +56,10 @@ interface IVoter {
     ///      Throws if length of _poolVote and _weights do not match.
     /// @param _poolVote    Array of pools you are voting for.
     /// @param _weights     Weights of pools.
-    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external;
+    function vote(
+        address[] calldata _poolVote,
+        uint256[] calldata _weights
+    ) external;
 
     /// @notice Called by users to update voting balances in voting rewards contracts.
     function poke() external;

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 interface IVotingEscrow {
     function token() external view returns (address);
+
     function balanceOf(
         address _user,
         uint256 _t
