@@ -4,8 +4,6 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import "hardhat/console.sol";
-
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
 contract BaseDexLpFarming is Ownable2Step {
     using SafeERC20 for IERC20;

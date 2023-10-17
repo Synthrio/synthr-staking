@@ -404,7 +404,6 @@ describe("GaugeController", function () {
     });
 
     it("Should revert if non controller try to add pool in GaugeController", async function () {
-
       let reward: RewardInfo[] = [
         {
           token: rewardToken.address,
@@ -416,7 +415,7 @@ describe("GaugeController", function () {
       await expect(
         gaugeController
           .connect(addr1)
-          .addPool( lpTtoken.address, votingEscrow.address, reward)
+          .addPool(lpTtoken.address, votingEscrow.address, reward)
       ).to.be.revertedWith("GaugeController: not authorized");
     });
 
