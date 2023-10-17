@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
+import "hardhat/console.sol";
+
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
 contract BaseDexLpFarming is Ownable2Step {
     using SafeERC20 for IERC20;
@@ -198,19 +200,27 @@ contract BaseDexLpFarming is Ownable2Step {
     function _depositLiquidity(
         uint256 _tokenId,
         uint256 _tokenAmount,
-        int256 _liquidity,
+        uint256 _liquidity,
         uint256 _accRewardPerShare,
-        UserInfo memory _user
+        UserInfo memory _user,
+        bool _negative
     ) internal {
         require(_liquidity != 0, "Farming: no liquidity");
 
-        _liquidity < 0
-            ? _user.amount -= uint256(_liquidity)
-            : _user.amount += uint256(_liquidity);
+        if (_negative) {
+            _user.amount -= _liquidity;
 
-        _user.rewardDebt +=
-            (_liquidity * int256(_accRewardPerShare)) /
-            int256(ACC_REWARD_PRECISION);
+            _user.rewardDebt -=
+            int256((_liquidity * _accRewardPerShare) /
+            ACC_REWARD_PRECISION);
+        }
+        else {
+            _user.amount += _liquidity;
+
+            _user.rewardDebt +=
+            int256((_liquidity * _accRewardPerShare) /
+            ACC_REWARD_PRECISION);
+        }
 
         userInfo[msg.sender] = _user;
         userTokenAmount[msg.sender][_tokenId] += _tokenAmount;
