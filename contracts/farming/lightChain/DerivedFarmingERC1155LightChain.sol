@@ -50,10 +50,10 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
 
         // Effects
         for (uint256 i = 0; i < _tokenIds.length; i++) {
-
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
-            int256 _liquidityDifference = int256(_liquidity) - int256(liqudityOfId[msg.sender][_tokenIds[i]]);
+            int256 _liquidityDifference = int256(_liquidity) -
+                int256(liqudityOfId[msg.sender][_tokenIds[i]]);
             liqudityOfId[msg.sender][_tokenIds[i]] = _liquidity;
             _depositLiquidity(
                 _tokenIds[i],
@@ -62,7 +62,6 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
                 _pool.accRewardPerShare,
                 _user
             );
-
         }
 
         // Interactions
@@ -151,7 +150,7 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
         LBPair.batchTransferFrom(address(this), _to, _tokenIds, _tokensAmount);
     }
 
-    function _getLiquidity(uint256 _tokenId) internal view returns(uint256) {
+    function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
         (, uint256 _liquidity) = LBPair.getBin(uint24(_tokenId));
         return _liquidity;
     }
