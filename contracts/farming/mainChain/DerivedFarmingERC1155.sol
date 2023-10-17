@@ -55,6 +55,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
             int256 _liquidityDifference = int256(_liquidity) - int256(liqudityOfId[msg.sender][_tokenIds[i]]);
+            _liquidityDifference > 0 ? liqudityOfId[msg.sender][_tokenIds[i]] += uint256(_liquidityDifference) : liqudityOfId[msg.sender][_tokenIds[i]] -= uint256(_liquidityDifference);
 
             _depositLiquidity(
                 _tokenIds[i],
@@ -89,7 +90,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
             uint256 _amount = userTokenAmount[msg.sender][_tokenIds[i]];
             require(_amount != 0, "Farming: no token available");
             _tokensAmount[i] = _amount;
-
+            liqudityOfId[msg.sender][_tokenIds[i]] = 0;
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
             _withdrawLiquidity(
@@ -135,7 +136,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
             uint256 _amount = userTokenAmount[msg.sender][_tokenIds[i]];
             require(_amount != 0, "Farming: token not deposited");
             _tokensAmount[i] = _amount;
-
+            liqudityOfId[msg.sender][_tokenIds[i]] = 0;
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
             _withdrawAndHarvest(
