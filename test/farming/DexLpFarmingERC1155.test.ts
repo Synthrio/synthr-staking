@@ -62,7 +62,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -88,7 +88,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         block2 - block
       );
       let liqAmount = (await this.lbPair.getBin(1))[1];
-      let lpSupply = (await this.lbPair.getReserve())[1];
+      let lpSupply = (await this.lbPair.getReserves())[1];
       let expectedrewardToken = rewardAmount
         .mul(parseUnits("1", 18))
         .div(lpSupply);
@@ -110,7 +110,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -139,7 +139,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
 
       let liqAmount = (await this.lbPair.getBin(1))[1];
 
-      let lpSupply = (await this.lbPair.getReserve())[1];
+      let lpSupply = (await this.lbPair.getReserves())[1];
 
       accPerShare = accPerShare.add(
         rewardAmount.mul(parseUnits("1", 18)).div(lpSupply)
@@ -160,7 +160,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
 
   describe("UpdatePool", function () {
     it("Should emit event LogUpdatePool", async function () {
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -188,7 +188,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -210,6 +210,48 @@ describe("DerivedDexLpFarmingERC1155", function () {
       );
     });
 
+    it("Should update liquidity of user, if deposit again", async function () {
+
+      await this.lbPair.mint(owner.address, 1, parseUnits("1000", 18));
+      await this.lbPair.approveForAll(this.chef.address, true);
+      await this.lbPair.setBin(
+        1,
+        parseUnits("1200", 18),
+        parseUnits("1300", 18)
+      );
+      await this.lbPair.setReserves(
+        parseUnits("12000", 18),
+        parseUnits("13000", 18)
+      );
+
+      expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
+        parseUnits("1000", 18)
+      );
+
+      await this.chef.depositBatch([1], [parseUnits("100", 18)])
+      await this.lbPair.setBin(
+        1,
+        parseUnits("1200", 18),
+        parseUnits("1700", 18)
+        );
+        let bef = (await this.chef.userInfo(this.alice.address)).rewardDebt;
+        console.log(bef);
+      await this.chef.depositBatch([1], [parseUnits("100", 18)])
+
+      let liqAmount = (await this.lbPair.getBin(1))[1];
+        expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
+          parseUnits("800", 18)
+        );
+        expect(await this.lbPair.balanceOf(this.chef.address, 1)).to.equal(
+          parseUnits("200", 18)
+        );
+        expect((await this.chef.userInfo(this.alice.address)).amount).to.equal(
+          liqAmount
+        );
+        let aft = (await this.chef.userInfo(this.alice.address)).rewardDebt;
+        console.log(aft);
+    });
+
     it("Should return true if token is deposited", async function () {
       await this.lbPair.mint(owner.address, 1, parseUnits("1000", 18));
       await this.lbPair.approveForAll(this.chef.address, true);
@@ -218,7 +260,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -263,7 +305,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1400", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("2000", 18)
       );
@@ -314,7 +356,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -329,7 +371,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         block2 - block
       );
       let liqAmount = (await this.lbPair.getBin(1))[1];
-      let lpSupply = (await this.lbPair.getReserve())[1];
+      let lpSupply = (await this.lbPair.getReserves())[1];
 
       expectedrewardToken = expectedrewardToken.mul(pricision).div(lpSupply);
 
@@ -361,7 +403,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -378,7 +420,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         block2 - block
       );
       let liqAmount = (await this.lbPair.getBin(1))[1];
-      let lpSupply = (await this.lbPair.getReserve())[1];
+      let lpSupply = (await this.lbPair.getReserves())[1];
       expectedrewardToken = expectedrewardToken.mul(pricision).div(lpSupply);
       expectedrewardToken = expectedrewardToken.mul(liqAmount).div(pricision);
       expect((await this.chef.userInfo(owner.address)).rewardDebt).to.be.equal(
@@ -400,7 +442,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1200", 18),
         parseUnits("1300", 18)
       );
-      await this.lbPair.setReserve(
+      await this.lbPair.setReserves(
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
@@ -420,7 +462,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         block2 - block
       );
       let liqAmount = (await this.lbPair.getBin(1))[1];
-      let lpSupply = (await this.lbPair.getReserve())[1];
+      let lpSupply = (await this.lbPair.getReserves())[1];
       expectedrewardToken = expectedrewardToken.mul(precision).div(lpSupply);
       expectedrewardToken = expectedrewardToken.mul(liqAmount).div(precision);
 

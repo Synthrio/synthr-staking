@@ -54,7 +54,6 @@ async function addPoolFunc() {
   ];
 
   let tx = await gaugeController.addPool(
-    epoch,
     lpTtoken.address,
     votingEscrow.address,
     reward
