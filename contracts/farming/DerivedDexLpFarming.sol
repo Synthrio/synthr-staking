@@ -137,9 +137,10 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         _depositLiquidity(
             _tokenId,
             1,
-            int256(_liquidity),
+            _liquidity,
             _accRewardPerShare,
-            _user
+            _user,
+            false
         );
 
         // Interactions
