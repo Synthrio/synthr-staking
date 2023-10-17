@@ -64,6 +64,32 @@ contract GaugeController is AccessControl {
         return userInfo[_pool][_user].rewardDebt;
     }
 
+    /// @notice View function to see pending reward of by token on frontend.
+    /// @param _pool The address of the pool. See `poolInfo`.
+    /// @param _user Address of user.
+    /// @return pending_ reward for a given user.
+    function userRewardByToken(
+        address _pool,
+        address _user,
+        uint256 indexOfRewardToken
+    ) external view returns (uint256 pending_) {
+        PoolInfo memory _poolInfo = poolInfo[_pool];
+        UserInfo memory user = userInfo[_pool][_user];
+        RewardInfo[MAX_REWARD_TOKEN] memory _rewardInfo = reward[_pool];
+        uint256 lpSupply = lpToken[_pool].balanceOf(_pool);
+        if (block.number > _poolInfo.lastRewardBlock && lpSupply != 0) {
+        pending_ += _pendingRewardForToken(
+                    user.amount,
+                    user.rewardDebt[indexOfRewardToken],
+                    lpSupply,
+                    _rewardInfo[indexOfRewardToken].accRewardPerShare,
+                    _rewardInfo[indexOfRewardToken].rewardPerBlock,
+                    _poolInfo.lastRewardBlock,
+                    block.number
+                );
+        }
+    }
+
     /// @notice View function to see pending reward at current block on frontend.
     /// @param _pool The address of the pool. See `poolInfo`.
     /// @param _user Address of user.
@@ -91,7 +117,6 @@ contract GaugeController is AccessControl {
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param _lpToken Address of the LP ERC-20 token.
     function addPool(
-        uint256 _epoch,
         address _lpToken,
         address _pool,
         RewardInfo[] memory _reward
@@ -103,7 +128,7 @@ contract GaugeController is AccessControl {
         lpToken[_pool] = IERC20(_lpToken);
 
         poolInfo[_pool] = PoolInfo({
-            epoch: _epoch,
+            epoch: 0,
             lastRewardBlock: uint64(block.number),
             index: _reward.length - 1
         });
@@ -219,10 +244,55 @@ contract GaugeController is AccessControl {
 
     /// @notice Claim proceeds for transaction sender to `to`.
     /// @param _pool The address of the pool. See `poolInfo`.
-    /// @param to Receiver of syUSD rewards.
-    function claim(address _pool, address to) external {
+    /// @param _to Receiver of syUSD rewards.
+    function claim(address _pool, address _to) external {
         PoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
+        uint256 _totalPendingReward;
+        for (uint256 i = 0; i <= _poolInfo.index; ++i) {
+
+            (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(_user.amount, _user.rewardDebt[i], rewardInfo[i].accRewardPerShare, rewardInfo[i].token, _to);
+            // Effects
+            _user.rewardDebt[i] = accumulatedReward;
+            _totalPendingReward += _pendingReward;
+        }
+        userInfo[_pool][msg.sender] = _user;
+        emit Claimed(msg.sender, _pool, _totalPendingReward);
+    }
+
+    /// @notice Claim proceeds for transaction sender to `to`.
+    /// @param _pool The address of the pool. See `poolInfo`.
+    /// @param _to Receiver of syUSD rewards.
+    /// @param _index token index in reward tokens of pool.
+    function claimForToken(address _pool, address _to, uint256 _index) external {
+        updatePool(_pool);
+        UserInfo memory _user = userInfo[_pool][msg.sender];
+        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
+
+        (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(_user.amount, _user.rewardDebt[_index], rewardInfo[_index].accRewardPerShare, rewardInfo[_index].token, _to);
+
+        _user.rewardDebt[_index] = accumulatedReward;
+
+        userInfo[_pool][msg.sender] = _user;
+        emit Claimed(msg.sender, _pool, _pendingReward);
+    }
+
+    /// @notice Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`.
+    /// @param _pool The address of the pool. See `poolInfo`.
+    /// @param _amount LP token amount to withdraw.
+    /// @param _to Receiver of the LP tokens and syUSD rewards.
+    function decreaseRewardAndClaim(
+        address _pool,
+        uint256 _amount,
+        address _to
+    ) external {
+        require(
+            hasRole(POOL_ROLE, msg.sender),
+            "GaugeController: not authorized"
+        );
+        PoolInfo memory _poolInfo = updatePool(_pool);
+        UserInfo memory _user = userInfo[_pool][_to];
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
         uint256 _totalPendingReward;
         for (uint256 i = 0; i <= _poolInfo.index; ++i) {
@@ -233,58 +303,23 @@ contract GaugeController is AccessControl {
             uint256 _pendingReward = uint256(
                 accumulatedReward - (_user.rewardDebt[i])
             );
+
             // Effects
-            _user.rewardDebt[i] = accumulatedReward;
-
-            // Interactions
-            if (_pendingReward != 0) {
-                IERC20(rewardInfo[i].token).safeTransfer(to, _pendingReward);
-                _totalPendingReward += _pendingReward;
-            }
-        }
-        userInfo[_pool][msg.sender] = _user;
-        emit Claimed(msg.sender, _pool, _totalPendingReward);
-    }
-
-    /// @notice Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`.
-    /// @param _pool The address of the pool. See `poolInfo`.
-    /// @param _amount LP token amount to withdraw.
-    /// @param to Receiver of the LP tokens and syUSD rewards.
-    function decreaseRewardAndClaim(
-        address _pool,
-        uint256 _amount,
-        address to
-    ) external {
-        require(
-            hasRole(POOL_ROLE, msg.sender),
-            "GaugeController: not authorized"
-        );
-        PoolInfo memory _poolInfo = updatePool(_pool);
-        UserInfo memory _user = userInfo[_pool][to];
-        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
-        uint256 _totalPendingReward;
-        for (uint256 i = 0; i <= _poolInfo.index; ++i) {
-            int256 accumulatedReward = _calAccReward(
-                _user.amount,
+            _user.rewardDebt[i] = accumulatedReward - (_calAccReward(
+                _amount,
                 rewardInfo[i].accRewardPerShare
-            );
-            uint256 _pendingReward = uint256(
-                accumulatedReward - (_user.rewardDebt[i])
-            );
-
-            // Effects
-            _user.rewardDebt[i] = accumulatedReward;
+            ));
             // Interactions
             if (_pendingReward != 0) {
-                IERC20(rewardInfo[i].token).safeTransfer(to, _pendingReward);
+                IERC20(rewardInfo[i].token).safeTransfer(_to, _pendingReward);
                 _totalPendingReward += _pendingReward;
             }
         }
 
         _user.amount -= _amount;
-        userInfo[_pool][to] = _user;
+        userInfo[_pool][_to] = _user;
 
-        emit Claimed(to, _pool, _totalPendingReward);
+        emit Claimed(_to, _pool, _totalPendingReward);
     }
 
     /// @notice Update reward variables of the given pool.
@@ -391,6 +426,21 @@ contract GaugeController is AccessControl {
                     _blockNumber
                 );
             }
+        }
+    }
+
+    function _claimForToken(uint256 _amount, int256 _rewardDebt, uint256 _accRewardPerShare, address _token, address _to) internal returns(int256 _accmulatedReward, uint256 _pendingReward) {
+         _accmulatedReward = _calAccReward(
+            _accRewardPerShare,
+            _amount
+        );
+
+        _pendingReward = uint256(
+            _accmulatedReward - _rewardDebt
+        );
+
+        if (_pendingReward != 0) {
+            IERC20(_token).safeTransfer(_to, _pendingReward);
         }
     }
 }
