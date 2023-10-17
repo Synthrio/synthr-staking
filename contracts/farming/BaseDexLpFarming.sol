@@ -99,6 +99,7 @@ contract BaseDexLpFarming is Ownable2Step {
     ) external onlyOwner {
         PoolInfo memory _pool = pool;
         _pool.rewardPerBlock = _rewardPerBlock;
+        _pool.lastRewardBlock = uint64(block.number);
         ++_pool.currentEpoch;
         pool = _pool;
 
