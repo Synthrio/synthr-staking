@@ -55,7 +55,7 @@ contract DerivedDexLpFarmingERC1155 is BaseDexLpFarming {
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
             int256 _liquidityDifference = int256(_liquidity) - int256(liqudityOfId[msg.sender][_tokenIds[i]]);
-            _liquidityDifference > 0 ? liqudityOfId[msg.sender][_tokenIds[i]] += uint256(_liquidityDifference) : liqudityOfId[msg.sender][_tokenIds[i]] -= uint256(_liquidityDifference);
+           liqudityOfId[msg.sender][_tokenIds[i]] = _liquidity;
 
             _depositLiquidity(
                 _tokenIds[i],

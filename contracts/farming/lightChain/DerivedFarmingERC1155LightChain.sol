@@ -54,7 +54,7 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
             int256 _liquidityDifference = int256(_liquidity) - int256(liqudityOfId[msg.sender][_tokenIds[i]]);
-
+            liqudityOfId[msg.sender][_tokenIds[i]] = _liquidity;
             _depositLiquidity(
                 _tokenIds[i],
                 _tokenAmounts[i],
@@ -91,6 +91,7 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
             _tokensAmount[i] = _amount;
 
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
+            liqudityOfId[msg.sender][_tokenIds[i]] = 0;
 
             _withdrawLiquidity(
                 _tokenIds[i],
@@ -136,6 +137,7 @@ contract DerivedDexLpFarmingERC1155LightChain is BaseDexLpFarmingLightChain {
             _tokensAmount[i] = _amount;
 
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
+            liqudityOfId[msg.sender][_tokenIds[i]] = 0;
 
             _withdrawAndHarvest(
                 _tokenIds[i],
