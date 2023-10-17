@@ -207,19 +207,16 @@ contract BaseDexLpFarming is Ownable2Step {
     ) internal {
         require(_liquidity != 0, "Farming: no liquidity");
 
+        int256 _accumulatedReward = int256(
+            _calAccumulatedReward(_liquidity, _accRewardPerShare)
+        );
+
         if (_negative) {
             _user.amount -= _liquidity;
-
-            _user.rewardDebt -=
-            int256((_liquidity * _accRewardPerShare) /
-            ACC_REWARD_PRECISION);
-        }
-        else {
+            _user.rewardDebt -= _accumulatedReward;
+        } else {
             _user.amount += _liquidity;
-
-            _user.rewardDebt +=
-            int256((_liquidity * _accRewardPerShare) /
-            ACC_REWARD_PRECISION);
+            _user.rewardDebt += _accumulatedReward;
         }
 
         userInfo[msg.sender] = _user;

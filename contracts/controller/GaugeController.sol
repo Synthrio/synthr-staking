@@ -78,15 +78,15 @@ contract GaugeController is AccessControl {
         RewardInfo[MAX_REWARD_TOKEN] memory _rewardInfo = reward[_pool];
         uint256 lpSupply = lpToken[_pool].balanceOf(_pool);
         if (block.number > _poolInfo.lastRewardBlock && lpSupply != 0) {
-        pending_ += _pendingRewardForToken(
-                    user.amount,
-                    user.rewardDebt[indexOfRewardToken],
-                    lpSupply,
-                    _rewardInfo[indexOfRewardToken].accRewardPerShare,
-                    _rewardInfo[indexOfRewardToken].rewardPerBlock,
-                    _poolInfo.lastRewardBlock,
-                    block.number
-                );
+            pending_ += _pendingRewardForToken(
+                user.amount,
+                user.rewardDebt[indexOfRewardToken],
+                lpSupply,
+                _rewardInfo[indexOfRewardToken].accRewardPerShare,
+                _rewardInfo[indexOfRewardToken].rewardPerBlock,
+                _poolInfo.lastRewardBlock,
+                block.number
+            );
         }
     }
 
@@ -251,8 +251,13 @@ contract GaugeController is AccessControl {
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
         uint256 _totalPendingReward;
         for (uint256 i = 0; i <= _poolInfo.index; ++i) {
-
-            (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(_user.amount, _user.rewardDebt[i], rewardInfo[i].accRewardPerShare, rewardInfo[i].token, _to);
+            (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(
+                _user.amount,
+                _user.rewardDebt[i],
+                rewardInfo[i].accRewardPerShare,
+                rewardInfo[i].token,
+                _to
+            );
             // Effects
             _user.rewardDebt[i] = accumulatedReward;
             _totalPendingReward += _pendingReward;
@@ -265,12 +270,22 @@ contract GaugeController is AccessControl {
     /// @param _pool The address of the pool. See `poolInfo`.
     /// @param _to Receiver of syUSD rewards.
     /// @param _index token index in reward tokens of pool.
-    function claimForToken(address _pool, address _to, uint256 _index) external {
+    function claimForToken(
+        address _pool,
+        address _to,
+        uint256 _index
+    ) external {
         updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
         RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];
 
-        (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(_user.amount, _user.rewardDebt[_index], rewardInfo[_index].accRewardPerShare, rewardInfo[_index].token, _to);
+        (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(
+            _user.amount,
+            _user.rewardDebt[_index],
+            rewardInfo[_index].accRewardPerShare,
+            rewardInfo[_index].token,
+            _to
+        );
 
         _user.rewardDebt[_index] = accumulatedReward;
 
@@ -305,10 +320,9 @@ contract GaugeController is AccessControl {
             );
 
             // Effects
-            _user.rewardDebt[i] = accumulatedReward - (_calAccReward(
-                _amount,
-                rewardInfo[i].accRewardPerShare
-            ));
+            _user.rewardDebt[i] =
+                accumulatedReward -
+                (_calAccReward(_amount, rewardInfo[i].accRewardPerShare));
             // Interactions
             if (_pendingReward != 0) {
                 IERC20(rewardInfo[i].token).safeTransfer(_to, _pendingReward);
@@ -429,15 +443,16 @@ contract GaugeController is AccessControl {
         }
     }
 
-    function _claimForToken(uint256 _amount, int256 _rewardDebt, uint256 _accRewardPerShare, address _token, address _to) internal returns(int256 _accmulatedReward, uint256 _pendingReward) {
-         _accmulatedReward = _calAccReward(
-            _accRewardPerShare,
-            _amount
-        );
+    function _claimForToken(
+        uint256 _amount,
+        int256 _rewardDebt,
+        uint256 _accRewardPerShare,
+        address _token,
+        address _to
+    ) internal returns (int256 _accmulatedReward, uint256 _pendingReward) {
+        _accmulatedReward = _calAccReward(_accRewardPerShare, _amount);
 
-        _pendingReward = uint256(
-            _accmulatedReward - _rewardDebt
-        );
+        _pendingReward = uint256(_accmulatedReward - _rewardDebt);
 
         if (_pendingReward != 0) {
             IERC20(_token).safeTransfer(_to, _pendingReward);
