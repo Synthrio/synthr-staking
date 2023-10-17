@@ -124,7 +124,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
         // Interactions
         tokenTracker.transferFrom(address(this), _to, _tokenId);
-        emit WithdrawAndHarvest(msg.sender,_tokenId, _pendingAmount);
+        emit WithdrawAndHarvest(msg.sender, _tokenId, _pendingAmount);
     }
 
     function _deposit(

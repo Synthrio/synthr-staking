@@ -55,16 +55,19 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
             bool neg;
-             uint256 _liquidityDifference;
-            
+            uint256 _liquidityDifference;
+
             if (_liquidity > liqudityOfId[msg.sender][_tokenIds[i]]) {
-                _liquidityDifference =  _liquidity - liqudityOfId[msg.sender][_tokenIds[i]];
-            }
-            else {
-                 _liquidityDifference =  liqudityOfId[msg.sender][_tokenIds[i]] - _liquidity;
+                _liquidityDifference =
+                    _liquidity -
+                    liqudityOfId[msg.sender][_tokenIds[i]];
+            } else {
+                _liquidityDifference =
+                    liqudityOfId[msg.sender][_tokenIds[i]] -
+                    _liquidity;
                 neg = true;
             }
-            
+
             liqudityOfId[msg.sender][_tokenIds[i]] = _liquidity;
             _depositLiquidity(
                 _tokenIds[i],
