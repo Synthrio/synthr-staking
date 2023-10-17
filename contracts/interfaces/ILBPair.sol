@@ -11,5 +11,5 @@ interface ILBPair {
 
     function getBin(uint24 id) external view returns (uint128, uint128);
 
-    function getReserve() external view returns (uint128, uint128);
+    function getReserves() external view returns (uint128, uint128);
 }

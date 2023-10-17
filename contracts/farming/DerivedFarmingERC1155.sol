@@ -29,14 +29,14 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
     function pendingReward(
         address _user
     ) external view returns (uint256 _pending) {
-        (, uint256 _lpSupply) = LBPair.getReserve();
+        (, uint256 _lpSupply) = LBPair.getReserves();
         _pending = _pendingReward(_user, _lpSupply);
     }
 
     /// @notice Update reward variables of the given pool.
     /// @return _pool Returns the pool that was updated.
     function updatePool() public returns (PoolInfo memory _pool) {
-        (, uint256 lpSupply) = LBPair.getReserve();
+        (, uint256 lpSupply) = LBPair.getReserves();
         _pool = _updatePool(lpSupply);
     }
 
@@ -54,17 +54,25 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             uint256 _liquidity = _getLiquidity(_tokenIds[i]);
 
-            int256 _liquidityDifference = int256(_liquidity) -
-                int256(liqudityOfId[msg.sender][_tokenIds[i]]);
+            bool neg;
+             uint256 _liquidityDifference;
+            
+            if (_liquidity > liqudityOfId[msg.sender][_tokenIds[i]]) {
+                _liquidityDifference =  _liquidity - liqudityOfId[msg.sender][_tokenIds[i]];
+            }
+            else {
+                 _liquidityDifference =  liqudityOfId[msg.sender][_tokenIds[i]] - _liquidity;
+                neg = true;
+            }
             
             liqudityOfId[msg.sender][_tokenIds[i]] = _liquidity;
-
             _depositLiquidity(
                 _tokenIds[i],
                 _tokenAmounts[i],
                 _liquidityDifference,
                 _pool.accRewardPerShare,
-                _user
+                _user,
+                neg
             );
         }
 
