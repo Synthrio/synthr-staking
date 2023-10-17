@@ -352,7 +352,7 @@ contract LBPair is LBToken, Ownable {
         idBin[id].binReserceY = uint128(y);
     }
 
-    function setReserve(uint256 x, uint256 y) external onlyOwner {
+    function setReserves(uint256 x, uint256 y) external onlyOwner {
         reserveX = uint128(x);
         reserveY = uint128(y);
     }
@@ -361,7 +361,7 @@ contract LBPair is LBToken, Ownable {
         return (idBin[id].binReserceX, idBin[id].binReserceY);
     }
 
-    function getReserve() external view returns (uint128, uint128) {
+    function getReserves() external view returns (uint128, uint128) {
         return (reserveX, reserveY);
     }
 
