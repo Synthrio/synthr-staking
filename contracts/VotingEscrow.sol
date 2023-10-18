@@ -16,6 +16,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     uint256 public constant CREATE_LOCK_TYPE = 1;
     uint256 public constant INCREASE_LOCK_AMOUNT = 2;
     uint256 public constant INCREASE_UNLOCK_TIME = 3;
+    uint256 public constant INCREASE_UNLOCK_TIME_AND_LOCK_AMOUNT = 4;
 
     uint256 public constant WEEK = 7 * 86400; // all future times are rounded by week
     uint256 public constant MAXTIME = 4 * 365 * 86400; // 4 years
@@ -78,6 +79,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     );
     event Withdrew(address indexed provider, uint256 value, uint256 timeStamp);
     event Supply(uint256 prevSupply, uint256 supply);
+    event GaugeUpdated(address indexed newGauge);
 
     constructor(
         address _tokenAddr,
@@ -232,6 +234,11 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         emit ControllerChanged(msg.sender, _newController);
     }
 
+    function setGaugeController(address _newController) external {
+        gaugeController = _newController;
+        emit GaugeUpdated(_newController);
+    }
+
     function checkpoint() external {
         _checkpoint(address(0), LockedBalance(0, 0), LockedBalance(0, 0));
     }
@@ -320,6 +327,38 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         );
 
         _depositFor(msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
+    }
+
+    function increaseAmountAndUnlockTime(
+        uint256 _value,
+        uint256 _unlockTime
+    ) external nonReentrant {
+        _assertNotContract(msg.sender);
+        LockedBalance storage _locked = locked[msg.sender];
+        uint256 unlockTime = (_unlockTime / WEEK) * WEEK;
+
+        require(_value > 0, "VotingEscrow: need non-zero value");
+        require(_locked.amount > 0, "VotingEscrow: No existing lock found");
+        require(
+            _locked.end > block.timestamp,
+            "VotingEscrow: Cannot add to an expired lock. Withdraw"
+        );
+        require(
+            unlockTime > _locked.end,
+            "VotingEscrow: Can only increase lock duration"
+        );
+        require(
+            unlockTime <= block.timestamp + MAXTIME,
+            "VotingEscrow: Voting lock can be 4 years max"
+        );
+
+        _depositFor(
+            msg.sender,
+            _value,
+            unlockTime,
+            _locked,
+            INCREASE_UNLOCK_TIME_AND_LOCK_AMOUNT
+        );
     }
 
     function withdraw() external nonReentrant {
