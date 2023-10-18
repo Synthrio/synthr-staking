@@ -79,6 +79,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     );
     event Withdrew(address indexed provider, uint256 value, uint256 timeStamp);
     event Supply(uint256 prevSupply, uint256 supply);
+    event GaugeUpdated(address indexed newGauge);
 
     constructor(
         address _tokenAddr,
@@ -231,6 +232,11 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         controller = _newController;
 
         emit ControllerChanged(msg.sender, _newController);
+    }
+
+    function setGaugeController(address _newController) external {
+        gaugeController = _newController;
+        emit GaugeUpdated(_newController);
     }
 
     function checkpoint() external {
