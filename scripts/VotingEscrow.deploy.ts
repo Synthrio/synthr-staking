@@ -6,14 +6,11 @@ dotenv.config();
 
 async function main() {
   let gaugeControllerAddress = process.env.GAUGE_CONTROLLER_ADDRESS;
-
-  const MockToken = await ethers.getContractFactory("MockToken");
-  const mockToken = await MockToken.deploy();
-  await mockToken.deployed();
+  let rewardToken = process.env.REWARD_TOKEN_ARBITRUM_ADDRESS;
 
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await VotingEscrow.deploy(
-    mockToken.address,
+    `${rewardToken}`,
     `${gaugeControllerAddress}`,
     "Vote Escrowed SYNTH",
     "veSYNTH",
@@ -22,22 +19,16 @@ async function main() {
 
   await votingEscrow.deployed();
   console.log(`VotingEscrow deployed to ${votingEscrow.address}`);
-  console.log(`MockToken deployed to ${mockToken.address}`);
 
   await run("verify:verify", {
     address: votingEscrow.address,
     constructorArguments: [
-      mockToken.address,
+      `${rewardToken}`,
       `${gaugeControllerAddress}`,
       "Vote Escrowed SYNTH",
       "veSYNTH",
       "1",
     ],
-  });
-
-  await run("verify:verify", {
-    address: mockToken.address,
-    constructorArguments: [],
   });
 }
 
