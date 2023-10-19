@@ -4,11 +4,9 @@ pragma solidity 0.8.19;
 interface IVoter {
     error AlreadyVotedOrDeposited();
     error DistributeWindow();
-    error GaugeAlreadyKilled();
-    error GaugeAlreadyRevived();
-    error GaugeExists();
-    error GaugeDoesNotExist(address _pool);
-    error GaugeNotAlive(uint16 _gauge);
+    error PoolAlreadyKilled();
+    error PoolAlreadyRevived();
+    error PoolNotAlive(uint256 _pool);
     error MaximumVotingNumberTooLow();
     error NonZeroVotes();
     error NotGovernor();
@@ -20,17 +18,13 @@ interface IVoter {
     error ZeroBalance();
     error ZeroAddress();
 
-    event GaugeKilled(uint16 indexed gauge);
-    event GaugeRevived(uint16 indexed gauge);
-    event GaugeSet(
-        uint16 indexed gauge,
-        address indexed pool,
-        address indexed governor
-    );
+    event PoolKilled(uint256 indexed gauge);
+    event PoolRevived(uint256 indexed gauge);
+    event PoolSet(uint256 indexed pool, address indexed governor);
 
     event Voted(
         address indexed voter,
-        address indexed pool,
+        uint256 indexed pool,
         address indexed user,
         uint256 weight,
         uint256 totalWeight,
@@ -38,7 +32,7 @@ interface IVoter {
     );
     event Abstained(
         address indexed voter,
-        address indexed pool,
+        uint256 indexed pool,
         address indexed user,
         uint256 weight,
         uint256 totalWeight,
@@ -57,7 +51,7 @@ interface IVoter {
     /// @param _poolVote    Array of pools you are voting for.
     /// @param _weights     Weights of pools.
     function vote(
-        address[] calldata _poolVote,
+        uint256[] calldata _poolVote,
         uint256[] calldata _weights
     ) external;
 
