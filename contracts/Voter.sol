@@ -13,6 +13,7 @@ import {TimeLibrary} from "./liberaries/TimeLibrary.sol";
 contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    uint256 internal constant MIN_MAXVOTINGNUM = 10;
     address public immutable ve;
 
     address public governor;
@@ -23,33 +24,26 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     uint256 public maxVotingNum;
 
-    uint256 internal constant MIN_MAXVOTINGNUM = 10;
+    // last added pool index
+    uint256 public index;
 
-    /// @dev All pools viable for incentives
-    address[] public pools;
+    // pool => total weight
+    mapping(uint256 => uint256) public weights;
 
-    mapping(address => uint16) public gauges;
+    // user => pool => weight
+    mapping(address => mapping(uint256 => uint256)) public votes;
 
-    mapping(uint16 => address) public poolForGauge;
-
-    mapping(address => uint256) public weights;
-
-    mapping(address => mapping(address => uint256)) public votes;
     /// @dev address of user => List of pools voted for by user
-
-    mapping(address => address[]) public poolVote;
+    mapping(address => uint256[]) public poolVote;
 
     mapping(address => uint256) public usedWeights;
 
     mapping(address => uint256) public lastVoted;
 
-    mapping(uint16 => bool) public isGauge;
-
     mapping(address => bool) public isWhitelistedUser;
 
-    mapping(uint16 => bool) public isAlive;
+    mapping(uint256 => bool) public isAlive;
 
-    mapping(address => uint256) public voteOnUser;
     mapping(address => bool) public voted;
 
     constructor(address _forwarder, address _ve) ERC2771Context(_forwarder) {
@@ -114,7 +108,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     function vote(
-        address[] calldata _poolVote,
+        uint256[] calldata _poolVote,
         uint256[] calldata _weights
     ) external onlyNewEpoch(msg.sender) nonReentrant {
         address _sender = _msgSender();
@@ -143,43 +137,31 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         emit WhitelistUser(_sender, _user, _bool);
     }
 
-    function setGauge(
-        address _pool,
-        uint16 _gauge
-    ) external nonReentrant returns (uint16) {
+    function addPool() external nonReentrant {
         address sender = _msgSender();
         if (sender != governor) revert NotGovernor();
-        if (gauges[_pool] != 0) revert GaugeExists();
 
-        gauges[_pool] = _gauge;
-        poolForGauge[_gauge] = _pool;
-        isGauge[_gauge] = true;
-        isAlive[_gauge] = true;
+        uint256 _index = index + 1;
+        isAlive[_index] = true;
 
-        pools.push(_pool);
+        index = _index;
 
-        emit GaugeSet(_gauge, _pool, sender);
-
-        return _gauge;
+        emit PoolSet(_index, sender);
     }
 
-    function killGauge(uint16 _gauge) external {
+    function killPool(uint256 _pool) external {
         if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
-        if (!isAlive[_gauge]) revert GaugeAlreadyKilled();
+        if (!isAlive[_pool]) revert PoolAlreadyKilled();
 
-        isAlive[_gauge] = false;
-        emit GaugeKilled(_gauge);
+        isAlive[_pool] = false;
+        emit PoolKilled(_pool);
     }
 
-    function reviveGauge(uint16 _gauge) external {
+    function revivePool(uint256 _pool) external {
         if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
-        if (isAlive[_gauge]) revert GaugeAlreadyRevived();
-        isAlive[_gauge] = true;
-        emit GaugeRevived(_gauge);
-    }
-
-    function length() external view returns (uint256) {
-        return pools.length;
+        if (isAlive[_pool]) revert PoolAlreadyRevived();
+        isAlive[_pool] = true;
+        emit PoolRevived(_pool);
     }
 
     function poke() external nonReentrant {
@@ -193,7 +175,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     function _poke(address _user, uint256 _weight) internal {
-        address[] memory _poolVote = poolVote[_user];
+        uint256[] memory _poolVote = poolVote[_user];
         uint256 _poolCnt = _poolVote.length;
         uint256[] memory _weights = new uint256[](_poolCnt);
 
@@ -204,19 +186,18 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     function _reset(address _user) internal {
-        address[] storage _poolVote = poolVote[_user];
+        uint256[] storage _poolVote = poolVote[_user];
         uint256 _poolVoteCnt = _poolVote.length;
         uint256 _totalWeight = 0;
 
         for (uint256 i = 0; i < _poolVoteCnt; i++) {
-            address _pool = _poolVote[i];
+            uint256 _pool = _poolVote[i];
             uint256 _votes = votes[_user][_pool];
 
             if (_votes != 0) {
                 weights[_pool] -= _votes;
                 delete votes[_user][_pool];
 
-                voteOnUser[_user] -= _votes;
                 _totalWeight += _votes;
                 emit Abstained(
                     _msgSender(),
@@ -238,7 +219,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     function _vote(
         address _user,
         uint256 _weight,
-        address[] memory _poolVote,
+        uint256[] memory _poolVote,
         uint256[] memory _weights
     ) internal {
         _reset(_user);
@@ -253,36 +234,29 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         }
 
         for (uint256 i = 0; i < _poolCnt; i++) {
-            address _pool = _poolVote[i];
-            uint16 _gauge = gauges[_pool];
-            if (_gauge == 0) revert GaugeDoesNotExist(_pool);
-            if (!isAlive[_gauge]) revert GaugeNotAlive(_gauge);
+            uint256 _pool = _poolVote[i];
+            if (!isAlive[_pool]) revert PoolNotAlive(_pool);
 
-            if (isGauge[_gauge]) {
-                uint256 _poolWeight = (_weights[i] * _weight) /
-                    _totalVoteWeight;
-                if (votes[_user][_pool] != 0) revert NonZeroVotes();
-                if (_poolWeight == 0) revert ZeroBalance();
+            uint256 _poolWeight = (_weights[i] * _weight) / _totalVoteWeight;
+            if (votes[_user][_pool] != 0) revert NonZeroVotes();
+            if (_poolWeight == 0) revert ZeroBalance();
 
-                poolVote[_user].push(_pool);
+            poolVote[_user].push(_pool);
 
-                weights[_pool] += _poolWeight;
-                votes[_user][_pool] += _poolWeight;
+            weights[_pool] += _poolWeight;
+            votes[_user][_pool] += _poolWeight;
 
-                voteOnUser[_user] += _poolWeight;
+            _usedWeight += _poolWeight;
+            _totalWeight += _poolWeight;
 
-                _usedWeight += _poolWeight;
-                _totalWeight += _poolWeight;
-
-                emit Voted(
-                    _msgSender(),
-                    _pool,
-                    _user,
-                    _poolWeight,
-                    weights[_pool],
-                    block.timestamp
-                );
-            }
+            emit Voted(
+                _msgSender(),
+                _pool,
+                _user,
+                _poolWeight,
+                weights[_pool],
+                block.timestamp
+            );
         }
         if (_usedWeight > 0) voted[_user] = true;
         totalWeight += _totalWeight;
