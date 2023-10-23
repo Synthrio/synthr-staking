@@ -173,6 +173,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
     function getLiquidityIds(uint256[] calldata _tokenIds) external view returns (uint256[] memory tokenIds) {
         uint256 liquidity;
         uint256 idIndex;
+        tokenIds = new uint256[](_tokenIds.length);
         for (uint256 index; index < _tokenIds.length; ++index) {
             liquidity = _getLiquidity(_tokenIds[index]);
             if (liquidity != 0) {
