@@ -87,7 +87,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokenAmounts
         );
 
-        emit DepositBatch(msg.sender, _tokenIds);
+        emit Deposit(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -122,14 +122,15 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokensAmount
         );
 
-        emit WithdrawBatch(msg.sender, _tokenIds);
+        emit Withdraw(msg.sender, _tokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param to Receiver of REWARD_TOKEN rewards.
     function harvest(address to) external {
         PoolInfo memory pool = updatePool();
-        _harvest(pool.accRewardPerShare, to);
+        uint256 _pendingRewardAmount = _harvest(pool.accRewardPerShare, to);
+        emit Harvest(msg.sender, _pendingRewardAmount);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming and harvest proceeds for transaction sender to `to`.
@@ -163,14 +164,12 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         }
         // Interactions
         LBPair.batchTransferFrom(address(this), _to, _tokenIds, _tokensAmount);
-        emit WithdrawAndHarvestBatch(
-            msg.sender,
-            _tokenIds,
-            _totalPendingAmount
-        );
+        emit WithdrawAndHarvest(msg.sender, _tokenIds, _totalPendingAmount);
     }
 
-    function getLiquidityIds(uint256[] calldata _tokenIds) external view returns (uint256[] memory tokenIds) {
+    function getLiquidityIds(
+        uint256[] calldata _tokenIds
+    ) external view returns (uint256[] memory tokenIds) {
         uint256 liquidity;
         uint256 idIndex;
         tokenIds = new uint256[](_tokenIds.length);
