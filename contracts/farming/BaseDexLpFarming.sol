@@ -42,16 +42,9 @@ contract BaseDexLpFarming is Ownable2Step {
     /// @notice amount of token id of user has deposited in pool.
     mapping(address => mapping(uint256 => uint256)) public userTokenAmount;
 
-    event Deposit(address indexed user, uint256 tokenId);
-    event Withdraw(address indexed user, uint256 tokenId);
-    event DepositBatch(address indexed user, uint256[] tokenId);
-    event WithdrawBatch(address indexed user, uint256[] tokenId);
+    event Deposit(address indexed user, uint256[] tokenId);
+    event Withdraw(address indexed user, uint256[] tokenId);
     event WithdrawAndHarvest(
-        address indexed user,
-        uint256 tokenId,
-        uint256 amount
-    );
-    event WithdrawAndHarvestBatch(
         address indexed user,
         uint256[] tokenId,
         uint256 amount
@@ -126,14 +119,15 @@ contract BaseDexLpFarming is Ownable2Step {
         );
     }
 
-    function _harvest(uint256 _accRewardPerShare, address _to) internal {
+    function _harvest(
+        uint256 _accRewardPerShare,
+        address _to
+    ) internal returns (uint256 _pendingRewardAmount) {
         UserInfo memory _user = userInfo[msg.sender];
         int256 accumulatedReward = int256(
             _calAccumulatedReward(_user.amount, _accRewardPerShare)
         );
-        uint256 _pendingRewardAmount = uint256(
-            accumulatedReward - _user.rewardDebt
-        );
+        _pendingRewardAmount = uint256(accumulatedReward - _user.rewardDebt);
 
         // Effects
         _user.rewardDebt = accumulatedReward;
@@ -142,8 +136,6 @@ contract BaseDexLpFarming is Ownable2Step {
         if (_pendingRewardAmount != 0) {
             REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
         }
-
-        emit Harvest(msg.sender, _pendingRewardAmount);
     }
 
     function _withdrawAndHarvest(
