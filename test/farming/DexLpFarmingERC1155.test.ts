@@ -45,10 +45,20 @@ describe("DerivedDexLpFarmingERC1155", function () {
 
   describe("PoolInfo", function () {
     it("Should set pool info", async function () {
-      expect((await this.chef.pool()).lastRewardBlock).to.be.equal(0);
-      expect((await this.chef.pool()).currentEpoch).to.be.equal(1);
+      await this.rewardToken.approve(this.chef.address, parseUnits("503", 18));
+
+      let log = await this.chef.setRewardPerBlock(
+        "20000000000000000",
+        parseUnits("503", 18),
+        owner.address
+      );
+
+      expect((await this.chef.pool()).lastRewardBlock).to.be.equal(
+        log.blockNumber
+      );
+      expect((await this.chef.pool()).currentEpoch).to.be.equal(2);
       expect((await this.chef.pool()).rewardPerBlock).to.be.equal(
-        BigNumber.from("10000000000000000")
+        BigNumber.from("20000000000000000")
       );
     });
   });
@@ -196,7 +206,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1000", 18)
       );
       await expect(this.chef.depositBatch([1], [parseUnits("100", 18)]))
-        .to.emit(this.chef, "DepositBatch")
+        .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, [1]);
       let liqAmount = (await this.lbPair.getBin(1))[1];
       expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
@@ -281,7 +291,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1000", 18)
       );
       await expect(this.chef.depositBatch([1], [parseUnits("100", 18)]))
-        .to.emit(this.chef, "DepositBatch")
+        .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, [1]);
       let liqAmount = (await this.lbPair.getBin(1))[1];
       expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
@@ -328,7 +338,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
           [parseUnits("100", 18), parseUnits("100", 18)]
         )
       )
-        .to.emit(this.chef, "DepositBatch")
+        .to.emit(this.chef, "Deposit")
         .withArgs(owner.address, [1, 2]);
 
       expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
@@ -345,7 +355,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
       );
 
       await expect(this.chef.withdrawBatch([2, 1]))
-        .to.emit(this.chef, "WithdrawBatch")
+        .to.emit(this.chef, "Withdraw")
         .withArgs(owner.address, [2, 1]);
 
       expect(await this.lbPair.balanceOf(owner.address, 1)).to.equal(
@@ -396,7 +406,9 @@ describe("DerivedDexLpFarmingERC1155", function () {
       );
 
       let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
+      await expect(this.chef.harvest(this.alice.address))
+        .to.emit(this.chef, "Harvest")
+        .withArgs(owner.address, expectedrewardToken);
       let afterBalance = await this.rewardToken.balanceOf(this.alice.address);
       expect(afterBalance).to.be.equal(expectedrewardToken.add(beforeBalance));
     });
@@ -469,6 +481,10 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("403", 18)
       );
       let log2 = await this.chef.withdrawAndHarvest([1], owner.address);
+      expect(log2)
+        .to.emit(this.chef, "withdrawAndHarvest")
+        .withArgs(owner.address, [getBigNumber(1)]);
+
       let precision = await this.chef.ACC_REWARD_PRECISION();
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
