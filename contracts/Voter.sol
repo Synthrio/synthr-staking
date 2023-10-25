@@ -86,7 +86,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     function setVe(address _ve) external {
         if (_msgSender() != governor) revert NotGovernor();
         ve = _ve;
-        // emit VotingEscrowChanged(_ve);
+        emit VotingEscrowChanged(_ve);
     }
 
     function setGovernor(address _governor) external {
@@ -134,15 +134,18 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         _vote(_sender, _weight, _poolVote, _weights);
     }
 
-    function whitelistUser(address[] memory _user, bool[] memory _bool) external {
+    function whitelistUser(
+        address[] memory _user,
+        bool[] memory _bool
+    ) external {
         address _sender = _msgSender();
         if (_sender != governor) {
             revert NotGovernor();
         }
 
         if (_user.length != _bool.length) revert UnequalLengths();
-        
-        for (uint256 i; i<_user.length; ++i) {
+
+        for (uint256 i; i < _user.length; ++i) {
             isWhitelistedUser[_user[i]] = _bool[i];
         }
         emit WhitelistUser(_sender, _user, _bool);
