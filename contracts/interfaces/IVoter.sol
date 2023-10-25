@@ -21,6 +21,7 @@ interface IVoter {
     event PoolKilled(uint256 indexed gauge);
     event PoolRevived(uint256 indexed gauge);
     event PoolSet(uint256 indexed pool, address indexed governor);
+    event VotingEscrowChanged(address indexed newVotingEscrow);
 
     event Voted(
         address indexed voter,
@@ -40,8 +41,8 @@ interface IVoter {
     );
     event WhitelistUser(
         address indexed whitelister,
-        address indexed user,
-        bool indexed _bool
+        address[] indexed user,
+        bool[] indexed _bool
     );
 
     /// @notice Called by users to vote for pools. Votes distributed proportionally based on weights.
@@ -84,5 +85,5 @@ interface IVoter {
     ///      Throws if already whitelisted.
     /// @param _user .
     /// @param _bool .
-    function whitelistUser(address _user, bool _bool) external;
+    function whitelistUser(address[] calldata _user, bool[] calldata _bool) external;
 }
