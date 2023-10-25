@@ -14,7 +14,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 internal constant MIN_MAXVOTINGNUM = 10;
-    address public immutable ve;
+    address public ve;
 
     address public governor;
 
@@ -83,6 +83,12 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         return Time.epochVoteEnd(_timestamp);
     }
 
+    function setVe(address _ve) external {
+        if (_msgSender() != governor) revert NotGovernor();
+        ve = _ve;
+        // emit VotingEscrowChanged(_ve);
+    }
+
     function setGovernor(address _governor) external {
         if (_msgSender() != governor) revert NotGovernor();
         if (_governor == address(0)) revert ZeroAddress();
@@ -128,23 +134,30 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         _vote(_sender, _weight, _poolVote, _weights);
     }
 
-    function whitelistUser(address _user, bool _bool) external {
+    function whitelistUser(address[] memory _user, bool[] memory _bool) external {
         address _sender = _msgSender();
         if (_sender != governor) {
             revert NotGovernor();
         }
-        isWhitelistedUser[_user] = _bool;
+
+        if (_user.length != _bool.length) revert UnequalLengths();
+        
+        for (uint256 i; i<_user.length; ++i) {
+            isWhitelistedUser[_user[i]] = _bool[i];
+        }
         emit WhitelistUser(_sender, _user, _bool);
     }
 
-    function addPool() external nonReentrant {
+    function addPool(uint256 _poolCount) external nonReentrant {
         address sender = _msgSender();
         if (sender != governor) revert NotGovernor();
 
         uint256 _index = index + 1;
-        isAlive[_index] = true;
+        for (uint256 i; i < _poolCount; ++i) {
+            isAlive[_index + i] = true;
+        }
 
-        index = _index;
+        index = _index + _poolCount - 1;
 
         emit PoolSet(_index, sender);
     }
