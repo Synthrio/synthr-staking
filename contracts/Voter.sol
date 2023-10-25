@@ -159,7 +159,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
         index = _index + _poolCount - 1;
 
-        emit PoolSet(_index, sender);
+        emit PoolSet(_index + _poolCount - 1, sender);
     }
 
     function killPool(uint256 _pool) external {
