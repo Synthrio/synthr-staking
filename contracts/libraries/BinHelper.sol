@@ -1,16 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import {PackedUint128Math} from "./PackedUint128Math.sol";
 import {Uint256x256Math} from "./Uint256x256Math.sol";
-// import {SafeCast} from "./math/SafeCast.sol";
-// import {Constants} from "./Constants.sol";
-// import {PairParameterHelper} from "./PairParameterHelper.sol";
-// import {FeeHelper} from "./FeeHelper.sol";
-// import {PriceHelper} from "./PriceHelper.sol";
-// import {TokenHelper} from "./TokenHelper.sol";
 
 /**
  * @title Liquidity Book Bin Helper Library
@@ -32,22 +24,26 @@ library BinHelper {
      * @param totalSupply The total supply of the liquidity book
      * @return amountsOut The encoded amount of tokens that will be received
      */
-    function getAmountOutOfBin(bytes32 binReserves, uint256 amountToBurn, uint256 totalSupply)
-        internal
-        pure
-        returns (bytes32 amountsOut)
-    {
+    function getAmountOutOfBin(
+        bytes32 binReserves,
+        uint256 amountToBurn,
+        uint256 totalSupply
+    ) internal pure returns (bytes32 amountsOut) {
         (uint128 binReserveX, uint128 binReserveY) = binReserves.decode();
 
         uint128 amountXOutFromBin;
         uint128 amountYOutFromBin;
 
         if (binReserveX > 0) {
-            amountXOutFromBin = uint128(amountToBurn.mulDivRoundDown(binReserveX, totalSupply));
+            amountXOutFromBin = uint128(
+                amountToBurn.mulDivRoundDown(binReserveX, totalSupply)
+            );
         }
 
         if (binReserveY > 0) {
-            amountYOutFromBin = uint128(amountToBurn.mulDivRoundDown(binReserveY, totalSupply));
+            amountYOutFromBin = uint128(
+                amountToBurn.mulDivRoundDown(binReserveY, totalSupply)
+            );
         }
 
         amountsOut = amountXOutFromBin.encode(amountYOutFromBin);
