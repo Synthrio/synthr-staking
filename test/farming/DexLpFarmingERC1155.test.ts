@@ -6,15 +6,21 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { parseUnits } from "ethers/lib/utils";
 import { get } from "http";
 
-describe("DerivedDexLpFarmingERC1155", function () {
+describe.only("DerivedDexLpFarmingERC1155", function () {
   before(async function () {
-    await prepare(this, ["DerivedDexLpFarmingERC1155", "LBPair", "MockToken"]);
+    await prepare(this, [
+      "DerivedDexLpFarmingERC1155",
+      "LBPair",
+      "MockToken",
+      "LibTest",
+    ]);
   });
 
   let owner: any, addr1: any, addr2: any;
   beforeEach(async function () {
     await deploy(this, [["rewardToken", this.MockToken]]);
     await deploy(this, [["lbPair", this.LBPair]]);
+    await deploy(this, [["libTest", this.LibTest]]);
 
     [owner, addr1, addr2] = await ethers.getSigners();
     await deploy(this, [
@@ -233,10 +239,23 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("13000", 18)
       );
 
+      let reserveX = (await this.lbPair.getBin(1))[0];
+      let reserveY = (await this.lbPair.getBin(1))[1];
+      let amountInBin = await this.lbPair.balanceOf(owner.address, 1);
+      let binReserves = await this.libTest.encodeTest(reserveX, reserveY);
+      let supply = await this.lbPair.totalSupply(1);
+
+      let amountsOutFromBin = await this.libTest.getAmount(
+        binReserves,
+        amountInBin,
+        supply
+      );
+      let liquidity = (await this.libTest.decodeTest(amountsOutFromBin))[1];
       let pricision = await this.chef.ACC_REWARD_PRECISION();
       let log = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
+
       expect((await this.chef.userInfo(owner.address)).amount).to.be.equal(
-        parseUnits("1300", 18)
+        liquidity
       );
 
       await this.lbPair.setBin(
@@ -249,9 +268,24 @@ describe("DerivedDexLpFarmingERC1155", function () {
 
       let befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
       let befAcc = (await this.chef.pool()).accRewardPerShare;
+
+      reserveX = (await this.lbPair.getBin(1))[0];
+      reserveY = (await this.lbPair.getBin(1))[1];
+      amountInBin = await this.lbPair.balanceOf(owner.address, 1);
+      binReserves = await this.libTest.encodeTest(reserveX, reserveY);
+      supply = await this.lbPair.totalSupply(1);
+
+      amountsOutFromBin = await this.libTest.getAmount(
+        binReserves,
+        amountInBin,
+        supply
+      );
+      let afterLiquidity = (
+        await this.libTest.decodeTest(amountsOutFromBin)
+      )[1];
       let log2 = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
       expect((await this.chef.userInfo(owner.address)).amount).to.be.equal(
-        parseUnits("1500", 18)
+        afterLiquidity
       );
 
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
@@ -267,7 +301,7 @@ describe("DerivedDexLpFarmingERC1155", function () {
         .div(lpSupply)
         .add(befAcc);
       expectedrewardToken = expectedrewardToken
-        .mul(parseUnits("200", 18))
+        .mul(afterLiquidity.sub(liquidity))
         .div(pricision);
 
       expect((await this.chef.userInfo(owner.address)).rewardDebt).to.be.equal(
@@ -386,31 +420,55 @@ describe("DerivedDexLpFarmingERC1155", function () {
 
       let pricision = await this.chef.ACC_REWARD_PRECISION();
       let log = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
+      let befAcc = (await this.chef.pool()).accRewardPerShare;
+      let befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
       let x = await time.latest();
       await time.increaseTo(x + 10);
+      let reserveX = (await this.lbPair.getBin(1))[0];
+      let reserveY = (await this.lbPair.getBin(1))[1];
+      let amountInBin = await this.lbPair.balanceOf(owner.address, 1);
+      let binReserves = await this.libTest.encodeTest(reserveX, reserveY);
+      let supply = await this.lbPair.totalSupply(1);
+
+      let amountsOutFromBin = await this.libTest.getAmount(
+        binReserves,
+        amountInBin,
+        supply
+      );
+      let liqAmount = (await this.libTest.decodeTest(amountsOutFromBin))[1];
       let log2 = await this.chef.withdrawBatch([1]);
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
         block2 - block
       );
-      let liqAmount = (await this.lbPair.getBin(1))[1];
+
       let lpSupply = (await this.lbPair.getReserves())[1];
 
       expectedrewardToken = expectedrewardToken.mul(pricision).div(lpSupply);
-
-      expectedrewardToken = expectedrewardToken.mul(liqAmount).div(pricision);
+      expectedrewardToken = expectedrewardToken.add(befAcc);
+      let pendingReward = expectedrewardToken.mul(liqAmount).div(pricision);
+      pendingReward = befRewardDebt.sub(pendingReward);
 
       expect((await this.chef.userInfo(owner.address)).rewardDebt).to.be.equal(
-        "-" + expectedrewardToken
+        pendingReward
       );
+
+      let expectedrewardToken1 = BigNumber.from("10000000000000000");
+      expectedrewardToken1 = expectedrewardToken1.mul(pricision).div(lpSupply);
+      befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
+      expectedrewardToken1 = expectedrewardToken1.add(expectedrewardToken);
+      let pendingReward1 = expectedrewardToken1
+        .mul(BigNumber.from("130000000000000000000"))
+        .div(pricision);
+      pendingReward1 = pendingReward1.sub(befRewardDebt);
 
       let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
       await expect(this.chef.harvest(this.alice.address))
         .to.emit(this.chef, "Harvest")
-        .withArgs(owner.address, expectedrewardToken);
+        .withArgs(owner.address, pendingReward1);
       let afterBalance = await this.rewardToken.balanceOf(this.alice.address);
-      expect(afterBalance).to.be.equal(expectedrewardToken.add(beforeBalance));
+      expect(afterBalance).to.be.equal(pendingReward1.add(beforeBalance));
     });
 
     it("Harvest with empty user balance", async function () {
@@ -436,27 +494,55 @@ describe("DerivedDexLpFarmingERC1155", function () {
 
       let pricision = await this.chef.ACC_REWARD_PRECISION();
       let log = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
-      await time.increaseTo(30000126431);
+      let befAcc = (await this.chef.pool()).accRewardPerShare;
+      let befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
+      let x = await time.latest();
+      await time.increaseTo(x + 10);
+      let reserveX = (await this.lbPair.getBin(1))[0];
+      let reserveY = (await this.lbPair.getBin(1))[1];
+      let amountInBin = await this.lbPair.balanceOf(owner.address, 1);
+      let binReserves = await this.libTest.encodeTest(reserveX, reserveY);
+      let supply = await this.lbPair.totalSupply(1);
 
+      let amountsOutFromBin = await this.libTest.getAmount(
+        binReserves,
+        amountInBin,
+        supply
+      );
+      let liqAmount = (await this.libTest.decodeTest(amountsOutFromBin))[1];
       let log2 = await this.chef.withdrawBatch([1]);
-
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
       let expectedrewardToken = BigNumber.from("10000000000000000").mul(
         block2 - block
       );
-      let liqAmount = (await this.lbPair.getBin(1))[1];
+
       let lpSupply = (await this.lbPair.getReserves())[1];
+
       expectedrewardToken = expectedrewardToken.mul(pricision).div(lpSupply);
-      expectedrewardToken = expectedrewardToken.mul(liqAmount).div(pricision);
+      expectedrewardToken = expectedrewardToken.add(befAcc);
+      let pendingReward = expectedrewardToken.mul(liqAmount).div(pricision);
+      pendingReward = befRewardDebt.sub(pendingReward);
+
       expect((await this.chef.userInfo(owner.address)).rewardDebt).to.be.equal(
-        "-" + expectedrewardToken
+        pendingReward
       );
+      let expectedrewardToken1 = BigNumber.from("10000000000000000");
+      let liq = (await this.chef.userInfo(owner.address)).amount;
+      expectedrewardToken1 = expectedrewardToken1.mul(pricision).div(lpSupply);
+      befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
+      expectedrewardToken1 = expectedrewardToken1.add(expectedrewardToken);
+      let pendingReward1 = expectedrewardToken1
+        .mul(BigNumber.from("130000000000000000000"))
+        .div(pricision);
+      pendingReward1 = pendingReward1.sub(befRewardDebt);
+
       let beforeBalance = await this.rewardToken.balanceOf(this.alice.address);
-      await this.chef.harvest(this.alice.address);
-      expect(await this.rewardToken.balanceOf(this.alice.address)).to.be.equal(
-        expectedrewardToken.add(beforeBalance)
-      );
+      await expect(this.chef.harvest(this.alice.address))
+        .to.emit(this.chef, "Harvest")
+        .withArgs(owner.address, pendingReward1);
+      let afterBalance = await this.rewardToken.balanceOf(this.alice.address);
+      expect(afterBalance).to.be.equal(pendingReward1.add(beforeBalance));
     });
   });
 
