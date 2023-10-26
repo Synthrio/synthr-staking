@@ -57,6 +57,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
 
         // Effects
         for (uint256 i = 0; i < _tokenIds.length; i++) {
+            require(_tokenAmounts[i] != 0, "Farming: zero token amount");
             uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
             bool neg;
             uint256 _liquidityDifference;
