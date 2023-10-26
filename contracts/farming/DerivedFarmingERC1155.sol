@@ -5,10 +5,15 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "../interfaces/ILBPair.sol";
 import "./BaseDexLpFarming.sol";
+import {PackedUint128Math} from "../libraries/PackedUint128Math.sol";
+import {BinHelper} from "../libraries/BinHelper.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
 contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
     using SafeERC20 for IERC20;
+    using PackedUint128Math for bytes32;
+    using PackedUint128Math for uint128;
+    using BinHelper for bytes32;
 
     ILBPair public LBPair;
 
@@ -52,7 +57,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
 
         // Effects
         for (uint256 i = 0; i < _tokenIds.length; i++) {
-            uint256 _liquidity = _getLiquidity(_tokenIds[i]);
+            uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
 
             bool neg;
             uint256 _liquidityDifference;
@@ -105,7 +110,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokensAmount[i] = _amount;
 
             liqudityOfId[msg.sender][_tokenIds[i]] = 0;
-            uint256 _liquidity = _getLiquidity(_tokenIds[i]);
+            uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
 
             _withdrawLiquidity(
                 _tokenIds[i],
@@ -152,7 +157,7 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokensAmount[i] = _amount;
 
             liqudityOfId[msg.sender][_tokenIds[i]] = 0;
-            uint256 _liquidity = _getLiquidity(_tokenIds[i]);
+            uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
 
             _totalPendingAmount += _withdrawAndHarvest(
                 _tokenIds[i],
@@ -185,5 +190,15 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
     function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
         (, uint256 _liquidity) = LBPair.getBin(uint24(_tokenId));
         return _liquidity;
+    }
+
+    function _getLiquidityAmount(uint256 _id, address _user) internal view returns(uint256 _liquidity) {
+        (uint128 reserveX, uint128 reserveY) = LBPair.getBin(uint24(_id));
+        uint256 amountInBin = LBPair.balanceOf(_user, _id);
+        bytes32 binReserves = reserveX.encode(reserveY);
+        uint256 supply = LBPair.totalSupply(_id);
+
+        bytes32 amountsOutFromBin = binReserves.getAmountOutOfBin(amountInBin, supply);
+        (, _liquidity) = amountsOutFromBin.decode();
     }
 }
