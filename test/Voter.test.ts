@@ -58,7 +58,6 @@ async function addPoolFunc() {
   ];
 
   let tx = await gaugeController.addPool(
-    epoch,
     lpTtoken.address,
     votingEscrow.address,
     reward
@@ -92,7 +91,7 @@ async function setUpVotingAndGauge() {
   ).to.equal(parseUnits("1000", 18));
 }
 
-describe("VotingEscrow", function () {
+describe("Voter", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
@@ -106,8 +105,8 @@ describe("VotingEscrow", function () {
       await setUpVotingAndGauge();
 
       let t = await time.latest();
-      await voter.connect(owner).whitelistUser(owner.address, true);
-      await voter.addPool();
+      await voter.connect(owner).whitelistUser([owner.address], [true]);
+      await voter.addPool(1);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
@@ -127,6 +126,38 @@ describe("VotingEscrow", function () {
         );
       expect(await voter.usedWeights(addr1.address)).to.equal(voteAmount);
       expect(await voter.voted(addr1.address)).to.equal(true);
+    });
+    
+    it("Should whilist multiper user", async function () {
+      await setUpVotingAndGauge();
+
+      let t = await time.latest();
+      await voter.connect(owner).whitelistUser([owner.address, addr3.address, addr4.address, addr5.address], [true, true, true, true]);
+      expect(await voter.isWhitelistedUser(owner.address)).to.equal(true);
+      expect(await voter.isWhitelistedUser(addr3.address)).to.equal(true);
+      expect(await voter.isWhitelistedUser(addr4.address)).to.equal(true);
+      expect(await voter.isWhitelistedUser(addr5.address)).to.equal(true);
+      await voter.addPool(1);
+      const blockNum1 = await ethers.provider.getBlockNumber();
+      const block1 = await ethers.provider.getBlock(blockNum1);
+      const timestamp1 = block1.timestamp;
+      let voteAmount = await votingEscrow.balanceOf(
+        addr1.address,
+        timestamp1 + 1
+      );
+      await expect(voter.connect(addr1).vote([1], [1000]))
+        .to.emit(voter, "Voted")
+        .withArgs(
+          addr1.address,
+          1,
+          addr1.address,
+          voteAmount,
+          voteAmount,
+          timestamp1 + 1
+        );
+      expect(await voter.usedWeights(addr1.address)).to.equal(voteAmount);
+      expect(await voter.voted(addr1.address)).to.equal(true);
+      expect(await voter.voted(addr2.address)).to.equal(false);
     });
 
     it("Should vote for multiple pools", async function () {
@@ -157,12 +188,13 @@ describe("VotingEscrow", function () {
       ).to.equal(parseUnits("1000", 18));
 
       let t = await time.latest();
-      await voter.connect(owner).whitelistUser(owner.address, true);
-      await voter.addPool();
-      await voter.addPool();
-      await voter.addPool();
-      await voter.addPool();
-      await voter.addPool();
+      await voter.connect(owner).whitelistUser([owner.address], [true]);
+      await voter.addPool(5);
+      expect(await voter.isAlive(1)).to.equal(true);
+      expect(await voter.isAlive(2)).to.equal(true);
+      expect(await voter.isAlive(3)).to.equal(true);
+      expect(await voter.isAlive(4)).to.equal(true);
+      expect(await voter.isAlive(5)).to.equal(true);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
@@ -199,8 +231,8 @@ describe("VotingEscrow", function () {
     it("Should reset vote", async function () {
       await setUpVotingAndGauge();
 
-      await voter.connect(owner).whitelistUser(owner.address, true);
-      await voter.addPool();
+      await voter.connect(owner).whitelistUser([owner.address], [true]);
+      await voter.addPool(1);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
@@ -235,8 +267,8 @@ describe("VotingEscrow", function () {
 
     it("Should poke vote", async function () {
       await setUpVotingAndGauge();
-      await voter.connect(owner).whitelistUser(owner.address, true);
-      await voter.addPool();
+      await voter.connect(owner).whitelistUser([owner.address], [true]);
+      await voter.addPool(1);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
@@ -279,8 +311,8 @@ describe("VotingEscrow", function () {
 
     it("Should revert if voter vote again not", async function () {
       await setUpVotingAndGauge();
-      await voter.connect(owner).whitelistUser(owner.address, true);
-      await voter.addPool();
+      await voter.connect(owner).whitelistUser([owner.address], [true]);
+      await voter.addPool(1);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
@@ -304,8 +336,8 @@ describe("VotingEscrow", function () {
 
     it("Should revert if voter vote for not alive pool", async function () {
       await setUpVotingAndGauge();
-      await voter.connect(owner).whitelistUser(owner.address, true);
-      await voter.addPool();
+      await voter.connect(owner).whitelistUser([owner.address], [true]);
+      await voter.addPool(1);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
