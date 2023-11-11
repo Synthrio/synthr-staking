@@ -49,8 +49,10 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         PoolInfo memory _pool = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
+        uint256[] memory _tokenIds = new uint256[](1);
+        _tokenIds[0] = _tokenId;
         _deposit(_tokenId, _pool.accRewardPerShare, _user);
-        emit Deposit(msg.sender, _tokenId);
+        emit Deposit(msg.sender, _tokenIds);
     }
 
     /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
@@ -64,7 +66,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
             _deposit(_tokenIds[i], _pool.accRewardPerShare, _user);
         }
 
-        emit DepositBatch(msg.sender, _tokenIds);
+        emit Deposit(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -74,8 +76,10 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         require(_user.amount != 0, "Farming: can not withdraw");
         PoolInfo memory _pool = updatePool();
 
+        uint256[] memory _tokenIds = new uint256[](1);
+        _tokenIds[0] = _tokenId;
         _withdraw(_tokenId, _pool.accRewardPerShare, _user);
-        emit Withdraw(msg.sender, _tokenId);
+        emit Withdraw(msg.sender, _tokenIds);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming.
@@ -89,14 +93,15 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _withdraw(_tokenIds[i], _pool.accRewardPerShare, _user);
         }
-        emit WithdrawBatch(msg.sender, _tokenIds);
+        emit Withdraw(msg.sender, _tokenIds);
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param _to Receiver of REWARD_TOKEN rewards.
     function harvest(address _to) external {
         PoolInfo memory pool = updatePool();
-        _harvest(pool.accRewardPerShare, _to);
+        uint256 _pendingRewardAmount = _harvest(pool.accRewardPerShare, _to);
+        emit Harvest(msg.sender, _pendingRewardAmount);
     }
 
     /// @notice Withdraw LP tokens from DexLpFarming and harvest proceeds for transaction sender to `_to`.
@@ -124,7 +129,10 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
         // Interactions
         tokenTracker.transferFrom(address(this), _to, _tokenId);
-        emit WithdrawAndHarvest(msg.sender, _tokenId, _pendingAmount);
+
+        uint256[] memory _tokenIds = new uint256[](1);
+        _tokenIds[0] = _tokenId;
+        emit WithdrawAndHarvest(msg.sender, _tokenIds, _pendingAmount);
     }
 
     function _deposit(

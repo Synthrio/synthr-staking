@@ -12,4 +12,8 @@ interface ILBPair {
     function getBin(uint24 id) external view returns (uint128, uint128);
 
     function getReserves() external view returns (uint128, uint128);
+
+    function balanceOf(address account, uint256 id) external view returns (uint256);
+
+    function totalSupply(uint256 id) external view returns (uint256);
 }
