@@ -19,6 +19,10 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
 
     /// @notice liquidity amount of user corresponds to token id in pool.
     mapping(address => mapping(uint256 => uint256)) public liqudityOfId;
+    /// @notice liquidity amount of tokenX user deposited in LBPair pool corresponds to Token Id.
+    mapping(address => mapping(uint256 => uint256)) public liquidityAmountX;
+
+    event LBPairUpdated(ILBPair indexed newLBPair);
 
     /// @param _rewardToken The REWARD token contract address.
     constructor(
@@ -45,6 +49,13 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         _pool = _updatePool(lpSupply);
     }
 
+    /// @notice Set the new Lbpair, can only be called by owner.
+    /// @param _lbPair The new Lbpair
+    function setLBPair(ILBPair _lbPair) external onlyOwner {
+        LBPair = _lbPair;
+        emit LBPairUpdated(_lbPair);
+    }
+
     /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
     /// @param _tokenIds LP token ids to deposit.
     /// @param _tokenAmounts LP token amount to deposit.
@@ -58,7 +69,11 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         // Effects
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             require(_tokenAmounts[i] != 0, "Farming: zero token amount");
-            uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
+            (uint256 _liquidityX, uint256 _liquidity) = _getLiquidityAmount(
+                _tokenIds[i],
+                msg.sender
+            );
+            liquidityAmountX[msg.sender][_tokenIds[i]] = _liquidityX;
             bool neg;
             uint256 _liquidityDifference;
 
@@ -110,7 +125,10 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokensAmount[i] = _amount;
 
             liqudityOfId[msg.sender][_tokenIds[i]] = 0;
-            uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
+            (, uint256 _liquidity) = _getLiquidityAmount(
+                _tokenIds[i],
+                msg.sender
+            );
 
             _withdrawLiquidity(
                 _tokenIds[i],
@@ -157,7 +175,10 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             _tokensAmount[i] = _amount;
 
             liqudityOfId[msg.sender][_tokenIds[i]] = 0;
-            uint256 _liquidity = _getLiquidityAmount(_tokenIds[i], msg.sender);
+            (, uint256 _liquidity) = _getLiquidityAmount(
+                _tokenIds[i],
+                msg.sender
+            );
 
             _totalPendingAmount += _withdrawAndHarvest(
                 _tokenIds[i],
@@ -176,26 +197,28 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
         uint256[] calldata _tokenIds
     ) external view returns (uint256[] memory tokenIds) {
         uint256 liquidity;
+        uint256 liquidityX;
         uint256 idIndex;
         tokenIds = new uint256[](_tokenIds.length);
         for (uint256 index; index < _tokenIds.length; ++index) {
-            liquidity = _getLiquidity(_tokenIds[index]);
-            if (liquidity != 0) {
+            (liquidityX, liquidity) = _getLiquidity(_tokenIds[index]);
+            if (liquidity != 0 || liquidityX != 0) {
                 tokenIds[idIndex] = _tokenIds[index];
                 ++idIndex;
             }
         }
     }
 
-    function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
-        (, uint256 _liquidity) = LBPair.getBin(uint24(_tokenId));
-        return _liquidity;
+    function _getLiquidity(
+        uint256 _tokenId
+    ) internal view returns (uint256, uint256) {
+        return LBPair.getBin(uint24(_tokenId));
     }
 
     function _getLiquidityAmount(
         uint256 _id,
         address _user
-    ) internal view returns (uint256 _liquidity) {
+    ) internal view returns (uint256 _liquidityX, uint256 _liquidityY) {
         (uint128 reserveX, uint128 reserveY) = LBPair.getBin(uint24(_id));
         uint256 amountInBin = LBPair.balanceOf(_user, _id);
         bytes32 binReserves = reserveX.encode(reserveY);
@@ -205,6 +228,6 @@ contract DerivedDexLpFarmingERC1155 is Ownable2Step, BaseDexLpFarming {
             amountInBin,
             supply
         );
-        (, _liquidity) = amountsOutFromBin.decode();
+        (_liquidityX, _liquidityY) = amountsOutFromBin.decode();
     }
 }
