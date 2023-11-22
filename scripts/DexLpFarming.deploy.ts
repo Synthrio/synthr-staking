@@ -8,14 +8,11 @@ async function main() {
   let tokenTracker = process.env.TOKEN_TRACKER;
   let nativeToken = process.env.NATIVE_TOKEN_ADDRESS;
   let liquidityPool = process.env.LIQUIDITY_POOL_ADDRESS;
-
-  const MockToken = await ethers.getContractFactory("MockToken");
-  const mockToken = await MockToken.deploy();
-  await mockToken.deployed();
+  let mockToken = process.env.REE;
 
   const DexLpFarming = await ethers.getContractFactory("DerivedDexLpFarming");
   const dexLpFarming = await DexLpFarming.deploy(
-    mockToken.address,
+    `${mockToken}`,
     `${tokenTracker}`,
     `${liquidityPool}`,
     `${nativeToken}`
@@ -23,17 +20,11 @@ async function main() {
 
   await dexLpFarming.deployed();
   console.log(`DexLpFarming deployed to ${dexLpFarming.address}`);
-  console.log(`MockToken deployed to ${mockToken.address}`);
-
-  await run("verify:verify", {
-    address: mockToken.address,
-    constructorArguments: [],
-  });
 
   await run("verify:verify", {
     address: dexLpFarming.address,
     constructorArguments: [
-      mockToken.address,
+      `${mockToken}`,
       `${tokenTracker}`,
       `${liquidityPool}`,
       `${nativeToken}`,
