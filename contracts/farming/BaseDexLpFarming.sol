@@ -10,6 +10,8 @@ contract BaseDexLpFarming is Ownable2Step {
 
     uint256 public constant ACC_REWARD_PRECISION = 1e18;
 
+    uint256 public totalLiquidity;
+
     /// @notice Address of reward token contract.
     IERC20 public immutable REWARD_TOKEN;
 
@@ -18,6 +20,7 @@ contract BaseDexLpFarming is Ownable2Step {
     /// `rewardDebt` The amount of reward token entitled to the user.
     struct UserInfo {
         uint256 amount;
+        uint256 liquidityX;
         int256 rewardDebt;
     }
 
@@ -203,9 +206,11 @@ contract BaseDexLpFarming is Ownable2Step {
         );
 
         if (_negative) {
+            totalLiquidity -= _liquidity;
             _user.amount -= _liquidity;
             _user.rewardDebt -= _accumulatedReward;
         } else {
+            totalLiquidity += _liquidity;
             _user.amount += _liquidity;
             _user.rewardDebt += _accumulatedReward;
         }
@@ -225,6 +230,7 @@ contract BaseDexLpFarming is Ownable2Step {
         );
 
         _user.amount -= _liquidity;
+        totalLiquidity -= _liquidity;
 
         userInfo[msg.sender] = _user;
         userTokenAmount[msg.sender][_tokenId] = 0; // withdraw all its token from farming
