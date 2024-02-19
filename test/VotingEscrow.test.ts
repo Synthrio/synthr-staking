@@ -29,8 +29,8 @@ async function setUp() {
   rewardToken = await RewardToken.deploy();
   const RewardToken1 = await ethers.getContractFactory("MockToken");
   rewardToken1 = await RewardToken1.deploy();
-  await lpTtoken.mint(addr1.address, parseUnits("100000", 18));
-  await lpTtoken.mint(addr2.address, parseUnits("100000", 18));
+  await lpTtoken.mint(addr1.address, parseUnits("100000", 10));
+  await lpTtoken.mint(addr2.address, parseUnits("100000", 10));
 
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await VotingEscrow.deploy(
