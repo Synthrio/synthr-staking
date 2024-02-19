@@ -1,0 +1,31 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    name: 🚀 Lint and test
+    timeout-minutes: 5
+    steps:
+      - name: 👍 Checkout
+        uses: actions/checkout@v2
+
+      - name: 📦 Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+
+      - name: 📥 Install dependencies
+        run: npm install --force
+
+      - name: 💅 clean
+        run: npm run clean
+
+      - name: 📘 compile
+        run: npm run compile
+
+      - name: ✅ Run tests
+        run: npm run test
