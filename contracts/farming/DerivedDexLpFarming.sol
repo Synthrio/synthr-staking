@@ -14,6 +14,10 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     ITokenTracker public tokenTracker;
 
+    event TokenTrackerUpdated(ITokenTracker indexed newTokenTracker);
+    event LiquidityPoolUpdated(address indexed newLiquidityPool);
+    event NativeTokenUpdated(address indexed newNativeToken);
+
     /// @param _rewardToken The REWARD token contract address.
     constructor(
         IERC20 _rewardToken,
@@ -43,9 +47,30 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         _pool = _updatePool(lpSupply);
     }
 
+    /// @notice Set the new TokenTracker, can only be called by owner.
+    /// @param _tokenTracker The new TokenTracker.
+    function setTokenTracker(ITokenTracker _tokenTracker) external onlyOwner {
+        tokenTracker = _tokenTracker;
+        emit TokenTrackerUpdated(_tokenTracker);
+    }
+
+    /// @notice Set the new TokenTracker, can only be called by owner.
+    /// @param _nativeToken The new TokenTracker.
+    function setNativeToken(address _nativeToken) external onlyOwner {
+        nativeToken = _nativeToken;
+        emit NativeTokenUpdated(_nativeToken);
+    }
+
+    /// @notice Set the new TokenTracker, can only be called by owner.
+    /// @param _liquidityPool The new TokenTracker.
+    function setLiquidityPool(address _liquidityPool) external onlyOwner {
+        liquidityPool = _liquidityPool;
+        emit LiquidityPoolUpdated(_liquidityPool);
+    }
+
     /// @notice Deposit LP tokens to DexLpFarming for REWARD_TOKEN allocation.
     /// @param _tokenId LP token id to deposit.
-    function deposit(uint256 _tokenId) public {
+    function deposit(uint256 _tokenId) external {
         PoolInfo memory _pool = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
@@ -57,7 +82,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     /// @notice Deposit batch LP tokens to DexLpFarming for REWARD_TOKEN allocation.
     /// @param _tokenIds LP token ids to deposit.
-    function depositBatch(uint256[] memory _tokenIds) public {
+    function depositBatch(uint256[] memory _tokenIds) external {
         PoolInfo memory _pool = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
@@ -71,7 +96,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     /// @notice Withdraw LP tokens from DexLpFarming.
     /// @param _tokenId LP token id to withdraw.
-    function withdraw(uint256 _tokenId) public {
+    function withdraw(uint256 _tokenId) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
         PoolInfo memory _pool = updatePool();
@@ -84,7 +109,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
 
     /// @notice Withdraw LP tokens from DexLpFarming.
     /// @param _tokenIds LP token ids to withdraw.
-    function withdrawBatch(uint256[] memory _tokenIds) public {
+    function withdrawBatch(uint256[] memory _tokenIds) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
 

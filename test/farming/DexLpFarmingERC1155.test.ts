@@ -6,7 +6,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { parseUnits } from "ethers/lib/utils";
 import { get } from "http";
 
-describe.only("DerivedDexLpFarmingERC1155", function () {
+describe("DerivedDexLpFarmingERC1155", function () {
   before(async function () {
     await prepare(this, [
       "DerivedDexLpFarmingERC1155",
