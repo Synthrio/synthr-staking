@@ -1,34 +1,36 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract SynthrNFT is ERC721, Ownable {
+contract SynthrNFT is ERC721Upgradeable, OwnableUpgradeable {
     uint256 private _nextTokenId;
 
     event TransferBatch(address indexed operator, address[] to, uint256[] ids);
-    event MintBatch(address indexed operator, address[] to);
+    event MintBatch();
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
+    function initialize(string memory name_, string memory symbol_, address owner_) public initializer {
+        __ERC721_init(name_, symbol_);
+        __Ownable_init(owner_);
+    }
 
-    function safeMint(address to) public onlyOwner {
-        uint256 tokenId = _nextTokenId++;
+    function safeMint(address to) public onlyOwner returns (uint256 tokenId) {
+        tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
     }
 
-    function safeMintBatch(address[] memory _to) public onlyOwner {
+    function safeMintBatch(address[] calldata _to) public onlyOwner {
         require(_to.length > 1, "Synthr NFT: Batch minting valid for minting more than one");
-        address operator = _msgSender();
+        uint256 tokenId;
         for (uint256 i = 0; i < _to.length; i++) {
-            safeMint(_to[i]);
+            tokenId = safeMint(_to[i]);
         }
 
-        emit MintBatch(operator, _to);
+        emit MintBatch();
     }
 
-    function safeTransferBatch(address[] memory _to, uint256[] memory _ids) public onlyOwner {
+    function safeTransferBatch(address[] calldata _to, uint256[] calldata _ids) public onlyOwner {
         require(_to.length > 1, "Synthr NFT: Batch transfer valid for more than one transfer");
         require(_ids.length == _to.length, "SynthrNFT: ids and to length mismatch");
         address operator = _msgSender();

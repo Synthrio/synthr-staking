@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -69,7 +69,7 @@ contract DexLpFarming is Ownable2Step {
     event LogRewardPerBlock(uint256 rewardPerBlock, uint256 indexed currentEpoch, uint256 amount);
 
     /// @param _rewardToken The REWARD token contract address.
-    constructor(IERC20 _rewardToken) {
+    constructor(IERC20 _rewardToken) Ownable(msg.sender) {
         REWARD_TOKEN = _rewardToken;
     }
 

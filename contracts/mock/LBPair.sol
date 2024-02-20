@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -347,6 +347,7 @@ contract LBPair is LBToken, Ownable {
 
     mapping(uint256 => Bin) idBin;
 
+    constructor() Ownable(msg.sender){}
     function setBin(uint256 id, uint256 x, uint256 y) external onlyOwner {
         idBin[id].binReserceX = uint128(x);
         idBin[id].binReserceY = uint128(y);

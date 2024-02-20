@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import {PackedUint128Math} from "./PackedUint128Math.sol";
 import {Uint256x256Math} from "./Uint256x256Math.sol";
