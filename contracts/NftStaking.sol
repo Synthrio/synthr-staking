@@ -4,26 +4,21 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "./interfaces/INftToken.sol";
 import "./farming/BaseDexLpFarming.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
-contract NftStaking is Ownable2Step, BaseDexLpFarming {
-
+contract NftStaking is Ownable2Step, BaseDexLpFarming, IERC721Receiver {
     INftToken public nftToken;
 
     /// @param _rewardToken The REWARD token contract address.
-    constructor(
-        IERC20 _rewardToken,
-        INftToken _nftToken
-    ) BaseDexLpFarming(_rewardToken) {
+    constructor(IERC20 _rewardToken, INftToken _nftToken) BaseDexLpFarming(_rewardToken) {
         nftToken = _nftToken;
     }
 
     /// @notice View function to see pending reward on frontend.
     /// @param _user Address of user.
     /// @return _pending REWARD_TOKEN reward for a given user.
-    function pendingReward(
-        address _user
-    ) external view returns (uint256 _pending) {
+    function pendingReward(address _user) external view returns (uint256 _pending) {
         uint256 _lpSupply = nftToken.totalLockAmount();
         _pending = _pendingReward(_user, _lpSupply);
     }
@@ -101,23 +96,14 @@ contract NftStaking is Ownable2Step, BaseDexLpFarming {
     function withdrawAndHarvest(uint256 _tokenId, address _to) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
-        require(
-            userTokenAmount[msg.sender][_tokenId] != 0,
-            "Farming: can not withdraw"
-        );
+        require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
 
         PoolInfo memory _pool = updatePool();
 
         uint256 _liquidity = _getLiquidity(_tokenId);
 
         // Effects
-        uint256 _pendingAmount = _withdrawAndHarvest(
-            _tokenId,
-            _liquidity,
-            _pool.accRewardPerShare,
-            _user,
-            _to
-        );
+        uint256 _pendingAmount = _withdrawAndHarvest(_tokenId, _liquidity, _pool.accRewardPerShare, _user, _to);
 
         // Interactions
         nftToken.transferFrom(address(this), _to, _tokenId);
@@ -127,35 +113,21 @@ contract NftStaking is Ownable2Step, BaseDexLpFarming {
         emit WithdrawAndHarvest(msg.sender, _tokenIds, _pendingAmount);
     }
 
-    function _deposit(
-        uint256 _tokenId,
-        uint256 _accRewardPerShare,
-        UserInfo memory _user
-    ) internal {
-        uint256 _liquidity = _getLiquidity(_tokenId);
-
-        _depositLiquidity(
-            _tokenId,
-            1,
-            _liquidity,
-            _accRewardPerShare,
-            _user,
-            false
-        );
-
-        // Interactions
-        nftToken.transferFrom(msg.sender, address(this), _tokenId);
+    function onERC721Received(address, address, uint256, bytes calldata) external override returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 
-    function _withdraw(
-        uint256 _tokenId,
-        uint256 _accRewardPerShare,
-        UserInfo memory _user
-    ) internal {
-        require(
-            userTokenAmount[msg.sender][_tokenId] != 0,
-            "Farming: can not withdraw"
-        );
+    function _deposit(uint256 _tokenId, uint256 _accRewardPerShare, UserInfo memory _user) internal {
+        uint256 _liquidity = _getLiquidity(_tokenId);
+
+        _depositLiquidity(_tokenId, 1, _liquidity, _accRewardPerShare, _user, false);
+
+        // Interactions
+        nftToken.safeTransferFrom(msg.sender, address(this), _tokenId);
+    }
+
+    function _withdraw(uint256 _tokenId, uint256 _accRewardPerShare, UserInfo memory _user) internal {
+        require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
         uint256 _liquidity = _getLiquidity(_tokenId);
 
         _withdrawLiquidity(_tokenId, _liquidity, _accRewardPerShare, _user);
