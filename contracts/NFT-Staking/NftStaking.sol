@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity = 0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "./interfaces/INftToken.sol";
-import "./farming/BaseDexLpFarming.sol";
+import "../interfaces/ISynthrNFT.sol";
+import "../farming/BaseDexLpFarming.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 /// @notice The (older) DexLpFarming contract gives out a constant number of REWARD_TOKEN tokens per block.
 contract NftStaking is Ownable2Step, BaseDexLpFarming, IERC721Receiver {
-    INftToken public nftToken;
+    ISynthrNFT public nftToken;
+
+    uint256 public totalLockAmount;
 
     /// @param _rewardToken The REWARD token contract address.
-    constructor(IERC20 _rewardToken, INftToken _nftToken) BaseDexLpFarming(_rewardToken) {
+    constructor(IERC20 _rewardToken, ISynthrNFT _nftToken) BaseDexLpFarming(_rewardToken) {
         nftToken = _nftToken;
     }
 
@@ -19,15 +21,19 @@ contract NftStaking is Ownable2Step, BaseDexLpFarming, IERC721Receiver {
     /// @param _user Address of user.
     /// @return _pending REWARD_TOKEN reward for a given user.
     function pendingReward(address _user) external view returns (uint256 _pending) {
-        uint256 _lpSupply = nftToken.totalLockAmount();
+        uint256 _lpSupply = totalLockAmount;
         _pending = _pendingReward(_user, _lpSupply);
     }
 
     /// @notice Update reward variables of the given pool.
     /// @return _pool Returns the pool that was updated.
     function updatePool() public returns (PoolInfo memory _pool) {
-        uint256 lpSupply = nftToken.totalLockAmount();
+        uint256 lpSupply = totalLockAmount;
         _pool = _updatePool(lpSupply);
+    }
+
+    function setTotalLockAmount(uint256 _totalLockAmount) external onlyOwner {
+        totalLockAmount = _totalLockAmount;
     }
 
     /// @notice Deposit LP tokens to DexLpFarming for REWARD_TOKEN allocation.
@@ -86,8 +92,8 @@ contract NftStaking is Ownable2Step, BaseDexLpFarming, IERC721Receiver {
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param _to Receiver of REWARD_TOKEN rewards.
     function harvest(address _to) external {
-        PoolInfo memory pool = updatePool();
-        uint256 _pendingRewardAmount = _harvest(pool.accRewardPerShare, _to);
+        PoolInfo memory _pool = updatePool();
+        uint256 _pendingRewardAmount = _harvest(_pool.accRewardPerShare, _to);
         emit Harvest(msg.sender, _pendingRewardAmount);
     }
 
