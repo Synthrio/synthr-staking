@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity = 0.8.24;
 
 library Time {
     uint256 internal constant WEEK = 7 days;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity = 0.8.24;
 
 /**
  * @title Liquidity Book Uint256x256 Math Library

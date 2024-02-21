@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.19;
+pragma solidity = 0.8.24;
 
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
@@ -58,10 +58,12 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     modifier onlyNewEpoch(address _user) {
         // ensure new epoch since last vote
-        if (Time.epochStart(block.timestamp) <= lastVoted[_user])
+        if (Time.epochStart(block.timestamp) <= lastVoted[_user]) {
             revert AlreadyVotedOrDeposited();
-        if (block.timestamp <= Time.epochVoteStart(block.timestamp))
+        }
+        if (block.timestamp <= Time.epochVoteStart(block.timestamp)) {
             revert DistributeWindow();
+        }
         _;
     }
 
@@ -73,9 +75,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         return Time.epochNext(_timestamp);
     }
 
-    function epochVoteStart(
-        uint256 _timestamp
-    ) external pure returns (uint256) {
+    function epochVoteStart(uint256 _timestamp) external pure returns (uint256) {
         return Time.epochVoteStart(_timestamp);
     }
 
@@ -103,8 +103,9 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     function setMaxVotingNum(uint256 _maxVotingNum) external {
         if (_msgSender() != governor) revert NotGovernor();
-        if (_maxVotingNum < MIN_MAXVOTINGNUM)
+        if (_maxVotingNum < MIN_MAXVOTINGNUM) {
             revert MaximumVotingNumberTooLow();
+        }
         if (_maxVotingNum == maxVotingNum) revert SameValue();
         maxVotingNum = _maxVotingNum;
     }
@@ -113,10 +114,11 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         _reset(msg.sender);
     }
 
-    function vote(
-        uint256[] calldata _poolVote,
-        uint256[] calldata _weights
-    ) external onlyNewEpoch(msg.sender) nonReentrant {
+    function vote(uint256[] calldata _poolVote, uint256[] calldata _weights)
+        external
+        onlyNewEpoch(msg.sender)
+        nonReentrant
+    {
         address _sender = _msgSender();
         uint256 _weight = IVotingEscrow(ve).balanceOf(_sender, block.timestamp);
         require(_weight != 0, "Voter: no voting power");
@@ -125,19 +127,13 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (_poolVote.length > maxVotingNum) revert TooManyPools();
 
         uint256 _timestamp = block.timestamp;
-        if (
-            (_timestamp > Time.epochVoteEnd(_timestamp)) &&
-            !isWhitelistedUser[msg.sender]
-        ) revert NotWhitelistedUser();
+        if ((_timestamp > Time.epochVoteEnd(_timestamp)) && !isWhitelistedUser[msg.sender]) revert NotWhitelistedUser();
         lastVoted[msg.sender] = _timestamp;
 
         _vote(_sender, _weight, _poolVote, _weights);
     }
 
-    function whitelistUser(
-        address[] memory _user,
-        bool[] memory _bool
-    ) external {
+    function whitelistUser(address[] memory _user, bool[] memory _bool) external {
         address _sender = _msgSender();
         if (_sender != governor) {
             revert NotGovernor();
@@ -181,12 +177,10 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     function poke() external nonReentrant {
-        if (block.timestamp <= Time.epochVoteStart(block.timestamp))
+        if (block.timestamp <= Time.epochVoteStart(block.timestamp)) {
             revert DistributeWindow();
-        uint256 _weight = IVotingEscrow(ve).balanceOf(
-            msg.sender,
-            block.timestamp
-        );
+        }
+        uint256 _weight = IVotingEscrow(ve).balanceOf(msg.sender, block.timestamp);
         _poke(msg.sender, _weight);
     }
 
@@ -215,14 +209,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 delete votes[_user][_pool];
 
                 _totalWeight += _votes;
-                emit Abstained(
-                    _msgSender(),
-                    _pool,
-                    _user,
-                    _votes,
-                    weights[_pool],
-                    block.timestamp
-                );
+                emit Abstained(_msgSender(), _pool, _user, _votes, weights[_pool], block.timestamp);
             }
         }
         voted[_user] = false;
@@ -232,12 +219,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         delete poolVote[_user];
     }
 
-    function _vote(
-        address _user,
-        uint256 _weight,
-        uint256[] memory _poolVote,
-        uint256[] memory _weights
-    ) internal {
+    function _vote(address _user, uint256 _weight, uint256[] memory _poolVote, uint256[] memory _weights) internal {
         _reset(_user);
 
         uint256 _poolCnt = _poolVote.length;
@@ -265,14 +247,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             _usedWeight += _poolWeight;
             _totalWeight += _poolWeight;
 
-            emit Voted(
-                _msgSender(),
-                _pool,
-                _user,
-                _poolWeight,
-                weights[_pool],
-                block.timestamp
-            );
+            emit Voted(_msgSender(), _pool, _user, _poolWeight, weights[_pool], block.timestamp);
         }
         if (_usedWeight > 0) voted[_user] = true;
         totalWeight += _totalWeight;
