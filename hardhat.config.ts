@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import { config as dotEnvConfig } from "dotenv";
-
+import "hardhat-deploy";
 dotEnvConfig();
 
 const config: HardhatUserConfig = {
@@ -27,6 +27,9 @@ const config: HardhatUserConfig = {
       },
     ],
   },
+  namedAccounts: {
+    deployer: 0,
+  },
   networks: {
     hardhat: {
       allowUnlimitedContractSize: false
@@ -37,22 +40,29 @@ const config: HardhatUserConfig = {
       gas: 8000000,
       gasPrice: 1,
     },
-    sepolia:{
-      accounts:[`0x${process.env.PRIVATE_KEY}`],
+    sepolia: {
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
       url: process.env.SEPOLIA_URL,
+      saveDeployments: true
     },
     goerli: {
-      accounts:[`0x${process.env.PRIVATE_KEY}`],
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
       url: process.env.GOERLI_URL,
       chainId: 5,
+      saveDeployments: true
+
     },
-    polygon:{
-      accounts:[`0x${process.env.PRIVATE_KEY}`],
-      url: process.env.POLYGON_URL
+    polygon: {
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.POLYGON_URL,
+      saveDeployments: true
+
     },
-    arbitrum:{
-      accounts:[`0x${process.env.PRIVATE_KEY}`],
-      url: process.env.ARBITRUM_URL
+    arbitrum: {
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      url: process.env.ARBITRUM_URL,
+      saveDeployments: true
+
     }
   },
   etherscan: {
