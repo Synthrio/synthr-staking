@@ -24,7 +24,7 @@ contract NftStaking is Ownable2Step {
 
     /// @notice Info of each gauge pool.
     struct NFTPoolInfo {
-        bool exits;
+        bool exist;
         uint64 lastRewardBlock;
         uint256 accRewardPerShare;
         uint256 rewardPerBlock;
