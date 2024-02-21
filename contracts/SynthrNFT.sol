@@ -6,9 +6,18 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract SynthrNFT is ERC721Upgradeable, OwnableUpgradeable {
     uint256 private _nextTokenId;
+    uint256 public totalLockAmount;
+    mapping(address user => uint256 stakedAmount) public lockAmount;
 
     event TransferBatch(address indexed operator, address[] to, uint256[] ids);
     event MintBatch();
+
+    function setLockAmount(address user_, uint256 amount_) external onlyOwner {
+        require(user_ != address(0), "Synthr NFT: Address must be non zero");
+        require(amount_ > 0, "Synthr NFT: Lock amount should be more than zero");
+        lockAmount[user_] = amount_;
+        totalLockAmount += amount_;
+    }
 
     function initialize(string memory name_, string memory symbol_, address owner_) public initializer {
         __ERC721_init(name_, symbol_);

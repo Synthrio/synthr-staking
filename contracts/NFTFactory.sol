@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract SynthrNFTFactory is Ownable2Step {
-    uint256 public nftCount;
     address internal implementation;
     mapping(string => address) public NFTs;
 
@@ -14,23 +13,22 @@ contract SynthrNFTFactory is Ownable2Step {
 
     constructor(address owner_) Ownable(owner_) {}
 
-    function createNFT(string memory name_, string memory symbol_, address owner_)
+    function setImplementation() external onlyOwner returns (SynthrNFT _implementation) {
+        _implementation = new SynthrNFT();
+        _implementation.initialize("Template-Synthr-NFT", "tNFT", msg.sender);
+        implementation = address(_implementation);
+    }
+
+    function createNFT(string memory name_, string memory symbol_, address nftOwner_)
         public
         onlyOwner
         returns (address nft)
     {
-        if (nftCount == 0) {
-            SynthrNFT _implementation = new SynthrNFT();
-            _implementation.initialize(name_, symbol_, owner_);
-            implementation = address(_implementation);
-            nftCount++;
-            nft = address(_implementation);
-        } else if (nftCount > 0) {
-            bytes32 salt = keccak256(abi.encodePacked(name_, symbol_, owner_));
-            nft = Clones.cloneDeterministic(implementation, salt);
-            SynthrNFT(nft).initialize(name_, symbol_, owner_);
-            nftCount++;
-        }
+        require(implementation != address(0), "Factory: Template Implementation not yet set");
+        bytes32 salt = keccak256(abi.encodePacked(name_, symbol_, nftOwner_));
+        nft = Clones.cloneDeterministic(implementation, salt);
+        SynthrNFT(nft).initialize(name_, symbol_, nftOwner_);
+
         NFTs[name_] = nft;
         emit NFTCreated(address(this), name_, address(nft));
     }
