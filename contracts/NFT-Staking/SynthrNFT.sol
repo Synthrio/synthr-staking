@@ -8,7 +8,7 @@ contract SynthrNFT is ERC721, Ownable2Step {
     uint256 public tokenIdCount;
     mapping(uint256 tokenId => uint256 stakedAmount) public lockAmount;
 
-    event BatchMinted(address[] to);
+    event BatchMinted(address[] to, uint256 lastTokenIdMinted);
 
     constructor(string memory name_, string memory symbol_, address owner_) ERC721(name_, symbol_) Ownable(owner_) {}
 
@@ -27,6 +27,6 @@ contract SynthrNFT is ERC721, Ownable2Step {
         }
         tokenIdCount = tokenId;
 
-        emit BatchMinted(_to);
+        emit BatchMinted(_to, tokenIdCount);
     }
 }
