@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity = 0.8.24;
+pragma solidity =0.8.24;
 // todo verify dex lp farming of erc1155 in arbitrum goerli
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
