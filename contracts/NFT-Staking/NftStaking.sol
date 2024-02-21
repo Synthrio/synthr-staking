@@ -101,7 +101,7 @@ contract NftStaking is Ownable2Step {
     ) external onlyOwner {
 
         for (uint256 i; i < _pool.length; i++) {
-            poolInfo[_pool[i]].exits = true;
+            poolInfo[_pool[i]].exist = true;
             poolInfo[_pool[i]].lastRewardBlock = uint64(block.number);
         }
 
@@ -124,7 +124,7 @@ contract NftStaking is Ownable2Step {
 
         for (uint256 i; i < _pool.length; i++) {
             NFTPoolInfo memory _poolInfo = poolInfo[_pool[i]];
-            require(_poolInfo.exits, "NftStaking: pool not exits");
+            require(_poolInfo.exist, "NftStaking: pool not exist");
             _poolInfo.rewardPerBlock = _rewardPerBlock[i];
             _poolInfo.lastRewardBlock = uint64(block.number);
             ++_poolInfo.epoch;
@@ -140,7 +140,7 @@ contract NftStaking is Ownable2Step {
     /// @return _poolInfo Returns the pool that was updated.
     function updatePool(address _pool) public returns (NFTPoolInfo memory _poolInfo) {
         _poolInfo = poolInfo[_pool];
-        require(_poolInfo.exits, "NftStaking: pool not exits");
+        require(_poolInfo.exist, "NftStaking: pool not exist");
         uint256 _lpSupply = totalLockAmount;
         if (block.number > _poolInfo.lastRewardBlock) {
             if (_lpSupply > 0) {
