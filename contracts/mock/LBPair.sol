@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity 0.8.19;
+pragma solidity =0.8.24;
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -13,26 +14,14 @@ interface ILBToken {
     error LBToken__InvalidLength();
     error LBToken__SelfApproval(address owner);
     error LBToken__SpenderNotApproved(address from, address spender);
-    error LBToken__TransferExceedsBalance(
-        address from,
-        uint256 id,
-        uint256 amount
-    );
+    error LBToken__TransferExceedsBalance(address from, uint256 id, uint256 amount);
     error LBToken__BurnExceedsBalance(address from, uint256 id, uint256 amount);
 
     event TransferBatch(
-        address indexed sender,
-        address indexed from,
-        address indexed to,
-        uint256[] ids,
-        uint256[] amounts
+        address indexed sender, address indexed from, address indexed to, uint256[] ids, uint256[] amounts
     );
 
-    event ApprovalForAll(
-        address indexed account,
-        address indexed sender,
-        bool approved
-    );
+    event ApprovalForAll(address indexed account, address indexed sender, bool approved);
 
     function name() external view returns (string memory);
 
@@ -40,29 +29,18 @@ interface ILBToken {
 
     function totalSupply(uint256 id) external view returns (uint256);
 
-    function balanceOf(
-        address account,
-        uint256 id
-    ) external view returns (uint256);
+    function balanceOf(address account, uint256 id) external view returns (uint256);
 
-    function balanceOfBatch(
-        address[] calldata accounts,
-        uint256[] calldata ids
-    ) external view returns (uint256[] memory);
+    function balanceOfBatch(address[] calldata accounts, uint256[] calldata ids)
+        external
+        view
+        returns (uint256[] memory);
 
-    function isApprovedForAll(
-        address owner,
-        address spender
-    ) external view returns (bool);
+    function isApprovedForAll(address owner, address spender) external view returns (bool);
 
     function approveForAll(address spender, bool approved) external;
 
-    function batchTransferFrom(
-        address from,
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
-    ) external;
+    function batchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts) external;
 }
 
 /**
@@ -95,8 +73,9 @@ abstract contract LBToken is ILBToken {
      * @dev Modifier to check if the spender is approved for all.
      */
     modifier checkApproval(address from, address spender) {
-        if (!_isApprovedForAll(from, spender))
+        if (!_isApprovedForAll(from, spender)) {
             revert LBToken__SpenderNotApproved(from, spender);
+        }
         _;
     }
 
@@ -104,8 +83,9 @@ abstract contract LBToken is ILBToken {
      * @dev Modifier to check if the address is not zero or the contract itself.
      */
     modifier notAddressZeroOrThis(address account) {
-        if (account == address(0) || account == address(this))
+        if (account == address(0) || account == address(this)) {
             revert LBToken__AddressThisOrZero();
+        }
         _;
     }
 
@@ -140,9 +120,7 @@ abstract contract LBToken is ILBToken {
      * @param id The token id.
      * @return The total supply of that token id.
      */
-    function totalSupply(
-        uint256 id
-    ) public view virtual override returns (uint256) {
+    function totalSupply(uint256 id) public view virtual override returns (uint256) {
         return _totalSupplies[id];
     }
 
@@ -152,10 +130,7 @@ abstract contract LBToken is ILBToken {
      * @param id The token id.
      * @return The amount of tokens of type `id` owned by `account`.
      */
-    function balanceOf(
-        address account,
-        uint256 id
-    ) public view virtual override returns (uint256) {
+    function balanceOf(address account, uint256 id) public view virtual override returns (uint256) {
         return _balances[account][id];
     }
 
@@ -165,10 +140,7 @@ abstract contract LBToken is ILBToken {
      * @param ids The token ids.
      * @return batchBalances The balance for each (account, id) pair.
      */
-    function balanceOfBatch(
-        address[] calldata accounts,
-        uint256[] calldata ids
-    )
+    function balanceOfBatch(address[] calldata accounts, uint256[] calldata ids)
         public
         view
         virtual
@@ -191,10 +163,7 @@ abstract contract LBToken is ILBToken {
      * @param spender The address of the spender.
      * @return True if `spender` is approved to transfer `owner`'s tokens.
      */
-    function isApprovedForAll(
-        address owner,
-        address spender
-    ) public view virtual override returns (bool) {
+    function isApprovedForAll(address owner, address spender) public view virtual override returns (bool) {
         return _isApprovedForAll(owner, spender);
     }
 
@@ -203,10 +172,7 @@ abstract contract LBToken is ILBToken {
      * @param spender The address of the spender.
      * @param approved The boolean value to grant or revoke permission.
      */
-    function approveForAll(
-        address spender,
-        bool approved
-    ) public virtual override {
+    function approveForAll(address spender, bool approved) public virtual override {
         _approveForAll(msg.sender, spender, approved);
     }
 
@@ -217,12 +183,12 @@ abstract contract LBToken is ILBToken {
      * @param ids The list of token ids.
      * @param amounts The list of amounts to transfer for each token id in `ids`.
      */
-    function batchTransferFrom(
-        address from,
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
-    ) public virtual override checkApproval(from, msg.sender) {
+    function batchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts)
+        public
+        virtual
+        override
+        checkApproval(from, msg.sender)
+    {
         _batchTransferFrom(from, to, ids, amounts);
     }
 
@@ -232,10 +198,7 @@ abstract contract LBToken is ILBToken {
      * @param spender The address of the spender.
      * @return True if `spender` is approved to transfer `owner`'s tokens.
      */
-    function _isApprovedForAll(
-        address owner,
-        address spender
-    ) internal view returns (bool) {
+    function _isApprovedForAll(address owner, address spender) internal view returns (bool) {
         return owner == spender || _spenderApprovals[owner][spender];
     }
 
@@ -264,13 +227,12 @@ abstract contract LBToken is ILBToken {
      * @param amount The amount to burn.
      */
     function _burn(address account, uint256 id, uint256 amount) internal {
-        mapping(uint256 => uint256) storage accountBalances = _balances[
-            account
-        ];
+        mapping(uint256 => uint256) storage accountBalances = _balances[account];
 
         uint256 balance = accountBalances[id];
-        if (balance < amount)
+        if (balance < amount) {
             revert LBToken__BurnExceedsBalance(account, id, amount);
+        }
 
         unchecked {
             _totalSupplies[id] -= amount;
@@ -286,12 +248,7 @@ abstract contract LBToken is ILBToken {
      * @param ids The list of token ids.
      * @param amounts The list of amounts to transfer for each token id in `ids`.
      */
-    function _batchTransferFrom(
-        address from,
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
-    )
+    function _batchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts)
         internal
         checkLength(ids.length, amounts.length)
         notAddressZeroOrThis(to)
@@ -299,13 +256,14 @@ abstract contract LBToken is ILBToken {
         mapping(uint256 => uint256) storage fromBalances = _balances[from];
         mapping(uint256 => uint256) storage toBalances = _balances[to];
 
-        for (uint256 i; i < ids.length; ) {
+        for (uint256 i; i < ids.length;) {
             uint256 id = ids[i];
             uint256 amount = amounts[i];
 
             uint256 fromBalance = fromBalances[id];
-            if (fromBalance < amount)
+            if (fromBalance < amount) {
                 revert LBToken__TransferExceedsBalance(from, id, amount);
+            }
 
             unchecked {
                 fromBalances[id] = fromBalance - amount;
@@ -324,11 +282,7 @@ abstract contract LBToken is ILBToken {
      * @param spender The address of the spender
      * @param approved The boolean value to grant or revoke permission
      */
-    function _approveForAll(
-        address owner,
-        address spender,
-        bool approved
-    ) internal notAddressZeroOrThis(owner) {
+    function _approveForAll(address owner, address spender, bool approved) internal notAddressZeroOrThis(owner) {
         if (owner == spender) revert LBToken__SelfApproval(owner);
 
         _spenderApprovals[owner][spender] = approved;
@@ -346,6 +300,8 @@ contract LBPair is LBToken, Ownable {
     uint128 reserveY;
 
     mapping(uint256 => Bin) idBin;
+
+    constructor() Ownable(msg.sender) {}
 
     function setBin(uint256 id, uint256 x, uint256 y) external onlyOwner {
         idBin[id].binReserceX = uint128(x);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity =0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -47,29 +47,15 @@ contract DexLpFarming is Ownable2Step {
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
-    event EmergencyWithdraw(
-        address indexed user,
-        uint256 indexed pid,
-        uint256 amount,
-        address indexed to
-    );
+    event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event Harvest(address indexed user, uint256 indexed pid, uint256 amount);
-    event LogPoolAddition(
-        uint256 indexed pid,
-        uint256 allocPoint,
-        IERC721 indexed lpToken
-    );
+    event LogPoolAddition(uint256 indexed pid, uint256 allocPoint, IERC721 indexed lpToken);
     event LogSetPool(uint256 indexed pid, uint256 allocPoint);
-    event LogUpdatePool(
-        uint256 indexed pid,
-        uint64 lastRewardBlock,
-        uint256 lpSupply,
-        uint256 accRewardPerShare
-    );
+    event LogUpdatePool(uint256 indexed pid, uint64 lastRewardBlock, uint256 lpSupply, uint256 accRewardPerShare);
     event LogRewardPerBlock(uint256 rewardPerBlock, uint256 indexed currentEpoch, uint256 amount);
 
     /// @param _rewardToken The REWARD token contract address.
-    constructor(IERC20 _rewardToken) {
+    constructor(IERC20 _rewardToken) Ownable(msg.sender) {
         REWARD_TOKEN = _rewardToken;
     }
 
@@ -79,10 +65,7 @@ contract DexLpFarming is Ownable2Step {
     }
 
     /// @notice Returns the number of user tokens ids in the pool.
-    function userTokenIds(
-        uint256 pid,
-        address user
-    ) public view returns (uint256[] memory) {
+    function userTokenIds(uint256 pid, address user) public view returns (uint256[] memory) {
         return userToken[pid][user];
     }
 
@@ -95,11 +78,7 @@ contract DexLpFarming is Ownable2Step {
         lpToken.push(_lpToken);
 
         poolInfo.push(
-            PoolInfo({
-                allocPoint: uint64(allocPoint),
-                lastRewardBlock: uint64(block.number),
-                accRewardPerShare: 0
-            })
+            PoolInfo({allocPoint: uint64(allocPoint), lastRewardBlock: uint64(block.number), accRewardPerShare: 0})
         );
         emit LogPoolAddition(lpToken.length - 1, allocPoint, _lpToken);
     }
@@ -131,26 +110,17 @@ contract DexLpFarming is Ownable2Step {
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
     /// @return pending REWARD_TOKEN reward for a given user.
-    function pendingReward(
-        uint256 _pid,
-        address _user
-    ) external view returns (uint256 pending) {
+    function pendingReward(uint256 _pid, address _user) external view returns (uint256 pending) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo memory user = userInfo[_pid][_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
         uint256 lpSupply = lpToken[_pid].balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 blocks = block.number - (pool.lastRewardBlock);
-            uint256 rewardAmount = (blocks *
-                (rewardPerBlock) *
-                (pool.allocPoint)) / totalAllocPoint;
-            accRewardPerShare += ((rewardAmount * (ACC_REWARD_PRECISION)) /
-                lpSupply);
+            uint256 rewardAmount = (blocks * (rewardPerBlock) * (pool.allocPoint)) / totalAllocPoint;
+            accRewardPerShare += ((rewardAmount * (ACC_REWARD_PRECISION)) / lpSupply);
         }
-        pending = uint256(
-            int256((user.amount * accRewardPerShare) / ACC_REWARD_PRECISION) -
-                user.rewardDebt
-        );
+        pending = uint256(int256((user.amount * accRewardPerShare) / ACC_REWARD_PRECISION) - user.rewardDebt);
     }
 
     /// @notice Update reward variables of the given pool.
@@ -162,21 +132,12 @@ contract DexLpFarming is Ownable2Step {
             uint256 lpSupply = lpToken[pid].balanceOf(address(this));
             if (lpSupply > 0) {
                 uint256 blocks = block.number - pool.lastRewardBlock;
-                uint256 rewardAmount = (blocks *
-                    rewardPerBlock *
-                    pool.allocPoint) / totalAllocPoint;
-                pool.accRewardPerShare += uint128(
-                    (rewardAmount * ACC_REWARD_PRECISION) / lpSupply
-                );
+                uint256 rewardAmount = (blocks * rewardPerBlock * pool.allocPoint) / totalAllocPoint;
+                pool.accRewardPerShare += uint128((rewardAmount * ACC_REWARD_PRECISION) / lpSupply);
             }
             pool.lastRewardBlock = uint64(block.number);
             poolInfo[pid] = pool;
-            emit LogUpdatePool(
-                pid,
-                pool.lastRewardBlock,
-                lpSupply,
-                pool.accRewardPerShare
-            );
+            emit LogUpdatePool(pid, pool.lastRewardBlock, lpSupply, pool.accRewardPerShare);
         }
     }
 
@@ -237,9 +198,7 @@ contract DexLpFarming is Ownable2Step {
     function harvest(uint256 pid, address to) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo memory user = userInfo[pid][msg.sender];
-        int256 accumulatedReward = int256(
-            (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
-        );
+        int256 accumulatedReward = int256((user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION);
         uint256 _pendingReward = uint256(accumulatedReward - user.rewardDebt);
 
         // Effects
@@ -261,15 +220,11 @@ contract DexLpFarming is Ownable2Step {
         UserInfo memory user = userInfo[pid][msg.sender];
         require(user.amount != 0, "DexLpFarming: can not withdraw");
 
-        int256 accumulatedReward = int256(
-            (user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION
-        );
+        int256 accumulatedReward = int256((user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION);
         uint256 _pendingReward = uint256(accumulatedReward - user.rewardDebt);
 
         // Effects
-        user.rewardDebt =
-            accumulatedReward -
-            int256((pool.accRewardPerShare) / ACC_REWARD_PRECISION);
+        user.rewardDebt = accumulatedReward - int256((pool.accRewardPerShare) / ACC_REWARD_PRECISION);
         user.amount -= 1;
 
         userInfo[pid][msg.sender] = user;
@@ -291,20 +246,16 @@ contract DexLpFarming is Ownable2Step {
         uint256 amount = user.amount;
 
         // Note: transfer can fail or succeed if `amount` is zero.
-        for (uint256 i = 0; i < _userTokenIds.length; i++)
+        for (uint256 i = 0; i < _userTokenIds.length; i++) {
             lpToken[pid].transferFrom(address(this), to, _userTokenIds[i]);
+        }
 
         delete userInfo[pid][msg.sender];
         delete userToken[pid][msg.sender];
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
     }
 
-    function _deposit(
-        uint _pid,
-        uint256 _id,
-        UserInfo memory _user,
-        uint256 _accRewardPerShare
-    ) internal {
+    function _deposit(uint256 _pid, uint256 _id, UserInfo memory _user, uint256 _accRewardPerShare) internal {
         _user.amount += 1;
         userToken[_pid][msg.sender].push(_id);
         _user.rewardDebt += int256(_accRewardPerShare / ACC_REWARD_PRECISION);
@@ -317,7 +268,7 @@ contract DexLpFarming is Ownable2Step {
     }
 
     function _withdraw(
-        uint _pid,
+        uint256 _pid,
         uint256 _id,
         UserInfo memory _user,
         uint256 _accRewardPerShare,

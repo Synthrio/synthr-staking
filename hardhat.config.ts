@@ -16,6 +16,15 @@ const config: HardhatUserConfig = {
           },
         },
       },
+      {
+        version: "0.8.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 2000,
+          },
+        },
+      },
     ],
   },
   networks: {
@@ -47,7 +56,9 @@ const config: HardhatUserConfig = {
     }
   },
   etherscan: {
-    apiKey: process.env.ARBITRUM_API_KEY,
+    apiKey: {
+      sepolia: `${process.env.ETHERSCAN_API_KEY}`,
+    },
   },
 };
 

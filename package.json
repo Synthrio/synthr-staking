@@ -7,6 +7,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/contracts": "^5.0.1",
     "@types/chai": "^4.3.6",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.7.0",
@@ -16,7 +17,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.3",
     "@uniswap/v3-periphery": "^1.4.4",
     "dotenv": "^16.3.1"
   }

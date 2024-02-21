@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity =0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./interfaces/ISmartWalletChecker.sol";
@@ -66,17 +66,8 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     event OwnershipCommited(address admin);
     event OwnershipApplied(address admin);
     event WalletCommited(address newSmartWalletChecker);
-    event ControllerChanged(
-        address indexed prevController,
-        address indexed newController
-    );
-    event Deposited(
-        address indexed provider,
-        uint256 value,
-        uint256 indexed locktime,
-        uint256 _type,
-        uint256 ts
-    );
+    event ControllerChanged(address indexed prevController, address indexed newController);
+    event Deposited(address indexed provider, uint256 value, uint256 indexed locktime, uint256 _type, uint256 ts);
     event Withdrew(address indexed provider, uint256 value, uint256 timeStamp);
     event Supply(uint256 prevSupply, uint256 supply);
     event GaugeUpdated(address indexed newGauge);
@@ -112,10 +103,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return userPointHistory[_user][uepoch].slope;
     }
 
-    function userPointHistoryTs(
-        address _user,
-        uint256 _idx
-    ) external view returns (uint256) {
+    function userPointHistoryTs(address _user, uint256 _idx) external view returns (uint256) {
         return userPointHistory[_user][_idx].timeStamp;
     }
 
@@ -123,18 +111,13 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return locked[_user].end;
     }
 
-    function balanceOf(
-        address _user,
-        uint256 _t
-    ) external view returns (uint256) {
+    function balanceOf(address _user, uint256 _t) external view returns (uint256) {
         uint256 _epoch = userPointEpoch[_user];
         if (_epoch == 0) {
             return 0;
         } else {
             Point memory lastPoint = userPointHistory[_user][_epoch];
-            lastPoint.bias -=
-                lastPoint.slope *
-                int256(_t - lastPoint.timeStamp);
+            lastPoint.bias -= lastPoint.slope * int256(_t - lastPoint.timeStamp);
             if (lastPoint.bias < 0) {
                 lastPoint.bias = 0;
             }
@@ -142,10 +125,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         }
     }
 
-    function balanceOfAt(
-        address _user,
-        uint256 _block
-    ) external view returns (uint256) {
+    function balanceOfAt(address _user, uint256 _block) external view returns (uint256) {
         require(_block <= block.number, "VotingEscrow: Wrong condition");
         uint256 _min;
         uint256 _max = userPointEpoch[_user];
@@ -177,13 +157,9 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         uint256 blockTime = point0.timeStamp;
         if (blockDifference != 0) {
-            blockTime +=
-                (timeStampDiffrence * (_block - point0.blockNumber)) /
-                blockDifference;
+            blockTime += (timeStampDiffrence * (_block - point0.blockNumber)) / blockDifference;
         }
-        upoint.bias -=
-            upoint.slope *
-            int128(int256(blockTime - upoint.timeStamp));
+        upoint.bias -= upoint.slope * int128(int256(blockTime - upoint.timeStamp));
         if (upoint.bias >= 0) {
             return uint256(int256(upoint.bias));
         } else {
@@ -206,27 +182,21 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         if (targetEpoch < _epoch) {
             Point memory pointNext = pointHistory[targetEpoch + 1];
             if (point.blockNumber != pointNext.blockNumber) {
-                timeStampDiffrence =
-                    ((_block - point.blockNumber) *
-                        (pointNext.timeStamp - point.timeStamp)) /
-                    (pointNext.blockNumber - point.blockNumber);
+                timeStampDiffrence = ((_block - point.blockNumber) * (pointNext.timeStamp - point.timeStamp))
+                    / (pointNext.blockNumber - point.blockNumber);
             }
         } else {
             if (point.blockNumber != block.number) {
-                timeStampDiffrence = timeStampDiffrence =
-                    ((_block - point.blockNumber) *
-                        (block.timestamp - point.timeStamp)) /
-                    (block.number - point.blockNumber);
+                timeStampDiffrence = timeStampDiffrence = (
+                    (_block - point.blockNumber) * (block.timestamp - point.timeStamp)
+                ) / (block.number - point.blockNumber);
             }
         }
         return _supplyAt(point, point.timeStamp + timeStampDiffrence);
     }
 
     function changeController(address _newController) external {
-        require(
-            hasRole(CONTROLLER_ROLE, msg.sender),
-            "VotingEscrow: Invalid Caller"
-        );
+        require(hasRole(CONTROLLER_ROLE, msg.sender), "VotingEscrow: Invalid Caller");
         _revokeRole(CONTROLLER_ROLE, msg.sender);
         _grantRole(CONTROLLER_ROLE, _newController);
         controller = _newController;
@@ -244,19 +214,13 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     }
 
     function commitTransferOwnership(address _user) external {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VotingEscrow: admin only"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "VotingEscrow: admin only");
         futureAdmin = _user;
         emit OwnershipCommited(_user);
     }
 
     function applyTransferOwnership() external {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VotingEscrow: admin only"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "VotingEscrow: admin only");
         address _admin = futureAdmin;
         require(_admin != address(0), "VotingEscrow: Admin not set");
         admin = _admin;
@@ -264,19 +228,13 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     }
 
     function commitSmartWalletChecker(address _user) external {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VotingEscrow: admin only"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "VotingEscrow: admin only");
         futureSmartWalletChecker = _user;
         emit WalletCommited(_user);
     }
 
     function applySmartWalletChecker() external {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VotingEscrow: admin only"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "VotingEscrow: admin only");
         smartWalletChecker = futureSmartWalletChecker;
         emit WalletCommited(futureSmartWalletChecker);
     }
@@ -286,32 +244,20 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         require(_value > 0, "VotingEscrow: Need non-zero value");
         require(_locked.amount > 0, "VotingEscrow: No existing lock found");
-        require(
-            _locked.end > block.timestamp,
-            "VotingEscrow: Cannot add to an expired lock. Withdraw"
-        );
+        require(_locked.end > block.timestamp, "VotingEscrow: Cannot add to an expired lock. Withdraw");
 
         _depositFor(_user, _value, 0, locked[_user], DEPOSIT_FOR_TYPE);
     }
 
-    function createLock(
-        uint256 _value,
-        uint256 _unlockTime
-    ) external nonReentrant {
+    function createLock(uint256 _value, uint256 _unlockTime) external nonReentrant {
         _assertNotContract(msg.sender);
         uint256 unlockTime = (_unlockTime / WEEK) * WEEK;
         LockedBalance storage _locked = locked[msg.sender];
 
         require(_value > 0, "VotingEscrow: need non-zero value");
         require(_locked.amount == 0, "VotingEscrow: Withdraw old tokens first");
-        require(
-            unlockTime > block.timestamp,
-            "VotingEscrow: Can only lock until a time in the future"
-        );
-        require(
-            unlockTime <= MAXTIME + block.timestamp,
-            "VotingEscrow: Voting lock can be 4 years max"
-        );
+        require(unlockTime > block.timestamp, "VotingEscrow: Can only lock until a time in the future");
+        require(unlockTime <= MAXTIME + block.timestamp, "VotingEscrow: Voting lock can be 4 years max");
         _depositFor(msg.sender, _value, unlockTime, _locked, CREATE_LOCK_TYPE);
     }
 
@@ -321,52 +267,28 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         require(_value > 0, "VotingEscrow: need non-zero value");
         require(_locked.amount > 0, "VotingEscrow: No existing lock found");
-        require(
-            _locked.end > block.timestamp,
-            "VotingEscrow: Cannot add to an expired lock. Withdraw"
-        );
+        require(_locked.end > block.timestamp, "VotingEscrow: Cannot add to an expired lock. Withdraw");
 
         _depositFor(msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
     }
 
-    function increaseAmountAndUnlockTime(
-        uint256 _value,
-        uint256 _unlockTime
-    ) external nonReentrant {
+    function increaseAmountAndUnlockTime(uint256 _value, uint256 _unlockTime) external nonReentrant {
         _assertNotContract(msg.sender);
         LockedBalance storage _locked = locked[msg.sender];
         uint256 unlockTime = (_unlockTime / WEEK) * WEEK;
 
         require(_value > 0, "VotingEscrow: need non-zero value");
         require(_locked.amount > 0, "VotingEscrow: No existing lock found");
-        require(
-            _locked.end > block.timestamp,
-            "VotingEscrow: Cannot add to an expired lock. Withdraw"
-        );
-        require(
-            unlockTime > _locked.end,
-            "VotingEscrow: Can only increase lock duration"
-        );
-        require(
-            unlockTime <= block.timestamp + MAXTIME,
-            "VotingEscrow: Voting lock can be 4 years max"
-        );
+        require(_locked.end > block.timestamp, "VotingEscrow: Cannot add to an expired lock. Withdraw");
+        require(unlockTime > _locked.end, "VotingEscrow: Can only increase lock duration");
+        require(unlockTime <= block.timestamp + MAXTIME, "VotingEscrow: Voting lock can be 4 years max");
 
-        _depositFor(
-            msg.sender,
-            _value,
-            unlockTime,
-            _locked,
-            INCREASE_UNLOCK_TIME_AND_LOCK_AMOUNT
-        );
+        _depositFor(msg.sender, _value, unlockTime, _locked, INCREASE_UNLOCK_TIME_AND_LOCK_AMOUNT);
     }
 
     function withdraw() external nonReentrant {
         LockedBalance storage _locked = locked[msg.sender];
-        require(
-            block.timestamp >= _locked.end,
-            "VotingEscrow: The lock didn't expire"
-        );
+        require(block.timestamp >= _locked.end, "VotingEscrow: The lock didn't expire");
         uint256 _value = uint256(int256(_locked.amount));
         LockedBalance storage oldLocked = _locked;
         _locked.end = 0;
@@ -375,12 +297,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         _checkpoint(msg.sender, oldLocked, _locked);
         IERC20(token).safeTransfer(msg.sender, _value);
-        IGaugeController(gaugeController).updateReward(
-            address(this),
-            msg.sender,
-            _value,
-            false
-        );
+        IGaugeController(gaugeController).updateReward(address(this), msg.sender, _value, false);
         emit Withdrew(msg.sender, _value, block.timestamp);
         emit Supply(supply + _value, supply);
     }
@@ -391,22 +308,13 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         uint256 unlockTime = (_unlockTime / WEEK) * WEEK;
         require(_locked.end > block.timestamp, "VotingEscrow: Lock expired");
         require(_locked.amount > 0, "VotingEscrow: Nothing is locked");
-        require(
-            unlockTime > _locked.end,
-            "VotingEscrow: Can only increase lock duration"
-        );
-        require(
-            unlockTime <= block.timestamp + MAXTIME,
-            "VotingEscrow: Voting lock can be 4 years max"
-        );
+        require(unlockTime > _locked.end, "VotingEscrow: Can only increase lock duration");
+        require(unlockTime <= block.timestamp + MAXTIME, "VotingEscrow: Voting lock can be 4 years max");
 
         _depositFor(msg.sender, 0, unlockTime, _locked, INCREASE_UNLOCK_TIME);
     }
 
-    function _findBlockEpoch(
-        uint256 _block,
-        uint256 _maxEpoch
-    ) internal view returns (uint256) {
+    function _findBlockEpoch(uint256 _block, uint256 _maxEpoch) internal view returns (uint256) {
         uint256 _min = 0;
         uint256 _max = _maxEpoch;
         for (uint256 i = 0; i < 128; i++) {
@@ -423,10 +331,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return _min;
     }
 
-    function _supplyAt(
-        Point memory _point,
-        uint256 _time
-    ) internal view returns (uint256) {
+    function _supplyAt(Point memory _point, uint256 _time) internal view returns (uint256) {
         Point memory lastPoint = _point;
         uint256 timeInterval = (lastPoint.timeStamp / WEEK) * WEEK;
         for (uint256 i; i < 255; ++i) {
@@ -437,9 +342,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             } else {
                 dSlope = int128(int256(slopeChanges[timeInterval]));
             }
-            lastPoint.bias -=
-                lastPoint.slope *
-                int256(timeInterval - lastPoint.timeStamp);
+            lastPoint.bias -= lastPoint.slope * int256(timeInterval - lastPoint.timeStamp);
             if (timeInterval == _time) {
                 break;
             }
@@ -464,11 +367,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         }
     }
 
-    function _checkpoint(
-        address _user,
-        LockedBalance memory _oldLocked,
-        LockedBalance memory _newLocked
-    ) internal {
+    function _checkpoint(address _user, LockedBalance memory _oldLocked, LockedBalance memory _newLocked) internal {
         Point memory _uOld;
         Point memory _uNew;
         int256 _oldDslope = 0;
@@ -482,17 +381,13 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
                 unchecked {
                     _uOld.slope = _oldLocked.amount / int256(MAXTIME);
                 }
-                _uOld.bias =
-                    _uOld.slope *
-                    int256(_oldLocked.end - block.timestamp);
+                _uOld.bias = _uOld.slope * int256(_oldLocked.end - block.timestamp);
             }
             if (_newLocked.end > block.timestamp && _newLocked.amount > 0) {
                 unchecked {
                     _uNew.slope = _newLocked.amount / int256(MAXTIME);
                 }
-                _uNew.bias =
-                    _uNew.slope *
-                    int256(_newLocked.end - block.timestamp);
+                _uNew.bias = _uNew.slope * int256(_newLocked.end - block.timestamp);
             }
 
             // Read values of scheduled changes in the slope
@@ -507,12 +402,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
                 }
             }
         }
-        Point memory _lastPoint = Point({
-            bias: 0,
-            slope: 0,
-            timeStamp: block.timestamp,
-            blockNumber: block.number
-        });
+        Point memory _lastPoint = Point({bias: 0, slope: 0, timeStamp: block.timestamp, blockNumber: block.number});
         if (_epoch > 0) {
             _lastPoint = pointHistory[_epoch];
         }
@@ -524,8 +414,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         uint256 _blockSlope = 0; // dblock/dt
         if (block.timestamp > _lastPoint.timeStamp) {
             _blockSlope =
-                (MULTIPLIER * (block.number - _lastPoint.blockNumber)) /
-                (block.timestamp - _lastPoint.timeStamp);
+                (MULTIPLIER * (block.number - _lastPoint.blockNumber)) / (block.timestamp - _lastPoint.timeStamp);
         }
         // If last point is already recorded in this block, slope=0
         // But that's ok b/c we know the block in such case
@@ -535,7 +424,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         unchecked {
             _timeInterval = (_lastCheckpoint / WEEK) * WEEK;
         }
-        for (uint256 i; i < 255; ) {
+        for (uint256 i; i < 255;) {
             // Hopefully it won't happen that this won't get used in 5 years!
             // If it does, users will be able to withdraw but vote weight will be broken
             _timeInterval += WEEK;
@@ -545,10 +434,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             } else {
                 d_slope = int256(slopeChanges[_timeInterval]);
             }
-            _lastPoint.bias =
-                _lastPoint.bias -
-                _lastPoint.slope *
-                int256(_timeInterval - _lastCheckpoint);
+            _lastPoint.bias = _lastPoint.bias - _lastPoint.slope * int256(_timeInterval - _lastCheckpoint);
             _lastPoint.slope += d_slope;
             if (_lastPoint.bias < 0) {
                 // This can happen
@@ -560,10 +446,8 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             }
             _lastCheckpoint = _timeInterval;
             _lastPoint.timeStamp = _timeInterval;
-            _lastPoint.blockNumber =
-                _initialLastPoint.blockNumber +
-                ((_blockSlope * (_timeInterval - _initialLastPoint.timeStamp)) /
-                    MULTIPLIER);
+            _lastPoint.blockNumber = _initialLastPoint.blockNumber
+                + ((_blockSlope * (_timeInterval - _initialLastPoint.timeStamp)) / MULTIPLIER);
             _epoch += 1;
             if (_timeInterval == block.timestamp) {
                 _lastPoint.blockNumber = block.number;
@@ -647,12 +531,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         _checkpoint(_user, oldLocked, _locked);
         if (_value != 0) {
             IERC20(token).safeTransferFrom(_user, address(this), _value);
-            IGaugeController(gaugeController).updateReward(
-                address(this),
-                _user,
-                _value,
-                true
-            );
+            IGaugeController(gaugeController).updateReward(address(this), _user, _value, true);
         }
         emit Deposited(_user, _value, _locked.end, _type, block.timestamp);
         emit Supply(supplyBefore, supplyBefore + _value);
