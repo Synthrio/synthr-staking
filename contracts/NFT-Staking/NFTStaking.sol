@@ -52,6 +52,7 @@ contract NftStaking is Ownable2Step {
     event LogPoolAddition(address indexed owner, address[] pool);
     event LogUpdatePool(address indexed pool, uint64 lastRewardBlock, uint256 accRewardPerShare);
     event EpochUpdated(address indexed owner, address[] pool, uint256[] rewardPerBlock);
+    event totalLockAmountUpdated(address owner, uint256 totalLockAmount);
     
     constructor(address _admin, address _rewardToken) Ownable(_admin) {
         REWARD_TOKEN = IERC20(_rewardToken);
@@ -87,6 +88,12 @@ contract NftStaking is Ownable2Step {
         pending_ = _pendingRewardAmount(_pool, _user, _blockNumber);
     }
 
+    /// @notice set total locked token for lpSupply
+    function setTotalLockAmount(uint256 _totalLockAmount) external onlyOwner {
+        totalLockAmount = _totalLockAmount;
+
+        emit totalLockAmountUpdated(msg.sender, totalLockAmount);
+    }
 
     /// @notice Add a new NFT pool. Can only be called by the owner.
     function addPool(
