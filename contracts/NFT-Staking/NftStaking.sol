@@ -4,9 +4,9 @@ pragma solidity =0.8.24;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ISynthrNFT.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-
-contract NftStaking is Ownable2Step {
+contract NftStaking is IERC721Receiver, Ownable2Step {
     using SafeERC20 for IERC20;
 
     /// @notice Address of reward token contract.
@@ -44,7 +44,6 @@ contract NftStaking is Ownable2Step {
     /// @notice token id of user has deposited in pool.
     mapping(address => mapping(uint256 => address)) public tokenOwner;
 
-
     event Deposit(address indexed pool, address indexed user, uint256 tokenId);
     event Withdraw(address indexed pool, address indexed user, uint256 tokenId);
     event Claimed(address indexed pool, address indexed user, uint256 pendingRewardAmount);
@@ -53,7 +52,7 @@ contract NftStaking is Ownable2Step {
     event LogUpdatePool(address indexed pool, uint64 lastRewardBlock, uint256 accRewardPerShare);
     event EpochUpdated(address indexed owner, address[] pool, uint256[] rewardPerBlock);
     event totalLockAmountUpdated(address owner, uint256 totalLockAmount);
-    
+
     constructor(address _admin, address _rewardToken) Ownable(_admin) {
         REWARD_TOKEN = IERC20(_rewardToken);
     }
@@ -61,10 +60,7 @@ contract NftStaking is Ownable2Step {
     /// @dev retuen user reward debt
     /// @param _pool address of pool
     /// @param _user address of user
-    function userRewardsDebt(
-        address _pool,
-        address _user
-    ) external view returns (int256) {
+    function userRewardsDebt(address _pool, address _user) external view returns (int256) {
         return userInfo[_pool][_user].rewardDebt;
     }
 
@@ -95,11 +91,12 @@ contract NftStaking is Ownable2Step {
         emit totalLockAmountUpdated(msg.sender, totalLockAmount);
     }
 
-    /// @notice Add a new NFT pool. Can only be called by the owner.
-    function addPool(
-        address[] memory _pool
-    ) external onlyOwner {
+    function onERC721Received(address, address, uint256, bytes calldata) external override returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
 
+    /// @notice Add a new NFT pool. Can only be called by the owner.
+    function addPool(address[] memory _pool) external onlyOwner {
         for (uint256 i; i < _pool.length; i++) {
             poolInfo[_pool[i]].exist = true;
             poolInfo[_pool[i]].lastRewardBlock = uint64(block.number);
@@ -111,16 +108,11 @@ contract NftStaking is Ownable2Step {
     /// @notice update epoch of pool
     /// @param _pool addresses of pool to be updated.
     /// @param _rewardPerBlock array of rewardPerBlock
-    function updateEpoch(
-        address _user,
-        uint256 _rewardAmount,
-        address[] memory _pool,
-        uint256[] memory _rewardPerBlock
-    ) external onlyOwner {
-        require(
-            _rewardPerBlock.length == _pool.length,
-            "NftStaking: length of array doesn't mach"
-        );
+    function updateEpoch(address _user, uint256 _rewardAmount, address[] memory _pool, uint256[] memory _rewardPerBlock)
+        external
+        onlyOwner
+    {
+        require(_rewardPerBlock.length == _pool.length, "NftStaking: length of array doesn't mach");
 
         for (uint256 i; i < _pool.length; i++) {
             NFTPoolInfo memory _poolInfo = poolInfo[_pool[i]];
@@ -128,6 +120,7 @@ contract NftStaking is Ownable2Step {
             _poolInfo.rewardPerBlock = _rewardPerBlock[i];
             _poolInfo.lastRewardBlock = uint64(block.number);
             ++_poolInfo.epoch;
+            poolInfo[_pool[i]] = _poolInfo;
         }
 
         REWARD_TOKEN.safeTransferFrom(_user, address(this), _rewardAmount);
@@ -149,22 +142,22 @@ contract NftStaking is Ownable2Step {
                 _poolInfo.accRewardPerShare += _calAccPerShare(_rewardAmount, _lpSupply);
             }
             _poolInfo.lastRewardBlock = uint64(block.number);
-    
+            poolInfo[_pool] = _poolInfo;
             emit LogUpdatePool(_pool, _poolInfo.lastRewardBlock, _poolInfo.accRewardPerShare);
         }
     }
 
     /// @notice Deposit NFT token.
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
-    function deposit(address _pool, uint256 _tokenId) external onlyOwner {
+    function deposit(address _pool, uint256 _tokenId) external {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
-       
+
         UserInfo memory _user = userInfo[_pool][msg.sender];
         uint256 _lockAmount = ISynthrNFT(_pool).lockAmount(_tokenId);
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount);
-    
+
         _user.amount += _lockAmount;
         _user.rewardDebt += _calRewardDebt;
 
@@ -176,7 +169,7 @@ contract NftStaking is Ownable2Step {
         emit Deposit(_pool, msg.sender, _tokenId);
     }
 
-    function withdraw(address _pool, uint256 _tokenId) external onlyOwner {
+    function withdraw(address _pool, uint256 _tokenId) external {
         require(tokenOwner[_pool][_tokenId] == msg.sender, "NftStaking: not access to tokenId");
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
@@ -205,18 +198,18 @@ contract NftStaking is Ownable2Step {
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
-        uint256 _pendingRewardAmount = uint256(accumulatedReward - _user.rewardDebt);
+        uint256 _pendingReward = uint256(accumulatedReward - _user.rewardDebt);
 
         // Effects
         _user.rewardDebt = accumulatedReward;
         userInfo[_pool][msg.sender] = _user;
 
         // Interactions
-        if (_pendingRewardAmount != 0) {
-            REWARD_TOKEN.safeTransfer(_to, _pendingRewardAmount);
+        if (_pendingReward != 0) {
+            REWARD_TOKEN.safeTransfer(_to, _pendingReward);
         }
 
-        emit Claimed(msg.sender, _pool, _pendingRewardAmount);
+        emit Claimed(msg.sender, _pool, _pendingReward);
     }
 
     /// @notice Withdraw NFT token from pool and claim proceeds for transaction sender to `to`.
@@ -249,7 +242,11 @@ contract NftStaking is Ownable2Step {
         emit WithdrawAndClaim(_pool, msg.sender, _pendingReward);
     }
 
-    function _pendingRewardAmount(address _pool, address _user, uint256 _blockNumber) internal view returns (uint256 _pending) {
+    function _pendingRewardAmount(address _pool, address _user, uint256 _blockNumber)
+        internal
+        view
+        returns (uint256 _pending)
+    {
         uint256 _lpSupply = totalLockAmount;
         NFTPoolInfo memory _poolInfo = poolInfo[_pool];
         UserInfo memory _userInfo = userInfo[_pool][_user];

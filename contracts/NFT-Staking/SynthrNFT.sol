@@ -30,7 +30,7 @@ contract SynthrNFT is ERC721, Ownable2Step {
      * @notice Only owner of this contract is allowed to mint tokens
      */
     function safeMint(address to, uint256 lpAmount) external onlyOwner returns (uint256 tokenId) {
-        tokenId = tokenIdCount++;
+        tokenId = ++tokenIdCount;
         _safeMint(to, tokenId);
         lockAmount[tokenId] = lpAmount;
     }
@@ -45,7 +45,7 @@ contract SynthrNFT is ERC721, Ownable2Step {
         require(_to.length > 1, "Synthr NFT: Mint more than one");
         uint256 tokenId = tokenIdCount;
         for (uint256 i = 0; i < _to.length; i++) {
-            _safeMint(_to[i], tokenId++);
+            _safeMint(_to[i], ++tokenId);
             lockAmount[tokenId] = _lpAmount[i];
         }
         tokenIdCount = tokenId;
