@@ -4,10 +4,9 @@ import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
-import { Address } from '../../typechain-types/@openzeppelin/contracts/utils/Address';
 
 
-let owner: any, addr1: any, addr2: any, user0: any, user1: any, user2: any, user3: any;
+let owner: any, addr1: any, addr2: any, Alice: any, Bob: any, Joy: any, Roy: any;
 let nftStaking: any,
     rewardToken: any;
 
@@ -16,7 +15,7 @@ let pools: any;
 let totalLockAmount: any;
 async function setUp() {
     // Contracts are deployed using the first signer/account by default
-    [owner, addr1, addr2, user0, user1, user2, user3] = await ethers.getSigners();
+    [owner, addr1, addr2, Alice, Bob, Joy, Roy] = await ethers.getSigners();
     const RewardToken = await ethers.getContractFactory("MockToken");
     rewardToken = await RewardToken.deploy()
 
@@ -42,15 +41,15 @@ async function setUp() {
 
 async function mintNFTsToLpProviders() {
     const lpAmount = {
-        user0: ethers.utils.parseEther("100"), // 100 * 10^18
-        user1: ethers.utils.parseEther("2000"),
-        user2: ethers.utils.parseEther("30000"),
-        user3: ethers.utils.parseEther("400000"),
+        Alice: ethers.utils.parseEther("100"), // 100 * 10^18
+        Bob: ethers.utils.parseEther("2000"),
+        Joy: ethers.utils.parseEther("30000"),
+        Roy: ethers.utils.parseEther("400000"),
     }
-    await syCHAD.connect(owner).safeMint(user0.address, lpAmount.user0);
-    await syBULL.connect(owner).safeMint(user1.address, lpAmount.user1);
-    await syHODL.connect(owner).safeMint(user2.address, lpAmount.user2);
-    await syDIAMOND.connect(owner).safeMint(user3.address, lpAmount.user3);
+    await syCHAD.connect(owner).safeMint(Alice.address, lpAmount.Alice);
+    await syBULL.connect(owner).safeMint(Bob.address, lpAmount.Bob);
+    await syHODL.connect(owner).safeMint(Joy.address, lpAmount.Joy);
+    await syDIAMOND.connect(owner).safeMint(Roy.address, lpAmount.Roy);
     return ethers.utils.parseEther("432100"); //sum of above lpAmount.user
 }
 
@@ -63,10 +62,10 @@ async function addPoolFunc() {
 }
 
 async function approveNFT() {
-    await syCHAD.connect(user0).approve(nftStaking.address, 1);
-    await syBULL.connect(user1).approve(nftStaking.address, 1);
-    await syHODL.connect(user2).approve(nftStaking.address, 1);
-    await syDIAMOND.connect(user3).approve(nftStaking.address, 1);
+    await syCHAD.connect(Alice).approve(nftStaking.address, 1);
+    await syBULL.connect(Bob).approve(nftStaking.address, 1);
+    await syHODL.connect(Joy).approve(nftStaking.address, 1);
+    await syDIAMOND.connect(Roy).approve(nftStaking.address, 1);
     expect(await syCHAD.getApproved(1)).to.equal(nftStaking.address);
     expect(await syBULL.getApproved(1)).to.equal(nftStaking.address);
     expect(await syHODL.getApproved(1)).to.equal(nftStaking.address);
@@ -76,10 +75,10 @@ async function approveNFT() {
 
 
 async function depositNfts() {
-    let tx1 = await nftStaking.connect(user0).deposit(syCHAD.address, 1);
-    let tx2 = await nftStaking.connect(user1).deposit(syBULL.address, 1);
-    let tx3 = await nftStaking.connect(user2).deposit(syHODL.address, 1);
-    let tx4 = await nftStaking.connect(user3).deposit(syDIAMOND.address, 1);
+    let tx1 = await nftStaking.connect(Alice).deposit(syCHAD.address, 1);
+    let tx2 = await nftStaking.connect(Bob).deposit(syBULL.address, 1);
+    let tx3 = await nftStaking.connect(Joy).deposit(syHODL.address, 1);
+    let tx4 = await nftStaking.connect(Roy).deposit(syDIAMOND.address, 1);
     return [tx1, tx2, tx3, tx4];
 
 }
@@ -87,6 +86,11 @@ async function depositNfts() {
 function calAccRewardPerShare(_accRewardPerShare: BigNumber, _amount: BigNumber): BigNumber {
     const ACC_REWARD_PRECISION: BigNumber = ethers.utils.parseEther("1");
     return _amount.mul(_accRewardPerShare).div(ACC_REWARD_PRECISION);
+}
+
+function calAccPerShare(rewardAmount: BigNumber, lpSupply: BigNumber): BigNumber {
+    const ACC_REWARD_PRECISION: BigNumber = ethers.utils.parseEther("1");
+    return rewardAmount.mul(ACC_REWARD_PRECISION).div(lpSupply);
 }
 
 describe("NFTStaking", function () {
@@ -128,16 +132,16 @@ describe("NFTStaking", function () {
             const currentTime = await time.latest();
             await time.increaseTo(currentTime + 1000);
             expect(
-                await nftStaking.pendingReward(pools[0], user0.address)
+                await nftStaking.pendingReward(pools[0], Alice.address)
             ).to.equal(0);
             expect(
-                await nftStaking.pendingReward(pools[1], user1.address)
+                await nftStaking.pendingReward(pools[1], Bob.address)
             ).to.equal(0);
             expect(
-                await nftStaking.pendingReward(pools[2], user2.address)
+                await nftStaking.pendingReward(pools[2], Joy.address)
             ).to.equal(0);
             expect(
-                await nftStaking.pendingReward(pools[3], user3.address)
+                await nftStaking.pendingReward(pools[3], Roy.address)
             ).to.equal(0);
         });
 
@@ -147,16 +151,16 @@ describe("NFTStaking", function () {
             let txns = await depositNfts();
             await expect(txns[0])
                 .to.emit(nftStaking, "Deposit")
-                .withArgs(syCHAD.address, user0.address, 1);
+                .withArgs(syCHAD.address, Alice.address, 1);
             await expect(txns[1])
                 .to.emit(nftStaking, "Deposit")
-                .withArgs(syBULL.address, user1.address, 1);
+                .withArgs(syBULL.address, Bob.address, 1);
             await expect(txns[2])
                 .to.emit(nftStaking, "Deposit")
-                .withArgs(syHODL.address, user2.address, 1);
+                .withArgs(syHODL.address, Joy.address, 1);
             await expect(txns[3])
                 .to.emit(nftStaking, "Deposit")
-                .withArgs(syDIAMOND.address, user3.address, 1);
+                .withArgs(syDIAMOND.address, Roy.address, 1);
         })
         it("Should update user reward debt after deposits", async function () {
             await addPoolFunc();
@@ -170,31 +174,31 @@ describe("NFTStaking", function () {
             let poolInfoSyMAXI = await nftStaking.poolInfo(syMAXI.address)
 
             const lockAmount = {
-                user0: ethers.utils.parseEther("100"), // 100 * 10^18
-                user1: ethers.utils.parseEther("2000"),
-                user2: ethers.utils.parseEther("30000"),
-                user3: ethers.utils.parseEther("400000"),
+                Alice: ethers.utils.parseEther("100"), // 100 * 10^18
+                Bob: ethers.utils.parseEther("2000"),
+                Joy: ethers.utils.parseEther("30000"),
+                Roy: ethers.utils.parseEther("400000"),
             }
 
-            let amt0 = calAccRewardPerShare(poolInfoSyCHAD.accRewardPerShare, lockAmount.user0);
-            let amt1 = calAccRewardPerShare(poolInfoSyBULL.accRewardPerShare, lockAmount.user1);
-            let amt2 = calAccRewardPerShare(poolInfoSyHODL.accRewardPerShare, lockAmount.user2);
-            let amt3 = calAccRewardPerShare(poolInfoSyDIAMOND.accRewardPerShare, lockAmount.user3);
+            let amt0 = calAccRewardPerShare(poolInfoSyCHAD.accRewardPerShare, lockAmount.Alice);
+            let amt1 = calAccRewardPerShare(poolInfoSyBULL.accRewardPerShare, lockAmount.Bob);
+            let amt2 = calAccRewardPerShare(poolInfoSyHODL.accRewardPerShare, lockAmount.Joy);
+            let amt3 = calAccRewardPerShare(poolInfoSyDIAMOND.accRewardPerShare, lockAmount.Roy);
 
-            let user0Info = await nftStaking.userInfo(pools[0], user0.address)
-            let user1Info = await nftStaking.userInfo(pools[1], user1.address)
-            let user2Info = await nftStaking.userInfo(pools[2], user2.address)
-            let user3Info = await nftStaking.userInfo(pools[3], user3.address)
+            let AliceInfo = await nftStaking.userInfo(pools[0], Alice.address)
+            let BobInfo = await nftStaking.userInfo(pools[1], Bob.address)
+            let JoyInfo = await nftStaking.userInfo(pools[2], Joy.address)
+            let RoyInfo = await nftStaking.userInfo(pools[3], Roy.address)
 
-            expect(user0Info.amount).to.equal(lockAmount.user0);
-            expect(user1Info.amount).to.equal(lockAmount.user1);
-            expect(user2Info.amount).to.equal(lockAmount.user2);
-            expect(user3Info.amount).to.equal(lockAmount.user3);
+            expect(AliceInfo.amount).to.equal(lockAmount.Alice);
+            expect(BobInfo.amount).to.equal(lockAmount.Bob);
+            expect(JoyInfo.amount).to.equal(lockAmount.Joy);
+            expect(RoyInfo.amount).to.equal(lockAmount.Roy);
 
-            expect(user0Info.rewardDebt).to.equal(amt0);
-            expect(user1Info.rewardDebt).to.equal(amt1);
-            expect(user2Info.rewardDebt).to.equal(amt2);
-            expect(user3Info.rewardDebt).to.equal(amt3);
+            expect(AliceInfo.rewardDebt).to.equal(amt0);
+            expect(BobInfo.rewardDebt).to.equal(amt1);
+            expect(JoyInfo.rewardDebt).to.equal(amt2);
+            expect(RoyInfo.rewardDebt).to.equal(amt3);
 
 
 
@@ -207,12 +211,12 @@ describe("NFTStaking", function () {
             await mine(1000);
             const blockNum = await ethers.provider.getBlockNumber();
             const block = await ethers.provider.getBlock(blockNum);
-            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], user0.address, blockNum);
-            let tx = await nftStaking.connect(user0).claim(pools[0], user0.address);
+            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
             await expect(tx)
                 .to.emit(nftStaking, "Claimed")
-                .withArgs(user0.address, pools[0], expectedReward);
-            let actualReward = await rewardToken.balanceOf(user0.address);
+                .withArgs(Alice.address, pools[0], expectedReward);
+            let actualReward = await rewardToken.balanceOf(Alice.address);
             expect(expectedReward).to.equal(actualReward);
 
 
@@ -225,12 +229,55 @@ describe("NFTStaking", function () {
             await mine(1000);
             const blockNum = await ethers.provider.getBlockNumber();
             const block = await ethers.provider.getBlock(blockNum);
-            let tx = await nftStaking.connect(user0).withdraw(pools[0], 1);
+            let tx = await nftStaking.connect(Alice).withdraw(pools[0], 1);
             await expect(tx)
                 .to.emit(nftStaking, "Withdraw")
-                .withArgs(pools[0], user0.address, 1);
-            expect(await syCHAD.ownerOf(1)).to.equal(user0.address);
-            expect((await nftStaking.userInfo(syCHAD.address, user0.address)).amount).to.equal(0);
+                .withArgs(pools[0], Alice.address, 1);
+            expect(await syCHAD.ownerOf(1)).to.equal(Alice.address);
+            expect((await nftStaking.userInfo(syCHAD.address, Alice.address)).amount).to.equal(0);
+        });
+
+        it("Should claim reward after withdraw is triggged", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(1000);
+            let tx = await nftStaking.connect(Alice).withdraw(pools[0], 1);
+            await expect(tx)
+                .to.emit(nftStaking, "Withdraw")
+                .withArgs(pools[0], Alice.address, 1);
+            expect(await syCHAD.ownerOf(1)).to.equal(Alice.address);
+            expect((await nftStaking.userInfo(syCHAD.address, Alice.address)).amount).to.equal(0);
+            await mine(10); // 10 blocks are mined after the withdraw is triggged
+            const blockNum = await ethers.provider.getBlockNumber();
+            let pendingRewardBeforeClaim = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            let claimTx0 = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
+            let pendingRewardAfterClaim = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            expect(pendingRewardAfterClaim).to.equal(BigNumber.from(0));
+        });
+
+
+        it("Should update rewardDebt & AccumulatedUnoPerShare as calculated", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            const depositTxn = await depositNfts();
+            let accumulatedPerShareBeforeWithdraw = (await nftStaking.poolInfo(pools[0])).accRewardPerShare;
+            const depositLog = depositTxn[0];
+            await mine(1000);
+            const rewardPerBlock = "1000";
+            let totalLockAmount = await nftStaking.totalLockAmount();
+            let tx = await nftStaking.connect(Alice).withdraw(pools[0], 1);
+            await expect(tx)
+                .to.emit(nftStaking, "Withdraw")
+                .withArgs(pools[0], Alice.address, 1);
+            let block2 = (await ethers.provider.getBlock(tx.blockNumber)).number;
+            let block = (await ethers.provider.getBlock(depositLog.blockNumber)).number;
+
+            let expectedRewardAmount = BigNumber.from(rewardPerBlock).mul(block2 - block);
+            let expectedAccRewardPerShareCalculated = calAccPerShare(expectedRewardAmount, totalLockAmount).add(BigNumber.from(accumulatedPerShareBeforeWithdraw));
+            let accumulatedPerShareAfterWithdraw = (await nftStaking.poolInfo(pools[0])).accRewardPerShare;
+            expect(accumulatedPerShareBeforeWithdraw).to.equal(BigNumber.from(0));
+            expect(expectedAccRewardPerShareCalculated).to.equal(accumulatedPerShareAfterWithdraw);
         });
 
         it("Should withdraw nft to user and claim reward", async function () {
@@ -240,14 +287,14 @@ describe("NFTStaking", function () {
             await mine(1000);
             const blockNum = await ethers.provider.getBlockNumber();
             const block = await ethers.provider.getBlock(blockNum);
-            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], user0.address, blockNum);
-            let tx = await nftStaking.connect(user0).withdrawAndClaim(pools[0], 1, user0.address);
+            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            let tx = await nftStaking.connect(Alice).withdrawAndClaim(pools[0], 1, Alice.address);
             await expect(tx)
                 .to.emit(nftStaking, "WithdrawAndClaim")
-                .withArgs(pools[0], user0.address, expectedReward);
-            expect(await syCHAD.ownerOf(1)).to.equal(user0.address);
-            expect((await nftStaking.userInfo(syCHAD.address, user0.address)).amount).to.equal(0);
-            let actualReward = await rewardToken.balanceOf(user0.address);
+                .withArgs(pools[0], Alice.address, expectedReward);
+            expect(await syCHAD.ownerOf(1)).to.equal(Alice.address);
+            expect((await nftStaking.userInfo(syCHAD.address, Alice.address)).amount).to.equal(0);
+            let actualReward = await rewardToken.balanceOf(Alice.address);
             expect(expectedReward).to.equal(actualReward);
         });
 
