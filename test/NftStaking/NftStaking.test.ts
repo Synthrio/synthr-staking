@@ -6,7 +6,7 @@ import { parseUnits } from "ethers/lib/utils";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 
-let owner: any, addr1: any, addr2: any, Alice: any, Bob: any, Joy: any, Roy: any;
+let owner: any, addr1: any, addr2: any, Alice: any, Bob: any, Joy: any, Roy: any, Matt: any;
 let nftStaking: any,
     rewardToken: any;
 
@@ -15,7 +15,7 @@ let pools: any;
 let totalLockAmount: any;
 async function setUp() {
     // Contracts are deployed using the first signer/account by default
-    [owner, addr1, addr2, Alice, Bob, Joy, Roy] = await ethers.getSigners();
+    [owner, addr1, addr2, Alice, Bob, Joy, Roy, Matt] = await ethers.getSigners();
     const RewardToken = await ethers.getContractFactory("MockToken");
     rewardToken = await RewardToken.deploy()
 
@@ -50,7 +50,7 @@ async function mintNFTsToLpProviders() {
     await syBULL.connect(owner).safeMint(Bob.address, lpAmount.Bob);
     await syHODL.connect(owner).safeMint(Joy.address, lpAmount.Joy);
     await syDIAMOND.connect(owner).safeMint(Roy.address, lpAmount.Roy);
-    return ethers.utils.parseEther("432100"); //sum of above lpAmount.user
+    return lpAmount.Alice.add(lpAmount.Bob.add(lpAmount.Joy.add(lpAmount.Roy)));//sum of above lpAmount.user
 }
 
 
@@ -235,6 +235,27 @@ describe("NFTStaking", function () {
                 .withArgs(pools[0], Alice.address, 1);
             expect(await syCHAD.ownerOf(1)).to.equal(Alice.address);
             expect((await nftStaking.userInfo(syCHAD.address, Alice.address)).amount).to.equal(0);
+        });
+
+        it("Should revert if withdraw is triggered without depositing nft", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await mine(1000);
+            await expect(nftStaking.connect(Matt).withdraw(pools[0], 1)).to.revertedWith("NftStaking: not access to tokenId");
+        });
+
+        it("Should revert if claim is triggered without depositing nft", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await mine(1000);
+            const blockNum = await ethers.provider.getBlockNumber();
+            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Matt.address, blockNum);
+            let tx = await nftStaking.connect(Matt).claim(pools[0], Matt.address);
+            await expect(tx)
+                .to.emit(nftStaking, "Claimed")
+                .withArgs(Matt.address, pools[0], expectedReward);
+            let actualReward = await rewardToken.balanceOf(Alice.address);
+            expect(expectedReward).to.equal(actualReward);
         });
 
         it("Should claim reward after withdraw is triggged", async function () {
