@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import { config as dotEnvConfig } from "dotenv";
 import "hardhat-deploy";
+import 'solidity-coverage'
 dotEnvConfig();
 
 const config: HardhatUserConfig = {
@@ -14,6 +15,7 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 2000,
           },
+          viaIR: true,
         },
       },
       {
@@ -23,6 +25,8 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 2000,
           },
+          viaIR: true,
+
         },
       },
     ],
