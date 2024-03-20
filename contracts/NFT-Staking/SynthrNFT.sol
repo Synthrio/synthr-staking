@@ -20,7 +20,11 @@ contract SynthrNFT is ERC721, Ownable2Step {
      * @param symbol_ The symbol of the NFT contract.
      * @param owner_ The initial owner of the contract.
      */
-    constructor(string memory name_, string memory symbol_, address owner_) ERC721(name_, symbol_) Ownable(owner_) {}
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address owner_
+    ) ERC721(name_, symbol_) Ownable(owner_) {}
 
     /**
      * @dev Safely mints a single token and assigns it to the specified address.
@@ -29,7 +33,10 @@ contract SynthrNFT is ERC721, Ownable2Step {
      * @return tokenId The ID of the minted token.
      * @notice Only owner of this contract is allowed to mint tokens
      */
-    function safeMint(address to, uint256 lpAmount) external onlyOwner returns (uint256 tokenId) {
+    function safeMint(
+        address to,
+        uint256 lpAmount
+    ) external onlyOwner returns (uint256 tokenId) {
         tokenId = ++tokenIdCount;
         _safeMint(to, tokenId);
         lockAmount[tokenId] = lpAmount;
@@ -41,7 +48,10 @@ contract SynthrNFT is ERC721, Ownable2Step {
      * @param _lpAmount An array of LP amounts corresponding to each address.
      * @notice Only owner of this contract is allowed to mint tokens
      */
-    function safeMintBatch(address[] calldata _to, uint256[] calldata _lpAmount) external onlyOwner {
+    function safeMintBatch(
+        address[] calldata _to,
+        uint256[] calldata _lpAmount
+    ) external onlyOwner {
         require(_to.length > 1, "Synthr NFT: Mint more than one");
         uint256 tokenId = tokenIdCount;
         for (uint256 i = 0; i < _to.length; i++) {
@@ -51,5 +61,27 @@ contract SynthrNFT is ERC721, Ownable2Step {
         tokenIdCount = tokenId;
 
         emit BatchMinted(_to, tokenIdCount);
+    }
+
+    /**
+     * @notice get the NFT token IDs by holder address
+     * @param _address NFT holder address
+     */
+    function getTokenIds(
+        address _address
+    ) external view returns (uint256[] memory) {
+        uint256 balance = balanceOf(_address);
+        require(balance > 0, "balance is empty");
+
+        uint256[] memory tokenIds = new uint256[](balance);
+        uint256 index = 0;
+        for (uint256 i = 0; i <= tokenIdCount; i++) {
+            if (ownerOf(i) == _address) {
+                tokenIds[index] = i;
+                index++;
+            }
+        }
+
+        return tokenIds;
     }
 }
