@@ -75,7 +75,7 @@ contract SynthrNFT is ERC721, Ownable2Step {
 
         uint256[] memory tokenIds = new uint256[](balance);
         uint256 index = 0;
-        for (uint256 i = 0; i <= tokenIdCount; i++) {
+        for (uint256 i = 1; i <= tokenIdCount; i++) {
             if (ownerOf(i) == _address) {
                 tokenIds[index] = i;
                 index++;
