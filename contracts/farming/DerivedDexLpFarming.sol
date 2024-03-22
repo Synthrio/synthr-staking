@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity =0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "../interfaces/ITokenTracker.sol";
@@ -19,12 +19,9 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
     event NativeTokenUpdated(address indexed newNativeToken);
 
     /// @param _rewardToken The REWARD token contract address.
-    constructor(
-        IERC20 _rewardToken,
-        ITokenTracker _tokenTracker,
-        address _liquidityPool,
-        address _nativeToken
-    ) BaseDexLpFarming(_rewardToken) {
+    constructor(IERC20 _rewardToken, ITokenTracker _tokenTracker, address _liquidityPool, address _nativeToken)
+        BaseDexLpFarming(_rewardToken)
+    {
         tokenTracker = _tokenTracker;
         liquidityPool = _liquidityPool;
         nativeToken = _nativeToken;
@@ -33,9 +30,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
     /// @notice View function to see pending reward on frontend.
     /// @param _user Address of user.
     /// @return _pending REWARD_TOKEN reward for a given user.
-    function pendingReward(
-        address _user
-    ) external view returns (uint256 _pending) {
+    function pendingReward(address _user) external view returns (uint256 _pending) {
         uint256 _lpSupply = IERC20(nativeToken).balanceOf(liquidityPool);
         _pending = _pendingReward(_user, _lpSupply);
     }
@@ -134,23 +129,14 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
     function withdrawAndHarvest(uint256 _tokenId, address _to) external {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.amount != 0, "Farming: can not withdraw");
-        require(
-            userTokenAmount[msg.sender][_tokenId] != 0,
-            "Farming: can not withdraw"
-        );
+        require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
 
         PoolInfo memory _pool = updatePool();
 
         uint256 _liquidity = _getLiquidity(_tokenId);
 
         // Effects
-        uint256 _pendingAmount = _withdrawAndHarvest(
-            _tokenId,
-            _liquidity,
-            _pool.accRewardPerShare,
-            _user,
-            _to
-        );
+        uint256 _pendingAmount = _withdrawAndHarvest(_tokenId, _liquidity, _pool.accRewardPerShare, _user, _to);
 
         // Interactions
         tokenTracker.transferFrom(address(this), _to, _tokenId);
@@ -160,35 +146,17 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
         emit WithdrawAndHarvest(msg.sender, _tokenIds, _pendingAmount);
     }
 
-    function _deposit(
-        uint256 _tokenId,
-        uint256 _accRewardPerShare,
-        UserInfo memory _user
-    ) internal {
+    function _deposit(uint256 _tokenId, uint256 _accRewardPerShare, UserInfo memory _user) internal {
         uint256 _liquidity = _getLiquidity(_tokenId);
 
-        _depositLiquidity(
-            _tokenId,
-            1,
-            _liquidity,
-            _accRewardPerShare,
-            _user,
-            false
-        );
+        _depositLiquidity(_tokenId, 1, _liquidity, _accRewardPerShare, _user, false);
 
         // Interactions
         tokenTracker.transferFrom(msg.sender, address(this), _tokenId);
     }
 
-    function _withdraw(
-        uint256 _tokenId,
-        uint256 _accRewardPerShare,
-        UserInfo memory _user
-    ) internal {
-        require(
-            userTokenAmount[msg.sender][_tokenId] != 0,
-            "Farming: can not withdraw"
-        );
+    function _withdraw(uint256 _tokenId, uint256 _accRewardPerShare, UserInfo memory _user) internal {
+        require(userTokenAmount[msg.sender][_tokenId] != 0, "Farming: can not withdraw");
         uint256 _liquidity = _getLiquidity(_tokenId);
 
         _withdrawLiquidity(_tokenId, _liquidity, _accRewardPerShare, _user);
@@ -198,9 +166,7 @@ contract DerivedDexLpFarming is Ownable2Step, BaseDexLpFarming {
     }
 
     function _getLiquidity(uint256 _tokenId) internal view returns (uint256) {
-        (, , , , , , , uint256 _liquidity, , , , ) = tokenTracker.positions(
-            _tokenId
-        );
+        (,,,,,,, uint256 _liquidity,,,,) = tokenTracker.positions(_tokenId);
 
         return _liquidity;
     }

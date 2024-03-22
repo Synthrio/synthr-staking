@@ -3,21 +3,26 @@
   "scripts": {
     "compile": "hardhat compile",
     "clean": "hardhat clean",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "sepolia:deploy": "hardhat --network sepolia deploy",
+    "sepolia:verify": "hardhat --network sepolia etherscan-verify --solc-input"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/contracts": "^5.0.1",
     "@types/chai": "^4.3.6",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.7.0",
     "chai": "^4.3.8",
     "hardhat": "^2.17.3",
+    "hardhat-deploy": "^0.11.45",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.3",
     "@uniswap/v3-periphery": "^1.4.4",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "solidity-coverage": "^0.8.10"
   }
 }
