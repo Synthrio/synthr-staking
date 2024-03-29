@@ -166,6 +166,27 @@ describe("NFTStaking", function () {
             ).to.equal(0);
         });
 
+        it("Should not be able to deposit without approving the contract", async function () {
+            await addPoolFunc();
+            // should revert with insufficient allowance error
+                await expect(
+                 nftStaking.connect(Alice).deposit(syCHAD.address, 1)
+                 ).to.be.reverted;
+
+                await expect(
+                 nftStaking.connect(Bob).deposit(syBULL.address, 1)
+                 ).to.be.reverted;
+
+                await expect(
+                    nftStaking.connect(Joy).deposit(syHODL.address, 1)
+                    ).to.be.reverted;
+                    
+                await expect(
+                    nftStaking.connect(Roy).deposit(syDIAMOND.address, 1)
+                    ).to.be.reverted;        
+        })
+
+
         it("Should deposit user's nft", async function () {
             await addPoolFunc();
             await approveNFT();
