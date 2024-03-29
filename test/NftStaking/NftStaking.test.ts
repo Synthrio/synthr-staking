@@ -204,6 +204,26 @@ describe("NFTStaking", function () {
                 .to.emit(nftStaking, "Deposit")
                 .withArgs(syDIAMOND.address, Roy.address, 1);
         })
+
+        it("Should transfer user's nft to contract successfully", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            let txns = await depositNfts();
+
+            //checks whether the ownership of nfts is transferred to the staking contract
+            expect(await syCHAD.ownerOf(1))
+            .to.equal(nftStaking.address);
+
+            expect(await syBULL.ownerOf(1))
+            .to.equal(nftStaking.address);
+
+            expect(await syHODL.ownerOf(1))
+            .to.equal(nftStaking.address);
+
+            expect(await syDIAMOND.ownerOf(1))
+            .to.equal(nftStaking.address);
+        })
+
         it("Should update user reward debt after deposits", async function () {
             await addPoolFunc();
             await approveNFT();
