@@ -140,6 +140,14 @@ describe("NFTStaking", function () {
             .to.be.reverted;
         });
 
+        it("Should revert while updating epoch with different array length of pool and reward", async function () {
+            let tx = await nftStaking.addPool(pools);
+            await rewardToken.connect(owner)
+            .approve(nftStaking.address, ethers.utils.parseEther("100000"));
+            await expect(nftStaking.updateEpoch(owner.address, ethers.utils.parseEther("100000"), pools, [1000, 1000, 1000]))
+            .to.be.reverted;          
+        });
+
         it("Should have pending reward zero if user has not deposited in pool", async function () {
             await addPoolFunc();
             const currentTime = await time.latest();
