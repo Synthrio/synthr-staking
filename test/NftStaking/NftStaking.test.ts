@@ -270,17 +270,24 @@ describe("NFTStaking", function () {
             await addPoolFunc();
             await approveNFT();
             await depositNfts();
-            await mine(1000);
+            await mine(2000);
             const blockNum = await ethers.provider.getBlockNumber();
             const block = await ethers.provider.getBlock(blockNum);
             let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            let userInfo = await nftStaking.userInfo(pools[0], Alice.address);
+            const rewardDebtBeforeClaim = userInfo.rewardDebt;
+    
             let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
             await expect(tx)
                 .to.emit(nftStaking, "Claimed")
                 .withArgs(Alice.address, pools[0], expectedReward);
+           
+            let userInfo2 = await nftStaking.userInfo(pools[0], Alice.address);   
+
+            const rewardDebtAfterClaim = userInfo2.rewardDebt;
             let actualReward = await rewardToken.balanceOf(Alice.address);
             expect(expectedReward).to.equal(actualReward);
-
+            expect(rewardDebtAfterClaim-rewardDebtBeforeClaim).to.equal(expectedReward);
 
         });
 
