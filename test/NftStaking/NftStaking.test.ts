@@ -276,19 +276,46 @@ describe("NFTStaking", function () {
             let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
             let userInfo = await nftStaking.userInfo(pools[0], Alice.address);
             const rewardDebtBeforeClaim = userInfo.rewardDebt;
-    
-            let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
+            let tx = await nftStaking.connect(Alice).claim(pools[0],Alice.address);
             await expect(tx)
                 .to.emit(nftStaking, "Claimed")
                 .withArgs(Alice.address, pools[0], expectedReward);
-           
+    
             let userInfo2 = await nftStaking.userInfo(pools[0], Alice.address);   
-
             const rewardDebtAfterClaim = userInfo2.rewardDebt;
             let actualReward = await rewardToken.balanceOf(Alice.address);
             expect(expectedReward).to.equal(actualReward);
             expect(rewardDebtAfterClaim-rewardDebtBeforeClaim).to.equal(expectedReward);
 
+        });
+
+        it("Should have 0 pending reward at that block after claiming is done", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(2000);
+           
+            let tx = await nftStaking
+            .connect(Alice)
+            .claim(pools[0],Alice.address);
+
+            const blockNumNow = await ethers.provider.getBlockNumber();
+            //check pending amount after claim
+            let pendingNow = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNumNow);
+            expect(pendingNow).to.equal(0);
+        });
+
+        it("Should fail while claiming to a zero address", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(2000);
+           
+            let invalidAddress = ethers.constants.AddressZero;
+            
+            await expect(nftStaking.connect(Alice)
+            .claim(pools[0],invalidAddress))
+            .to.be.reverted;
         });
 
         it("Should withdraw nft to user", async function () {
