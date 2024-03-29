@@ -124,8 +124,21 @@ describe("NFTStaking", function () {
             expect(poolInfoSyHODL.exist).to.equal(true);
             expect(poolInfoSyDIAMOND.exist).to.equal(true);
             expect(poolInfoSyMAXI.exist).to.equal(true);
+
+            
+            //check owner reward token balance after epoch update
+            expect(poolInfoSyCHAD.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyBULL.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyHODL.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyDIAMOND.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyMAXI.rewardPerBlock).to.equal(1000);
         });
 
+        it("Should revert when trying to add invalid pool in nftStaking", async function () {
+            let invalidAddress = ethers.constants.AddressZero;
+            await expect(nftStaking.addPool([invalidAddress]))
+            .to.be.reverted;
+        });
 
         it("Should have pending reward zero if user has not deposited in pool", async function () {
             await addPoolFunc();
