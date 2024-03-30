@@ -277,6 +277,42 @@ describe("VotingEscrow", function () {
 
     });
 
+    it("Should revert if withdrawn before lock period ends", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
+        .connect(Alice)
+        .approve(votingEscrow.address, parseUnits("1000", 18));
+  
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      let unlockTime = BigNumber.from(timestamp + 1000000);
+      let _value = parseUnits("1000", 18);
+
+      let createLockTxn = await createLock(_value, unlockTime, Alice)
+      let createLockTS = (await ethers.provider.getBlock(createLockTxn.blockNumber)).timestamp;
+
+
+      let calUnlockTime = BigNumber.from(unlockTime)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
+      let userLockedInfo = await votingEscrow.locked(Alice.address);
+
+      expect(createLockTxn).to.emit(votingEscrow, "Deposited").withArgs(Alice.address, _value, calUnlockTime, 1, createLockTS)
+
+      expect(userLockedInfo.end).to.equal(calUnlockTime);
+      expect(userLockedInfo.amount).to.equal(_value);
+      expect(
+        await gaugeController.userInfo(votingEscrow.address, Alice.address)
+      ).to.equal(_value);
+      mine(500000);
+
+      await expect(votingEscrow.connect(Alice)
+        .withdraw())
+        .to.be.revertedWith("VotingEscrow: The lock didn't expire");
+
+    });
     it("Should claim reward after sometime of create lock", async function () {
       await addPoolFunc();
 
