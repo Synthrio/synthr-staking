@@ -120,6 +120,42 @@ describe("VotingEscrow", function () {
       ).to.equal(parseUnits("1000", 18));
     });
 
+    it("Should revert when creating a lock with unlock time greater than maximum allowed", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
+        .connect(addr1)
+        .approve(votingEscrow.address, parseUnits("1000", 18));
+    
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      // Set unlock time to exactly 5 years from now which is greater than allowed
+      let time1 = timestamp + 5 * 365 * 86400;
+      
+      await expect(votingEscrow.connect(addr1)
+      .createLock(parseUnits("1000", 18), time1))
+      .to.be.revertedWith('VotingEscrow: Voting lock can be 4 years max');
+    });
+
+    it("Should revert when trying to lock with non positive value", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
+        .connect(addr1)
+        .approve(votingEscrow.address, parseUnits("1000", 18));
+    
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      // Set unlock time to exactly 5 years from now which is greater than allowed
+      let time1 = timestamp + 5 * 365 * 86400;
+      
+      await expect(votingEscrow.connect(addr1)
+      .createLock(parseUnits("0", 18), time1))
+      .to.be.revertedWith('VotingEscrow: need non-zero value');
+    });
+
     it("Should create lock & increase lock amount", async function () {
       await addPoolFunc();
 
