@@ -238,6 +238,46 @@ describe("VotingEscrow", function () {
       expect(tx).to.emit(votingEscrow, "Deposited").withArgs(Alice.address, 0, calUnlockTime2, 3, increaseUnlockTimeTS)
 
     });
+
+    it("Should fail if trying to increase unlock time by 0", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
+        .connect(Alice)
+        .approve(votingEscrow.address, parseUnits("1000", 18));
+
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      let unlockTime = BigNumber.from(timestamp + 1000000);
+      let _value = parseUnits("1000", 18);
+
+      let createLockTxn = await createLock(_value, unlockTime, Alice)
+      let createLockTS = (await ethers.provider.getBlock(createLockTxn.blockNumber)).timestamp;
+
+
+      let calUnlockTime = BigNumber.from(unlockTime)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
+      let userLockedInfo = await votingEscrow.locked(Alice.address);
+
+      expect(createLockTxn).to.emit(votingEscrow, "Deposited").withArgs(Alice.address, _value, calUnlockTime, 1, createLockTS)
+
+      expect(userLockedInfo.end).to.equal(calUnlockTime);
+      expect(userLockedInfo.amount).to.equal(_value);
+      expect(
+        await gaugeController.userInfo(votingEscrow.address, Alice.address)
+      ).to.equal(_value);
+
+      let newUnlockTime = unlockTime.add(BigNumber.from(0));
+      let calUnlockTime2 = BigNumber.from(newUnlockTime)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
+
+      await expect(votingEscrow.connect(Alice).increaseUnlockTime(newUnlockTime)).to.be.revertedWith("VotingEscrow: Can only increase lock duration")
+
+    });
+
     it("Should create lock & withdraw lp tokens", async function () {
       await addPoolFunc();
 
@@ -277,6 +317,29 @@ describe("VotingEscrow", function () {
 
     });
 
+    it("Should revert if one account tries to withdraw LP tokens without depositing", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
+        .connect(Alice)
+        .approve(votingEscrow.address, parseUnits("1000", 18));
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      let unlockTime = BigNumber.from(timestamp + 1000000);
+      let _value = parseUnits("1000", 18);
+
+      let createLockTxn = await createLock(_value, unlockTime, Alice)
+
+      expect(
+        await gaugeController.userInfo(votingEscrow.address, Alice.address)
+      ).to.equal(_value);
+      mine(1000000); // mining 1000000 blocks after deposit so that to pass lock time
+
+      await expect(votingEscrow.connect(Bob).withdraw()).to.be.reverted;
+
+    });
+
     it("Should revert if withdrawn before lock period ends", async function () {
       await addPoolFunc();
 
@@ -291,23 +354,14 @@ describe("VotingEscrow", function () {
       let _value = parseUnits("1000", 18);
 
       let createLockTxn = await createLock(_value, unlockTime, Alice)
-      let createLockTS = (await ethers.provider.getBlock(createLockTxn.blockNumber)).timestamp;
-
-
-      let calUnlockTime = BigNumber.from(unlockTime)
-        .div(BigNumber.from(604800))
-        .mul(BigNumber.from(604800));
-      let userLockedInfo = await votingEscrow.locked(Alice.address);
-
-      expect(createLockTxn).to.emit(votingEscrow, "Deposited").withArgs(Alice.address, _value, calUnlockTime, 1, createLockTS)
-
-      expect(userLockedInfo.end).to.equal(calUnlockTime);
-      expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
-      mine(500000);
-
+      
+      console.log(block.timestamp);
+      //increasing time 
+      await ethers.provider.send("evm_increaseTime", [900000]);
+      await ethers.provider.send("evm_mine", []);
+      const blockNum2 = await ethers.provider.getBlockNumber();
+      const block2 = await ethers.provider.getBlock(blockNum2);
+      console.log(block2.timestamp);
       await expect(votingEscrow.connect(Alice)
         .withdraw())
         .to.be.revertedWith("VotingEscrow: The lock didn't expire");
