@@ -315,6 +315,9 @@ describe("VotingEscrow", function () {
       expect(withdrawTxn).to.emit(votingEscrow, "Withdrew").withArgs(Alice.address, _value, withdrawTS);
       expect(balanceBeforeLock).to.equal(balanceAfterWithdraw);
 
+      let userLockedInfo2 = await votingEscrow.locked(Alice.address);
+      expect(userLockedInfo2.amount).to.equal(0);
+
     });
 
     it("Should revert if one account tries to withdraw LP tokens without depositing", async function () {
