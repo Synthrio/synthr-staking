@@ -70,9 +70,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
     /// @param _user Address of user.
     /// @return pending_ reward for a given user.
     function pendingReward(address _pool, address _user) external view returns (uint256 pending_) {
-        uint256 _lockEnd = userInfo[_pool][_user].lockEnd;
-        uint256 _blockNum = _lockEnd > block.number ? block.number : _lockEnd;
-        pending_ = _pendingRewardAmount(_pool, _user, _blockNum);
+        pending_ = _pendingRewardAmount(_pool, _user, block.number);
     }
 
     /// @notice View function to see pending reward of user in pool at future block.
@@ -84,8 +82,6 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         view
         returns (uint256 pending_)
     {   
-        uint256 _lockEnd = userInfo[_pool][_user].lockEnd;
-        _blockNumber = _lockEnd > _blockNumber ? _blockNumber : _lockEnd;
         pending_ = _pendingRewardAmount(_pool, _user, _blockNumber);
     }
 
@@ -205,7 +201,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
 
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
         uint256 _pendingReward = uint256(accumulatedReward - _user.rewardDebt);
-        uint256 _exccessReward = _calculateExcessReward(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock);
+        uint256 _exccessReward = _calculateExcessRewardAtBlock(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock, block.number);
         _pendingReward -= _exccessReward;
         // Effects
         _user.rewardDebt = accumulatedReward;
@@ -231,7 +227,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
 
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
         uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt));
-        uint256 _exccessReward = _calculateExcessReward(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock);
+        uint256 _exccessReward = _calculateExcessRewardAtBlock(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock, block.number);
         _pendingReward -= _exccessReward;
 
         // Effects
@@ -266,6 +262,9 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
             _accRewardPerShare += (_calAccPerShare(_rewardAmount, _lpSupply));
         }
         _pending = uint256(_calAccRewardPerShare(_accRewardPerShare, _userInfo.amount) - _userInfo.rewardDebt);
+        uint256 _excessReward = _calculateExcessRewardAtBlock(_userInfo.lockEnd, _userInfo.amount, _poolInfo.rewardPerBlock, _blockNumber);
+        if (_pending < _excessReward) return 0;
+        _pending -= _excessReward;
     }
 
     function _calAccPerShare(uint256 _rewardAmount, uint256 _lpSupply) internal pure returns (uint256) {
@@ -276,12 +275,12 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         return int256((_amount * _accRewardPerShare) / ACC_REWARD_PRECISION);
     }
 
-    function _calculateExcessReward(uint256 _blockNum, uint256 _amount, uint256 _rewardPerBlock) internal view returns(uint256) {
+    function _calculateExcessRewardAtBlock(uint256 _LockblockNum, uint256 _amount, uint256 _rewardPerBlock, uint256 _currentBlock) internal view returns(uint256) {
         uint256 _lpSupply = totalLockAmount;
         uint256 _accShare;
-        if (block.number > _blockNum) {
+        if (_currentBlock > _LockblockNum) {
             if (_lpSupply > 0) {
-                uint256 _blocks = block.number - _blockNum;
+                uint256 _blocks = _currentBlock - _LockblockNum;
                 uint256 _rewardAmount = (_blocks * _rewardPerBlock);
                 _accShare = _calAccPerShare(_rewardAmount, _lpSupply);
             }
