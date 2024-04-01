@@ -333,7 +333,10 @@ describe("VotingEscrow", function () {
       let _value = parseUnits("1000", 18);
 
       let createLockTxn = await createLock(_value, unlockTime, Alice)
+      let createLockTS = (await ethers.provider.getBlock(createLockTxn.blockNumber)).timestamp;
 
+      let userLockedInfo = await votingEscrow.locked(Alice.address);
+      // console.log(userLockedInfo.end);
       expect(
         await gaugeController.userInfo(votingEscrow.address, Alice.address)
       ).to.equal(_value);
@@ -353,14 +356,20 @@ describe("VotingEscrow", function () {
       const blockNum = await ethers.provider.getBlockNumber();
       const block = await ethers.provider.getBlock(blockNum);
       const timestamp = block.timestamp;
+      console.log("timestamp just before lock : ",timestamp)
       let unlockTime = BigNumber.from(timestamp + 1000000);
       let _value = parseUnits("1000", 18);
 
+      let calUnlockTime = BigNumber.from(unlockTime)
+        .div(BigNumber.from(604800))
+        .mul(BigNumber.from(604800));
+
       let createLockTxn = await createLock(_value, unlockTime, Alice)
-      
+      let userLockedInfo = await votingEscrow.locked(Alice.address);
+      console.log("updated unlock time : ",calUnlockTime);
       console.log(block.timestamp);
       //increasing time 
-      await ethers.provider.send("evm_increaseTime", [900000]);
+      await ethers.provider.send("evm_increaseTime", [600000]);
       await ethers.provider.send("evm_mine", []);
       const blockNum2 = await ethers.provider.getBlockNumber();
       const block2 = await ethers.provider.getBlock(blockNum2);
