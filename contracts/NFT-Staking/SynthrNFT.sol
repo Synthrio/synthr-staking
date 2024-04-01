@@ -9,8 +9,14 @@ import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step
  * @dev A contract for creating and managing Synthr NFTs (Non-Fungible Tokens).
  */
 contract SynthrNFT is ERC721, Ownable2Step {
+
+    struct UserInfo {
+        uint256 stakedAmount;
+        uint256 lockEnd;
+    }
+
     uint256 public tokenIdCount;
-    mapping(uint256 tokenId => uint256 stakedAmount) public lockAmount;
+    mapping(uint256 tokenId => UserInfo) public userData;
 
     event BatchMinted(address[] to, uint256 lastTokenIdMinted);
 
@@ -22,6 +28,10 @@ contract SynthrNFT is ERC721, Ownable2Step {
      */
     constructor(string memory name_, string memory symbol_, address owner_) ERC721(name_, symbol_) Ownable(owner_) {}
 
+    function getuserData(uint256 _tokenId) external view returns(uint256, uint256) {
+        return (userData[_tokenId].stakedAmount, userData[_tokenId].lockEnd);
+    }
+
     /**
      * @dev Safely mints a single token and assigns it to the specified address.
      * @param to The address to which the token will be minted.
@@ -29,10 +39,11 @@ contract SynthrNFT is ERC721, Ownable2Step {
      * @return tokenId The ID of the minted token.
      * @notice Only owner of this contract is allowed to mint tokens
      */
-    function safeMint(address to, uint256 lpAmount) external onlyOwner returns (uint256 tokenId) {
+    function safeMint(address to, uint256 lpAmount, uint256 endBlockNumber) external onlyOwner returns (uint256 tokenId) {
         tokenId = ++tokenIdCount;
         _safeMint(to, tokenId);
-        lockAmount[tokenId] = lpAmount;
+        userData[tokenId].stakedAmount = lpAmount;
+        userData[tokenId].lockEnd = endBlockNumber;
     }
 
     /**
@@ -41,12 +52,13 @@ contract SynthrNFT is ERC721, Ownable2Step {
      * @param _lpAmount An array of LP amounts corresponding to each address.
      * @notice Only owner of this contract is allowed to mint tokens
      */
-    function safeMintBatch(address[] calldata _to, uint256[] calldata _lpAmount) external onlyOwner {
+    function safeMintBatch(address[] calldata _to, uint256[] calldata _lpAmount, uint256[] calldata _endBlockNumber) external onlyOwner {
         require(_to.length > 1, "Synthr NFT: Mint more than one");
         uint256 tokenId = tokenIdCount;
         for (uint256 i = 0; i < _to.length; i++) {
             _safeMint(_to[i], ++tokenId);
-            lockAmount[tokenId] = _lpAmount[i];
+            userData[tokenId].stakedAmount = _lpAmount[i];
+            userData[tokenId].lockEnd = _endBlockNumber[i];
         }
         tokenIdCount = tokenId;
 
