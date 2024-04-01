@@ -279,7 +279,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
     function _calculateExcessReward(uint256 _blockNum, uint256 _amount, uint256 _rewardPerBlock) internal view returns(uint256) {
         uint256 _lpSupply = totalLockAmount;
         uint256 _accShare;
-        if (_blockNum > block.number) {
+        if (block.number > _blockNum) {
             if (_lpSupply > 0) {
                 uint256 _blocks = block.number - _blockNum;
                 uint256 _rewardAmount = (_blocks * _rewardPerBlock);
