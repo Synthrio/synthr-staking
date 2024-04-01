@@ -120,6 +120,36 @@ describe("VotingEscrow", function () {
       ).to.equal(parseUnits("1000", 18));
     });
 
+    it("Should be able to deposit for other account", async function () {
+      await addPoolFunc();
+
+      await lpTtoken
+        .connect(addr1)
+        .approve(votingEscrow.address, parseUnits("1100", 18));
+
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      let time1 = timestamp + 1000000;
+      expect(
+        await votingEscrow
+          .connect(addr1)
+          .createLock(parseUnits("1000", 18), time1)
+      );
+      let userLockedInfo = await votingEscrow.locked(addr1.address);
+      expect(userLockedInfo.amount)
+        .to.equal(parseUnits("1000", 18));
+      
+      let depositForOther = await votingEscrow.connect(Alice).depositFor(addr1.address,parseUnits("100",18));
+      let userUpdatedInfo  = await votingEscrow.locked(addr1.address);  
+     
+      expect(userUpdatedInfo.amount)
+        .to.be.equal(
+          (userLockedInfo.amount)
+            .add(parseUnits("100",18)
+          ));
+    });
+
     it("Should revert when creating a lock with unlock time greater than maximum allowed", async function () {
       await addPoolFunc();
 
@@ -356,7 +386,7 @@ describe("VotingEscrow", function () {
       const blockNum = await ethers.provider.getBlockNumber();
       const block = await ethers.provider.getBlock(blockNum);
       const timestamp = block.timestamp;
-      console.log("timestamp just before lock : ",timestamp)
+     
       let unlockTime = BigNumber.from(timestamp + 1000000);
       let _value = parseUnits("1000", 18);
 
@@ -366,18 +396,17 @@ describe("VotingEscrow", function () {
 
       let createLockTxn = await createLock(_value, unlockTime, Alice)
       let userLockedInfo = await votingEscrow.locked(Alice.address);
-      console.log("updated unlock time : ",calUnlockTime);
-      console.log(block.timestamp);
+    
       //increasing time 
       await ethers.provider.send("evm_increaseTime", [600000]);
       await ethers.provider.send("evm_mine", []);
       const blockNum2 = await ethers.provider.getBlockNumber();
       const block2 = await ethers.provider.getBlock(blockNum2);
-      console.log(block2.timestamp);
+     
       await expect(votingEscrow.connect(Alice)
         .withdraw())
         .to.be.revertedWith("VotingEscrow: The lock didn't expire");
-
+        
     });
     it("Should claim reward after sometime of create lock", async function () {
       await addPoolFunc();
