@@ -20,6 +20,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
     struct UserInfo {
         uint256 amount;
         int256 rewardDebt;
+        uint256 lockEnd;
     }
 
     /// @notice Info of each gauge pool.
@@ -69,7 +70,9 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
     /// @param _user Address of user.
     /// @return pending_ reward for a given user.
     function pendingReward(address _pool, address _user) external view returns (uint256 pending_) {
-        pending_ = _pendingRewardAmount(_pool, _user, block.number);
+        uint256 _lockEnd = userInfo[_pool][_user].lockEnd;
+        uint256 _blockNum = _lockEnd > block.number ? block.number : _lockEnd;
+        pending_ = _pendingRewardAmount(_pool, _user, _blockNum);
     }
 
     /// @notice View function to see pending reward of user in pool at future block.
@@ -80,7 +83,9 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         external
         view
         returns (uint256 pending_)
-    {
+    {   
+        uint256 _lockEnd = userInfo[_pool][_user].lockEnd;
+        _blockNumber = _lockEnd > _blockNumber ? _blockNumber : _lockEnd;
         pending_ = _pendingRewardAmount(_pool, _user, _blockNumber);
     }
 
@@ -153,13 +158,14 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
 
         UserInfo memory _user = userInfo[_pool][msg.sender];
-        uint256 _lockAmount = ISynthrNFT(_pool).lockAmount(_tokenId);
+        (uint256 _lockAmount, uint256 _lockEndBlockNumber) = ISynthrNFT(_pool).getuserData(_tokenId);
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount);
 
         _user.amount += _lockAmount;
         _user.rewardDebt += _calRewardDebt;
+        _user.lockEnd = _lockEndBlockNumber;
 
         userInfo[_pool][msg.sender] = _user;
         tokenOwner[_pool][_tokenId] = msg.sender;
@@ -174,7 +180,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
-        uint256 _lockAmount = ISynthrNFT(_pool).lockAmount(_tokenId);
+       (uint256 _lockAmount,) = ISynthrNFT(_pool).getuserData(_tokenId);
         int256 _calRewardDebt = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount);
 
         _user.amount -= _lockAmount;
@@ -199,7 +205,8 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
 
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
         uint256 _pendingReward = uint256(accumulatedReward - _user.rewardDebt);
-
+        uint256 _exccessReward = _calculateExcessReward(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock);
+        _pendingReward -= _exccessReward;
         // Effects
         _user.rewardDebt = accumulatedReward;
         userInfo[_pool][msg.sender] = _user;
@@ -220,10 +227,12 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
-        uint256 _lockAmount = ISynthrNFT(_pool).lockAmount(_tokenId);
+        (uint256 _lockAmount,) = ISynthrNFT(_pool).getuserData(_tokenId);
 
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
         uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt));
+        uint256 _exccessReward = _calculateExcessReward(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock);
+        _pendingReward -= _exccessReward;
 
         // Effects
         _user.rewardDebt = accumulatedReward - (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount));
@@ -265,5 +274,19 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
 
     function _calAccRewardPerShare(uint256 _accRewardPerShare, uint256 _amount) internal pure returns (int256) {
         return int256((_amount * _accRewardPerShare) / ACC_REWARD_PRECISION);
+    }
+
+    function _calculateExcessReward(uint256 _blockNum, uint256 _amount, uint256 _rewardPerBlock) internal view returns(uint256) {
+        uint256 _lpSupply = totalLockAmount;
+        uint256 _accShare;
+        if (_blockNum > block.number) {
+            if (_lpSupply > 0) {
+                uint256 _blocks = block.number - _blockNum;
+                uint256 _rewardAmount = (_blocks * _rewardPerBlock);
+                _accShare = _calAccPerShare(_rewardAmount, _lpSupply);
+            }
+        }
+
+        return uint256(_calAccRewardPerShare(_accShare, _amount));
     }
 }
