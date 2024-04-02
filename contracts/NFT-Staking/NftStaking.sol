@@ -19,8 +19,9 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
     /// `rewardDebt` The amount of reward token entitled to the user.
     struct UserInfo {
         uint256 amount;
-        int256 rewardDebt;
         uint256 lockEnd;
+        uint256 tokenId;
+        int256 rewardDebt;
     }
 
     /// @notice Info of each gauge pool.
@@ -41,9 +42,6 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
 
     /// @notice Info of each user that stakes LP tokens.
     mapping(address => mapping(address => UserInfo)) public userInfo;
-
-    /// @notice token id of user has deposited in pool.
-    mapping(address => mapping(uint256 => address)) public tokenOwner;
 
     event Deposit(address indexed pool, address indexed user, uint256 tokenId);
     event Withdraw(address indexed pool, address indexed user, uint256 tokenId);
@@ -154,6 +152,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
 
         UserInfo memory _user = userInfo[_pool][msg.sender];
+        require(_user.tokenId == 0, "NftStaking: already exist");
         (uint256 _lockAmount, uint256 _lockEndBlockNumber) = ISynthrNFT(_pool).getuserData(_tokenId);
 
         // Effects
@@ -162,21 +161,20 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         _user.amount += _lockAmount;
         _user.rewardDebt += _calRewardDebt;
         _user.lockEnd = _lockEndBlockNumber;
+        _user.tokenId = _tokenId;
 
         userInfo[_pool][msg.sender] = _user;
-        tokenOwner[_pool][_tokenId] = msg.sender;
 
         ISynthrNFT(_pool).safeTransferFrom(msg.sender, address(this), _tokenId);
 
         emit Deposit(_pool, msg.sender, _tokenId);
     }
 
-    function withdraw(address _pool, uint256 _tokenId) external {
-        require(tokenOwner[_pool][_tokenId] == msg.sender, "NftStaking: not access to tokenId");
+    function withdraw(address _pool) external {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
-       (uint256 _lockAmount,) = ISynthrNFT(_pool).getuserData(_tokenId);
+       (uint256 _lockAmount,) = ISynthrNFT(_pool).getuserData(_user.tokenId);
         int256 _calRewardDebt = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount);
 
         _user.amount -= _lockAmount;
@@ -185,11 +183,9 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         userInfo[_pool][msg.sender] = _user;
 
         // Interactions
-        ISynthrNFT(_pool).transferFrom(address(this), msg.sender, _tokenId);
+        ISynthrNFT(_pool).transferFrom(address(this), msg.sender, _user.tokenId);
 
-        delete tokenOwner[_pool][_tokenId];
-
-        emit Withdraw(_pool, msg.sender, _tokenId);
+        emit Withdraw(_pool, msg.sender, _user.tokenId);
     }
 
     /// @notice Claim proceeds for transaction sender to `to`.
@@ -218,12 +214,11 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
     /// @notice Withdraw NFT token from pool and claim proceeds for transaction sender to `to`.
     /// @param _pool address of the pool. See `NFTPoolInfo`.
     /// @param _to Receiver of the LP tokens and syUSD rewards.
-    function withdrawAndClaim(address _pool, uint256 _tokenId, address _to) external {
-        require(tokenOwner[_pool][_tokenId] == msg.sender, "NftStaking: not access to tokenId");
+    function withdrawAndClaim(address _pool, address _to) external {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
-        (uint256 _lockAmount,) = ISynthrNFT(_pool).getuserData(_tokenId);
+        (uint256 _lockAmount,) = ISynthrNFT(_pool).getuserData(_user.tokenId);
 
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
         uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt));
@@ -240,9 +235,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
             REWARD_TOKEN.safeTransfer(_to, _pendingReward);
         }
 
-        ISynthrNFT(_pool).transferFrom(address(this), msg.sender, _tokenId);
-
-        delete tokenOwner[_pool][_tokenId];
+        ISynthrNFT(_pool).transferFrom(address(this), msg.sender, _user.tokenId);
 
         emit WithdrawAndClaim(_pool, msg.sender, _pendingReward);
     }
