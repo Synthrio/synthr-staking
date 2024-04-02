@@ -59,6 +59,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     Point[100000000000000000000000000000] public pointHistory;
 
     mapping(address => LockedBalance) public locked;
+    mapping(address => uint256) public createLockTs;
     mapping(address => Point[1000000000]) public userPointHistory;
     mapping(address => uint256) public userPointEpoch;
     mapping(uint256 => uint256) public slopeChanges;
@@ -258,6 +259,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         require(_locked.amount == 0, "VotingEscrow: Withdraw old tokens first");
         require(unlockTime > block.timestamp, "VotingEscrow: Can only lock until a time in the future");
         require(unlockTime <= MAXTIME + block.timestamp, "VotingEscrow: Voting lock can be 4 years max");
+        createLockTs[msg.sender] = block.timestamp;
         _depositFor(msg.sender, _value, unlockTime, _locked, CREATE_LOCK_TYPE);
     }
 
@@ -298,6 +300,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         _checkpoint(msg.sender, oldLocked, _locked);
         IERC20(token).safeTransfer(msg.sender, _value);
         IGaugeController(gaugeController).updateReward(address(this), msg.sender, _value, false);
+        delete createLockTs[msg.sender];
         emit Withdrew(msg.sender, _value, block.timestamp);
         emit Supply(supply + _value, supply);
     }

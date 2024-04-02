@@ -67,13 +67,33 @@ const config: HardhatUserConfig = {
       url: process.env.ARBITRUM_URL,
       saveDeployments: true
 
-    }
+    },
+    arbSepolia: {
+      url: `https://arb-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
+      chainId: 421614,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      saveDeployments: true
+
+    },
   },
   etherscan: {
     apiKey: {
       sepolia: `${process.env.ETHERSCAN_API_KEY}`,
+      arbitrumSepolia: `${process.env.ARBITRUM_API_KEY}`,
     },
+    customChains: [
+
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+    ],
   },
+
 };
 
 export default config;
