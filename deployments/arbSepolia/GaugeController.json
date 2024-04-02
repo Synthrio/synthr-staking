@@ -1,0 +1,1396 @@
+{
+  "address": "0xb29Fa09BBd3e083839082611a8a9eE16b4150855",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_admin",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "AccessControlBadConfirmation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "neededRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AddressEmptyCode",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "AddressInsufficientBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "FailedInnerCall",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "SafeERC20FailedOperation",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Claimed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newMaxRewardToken",
+          "type": "uint256"
+        }
+      ],
+      "name": "EpochUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "lpToken",
+          "type": "address"
+        }
+      ],
+      "name": "LogPoolAddition",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rewardPerBlock",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "accRewardPerShare",
+              "type": "uint256"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct GaugeController.RewardInfo[]",
+          "name": "poolReward",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "LogSetPool",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint64",
+          "name": "lastRewardBlock",
+          "type": "uint64"
+        }
+      ],
+      "name": "LogUpdatePool",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "previousAdminRole",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "newAdminRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newMaxRewardToken",
+          "type": "uint256"
+        }
+      ],
+      "name": "SetMaxRewardToken",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "ACC_REWARD_PRECISION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CONTROLLER_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DEFAULT_ADMIN_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_REWARD_TOKEN",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "POOL_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_lpToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rewardPerBlock",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "accRewardPerShare",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct GaugeController.RewardInfo[]",
+          "name": "_reward",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "addPool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rewardPerBlock",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "accRewardPerShare",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct GaugeController.RewardInfo[]",
+          "name": "_reward",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "addRewardToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        }
+      ],
+      "name": "claim",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_index",
+          "type": "uint256"
+        }
+      ],
+      "name": "claimForToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        }
+      ],
+      "name": "decreaseRewardAndClaim",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getRoleAdmin",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "hasRole",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "lpToken",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "pendingReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "pending_",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_blockNumber",
+          "type": "uint256"
+        }
+      ],
+      "name": "pendingRewardAtBlock",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "pending_",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "poolInfo",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "epoch",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint64",
+          "name": "lastRewardBlock",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "callerConfirmation",
+          "type": "address"
+        }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "reward",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "rewardPerBlock",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "accRewardPerShare",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "_indexes",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "_rewardPerBlock",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "_rewardAmount",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "updateEpoch",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        }
+      ],
+      "name": "updatePool",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epoch",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "lastRewardBlock",
+              "type": "uint64"
+            }
+          ],
+          "internalType": "struct GaugeController.PoolInfo",
+          "name": "_poolInfo",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_increase",
+          "type": "bool"
+        }
+      ],
+      "name": "updateReward",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "userInfo",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "indexOfRewardToken",
+          "type": "uint256"
+        }
+      ],
+      "name": "userRewardByToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "pending_",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "userRewards",
+      "outputs": [
+        {
+          "internalType": "int256[8]",
+          "name": "",
+          "type": "int256[8]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x91f178ce92bdb0e20efff76af1d6e5929252ae34d5eb784349c9ec6b3f150d6d",
+  "receipt": {
+    "to": null,
+    "from": "0xD2344ce2CFEaD1cBE24e33E8301411d62946A1d2",
+    "contractAddress": "0xb29Fa09BBd3e083839082611a8a9eE16b4150855",
+    "transactionIndex": 2,
+    "gasUsed": "4843689",
+    "logsBloom": "0x00000004000000000000000000000000000000000000000000000000000000000000020000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000001000000000040000000002000000000000000000000000000000000000000100000000000000080000004000000000000000000400000000000000000000000000000000000000",
+    "blockHash": "0x5de9f7c3948baa3827d4513853b7d65ecb9f32bbc2143c3191926aef2ee0e34c",
+    "transactionHash": "0x91f178ce92bdb0e20efff76af1d6e5929252ae34d5eb784349c9ec6b3f150d6d",
+    "logs": [
+      {
+        "transactionIndex": 2,
+        "blockNumber": 25739916,
+        "transactionHash": "0x91f178ce92bdb0e20efff76af1d6e5929252ae34d5eb784349c9ec6b3f150d6d",
+        "address": "0xb29Fa09BBd3e083839082611a8a9eE16b4150855",
+        "topics": [
+          "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
+          "0x7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c570223357",
+          "0x000000000000000000000000d2344ce2cfead1cbe24e33e8301411d62946a1d2",
+          "0x000000000000000000000000d2344ce2cfead1cbe24e33e8301411d62946a1d2"
+        ],
+        "data": "0x",
+        "logIndex": 3,
+        "blockHash": "0x5de9f7c3948baa3827d4513853b7d65ecb9f32bbc2143c3191926aef2ee0e34c"
+      }
+    ],
+    "blockNumber": 25739916,
+    "cumulativeGasUsed": "5090846",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xD2344ce2CFEaD1cBE24e33E8301411d62946A1d2"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "adc0c9564dbad08b509915dbd0c44a57",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_admin\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"AccessControlBadConfirmation\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"neededRole\",\"type\":\"bytes32\"}],\"name\":\"AccessControlUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"AddressInsufficientBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedInnerCall\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"SafeERC20FailedOperation\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newMaxRewardToken\",\"type\":\"uint256\"}],\"name\":\"EpochUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"lpToken\",\"type\":\"address\"}],\"name\":\"LogPoolAddition\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"rewardPerBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accRewardPerShare\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"struct GaugeController.RewardInfo[]\",\"name\":\"poolReward\",\"type\":\"tuple[]\"}],\"name\":\"LogSetPool\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"lastRewardBlock\",\"type\":\"uint64\"}],\"name\":\"LogUpdatePool\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newMaxRewardToken\",\"type\":\"uint256\"}],\"name\":\"SetMaxRewardToken\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"ACC_REWARD_PRECISION\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CONTROLLER_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MAX_REWARD_TOKEN\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"POOL_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_lpToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"rewardPerBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accRewardPerShare\",\"type\":\"uint256\"}],\"internalType\":\"struct GaugeController.RewardInfo[]\",\"name\":\"_reward\",\"type\":\"tuple[]\"}],\"name\":\"addPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"rewardPerBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accRewardPerShare\",\"type\":\"uint256\"}],\"internalType\":\"struct GaugeController.RewardInfo[]\",\"name\":\"_reward\",\"type\":\"tuple[]\"}],\"name\":\"addRewardToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"claimForToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"decreaseRewardAndClaim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"lpToken\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"pendingReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"pending_\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_blockNumber\",\"type\":\"uint256\"}],\"name\":\"pendingRewardAtBlock\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"pending_\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"poolInfo\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"epoch\",\"type\":\"uint256\"},{\"internalType\":\"uint64\",\"name\":\"lastRewardBlock\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"callerConfirmation\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"reward\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"rewardPerBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accRewardPerShare\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256[]\",\"name\":\"_indexes\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"_rewardPerBlock\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"_rewardAmount\",\"type\":\"uint256[]\"}],\"name\":\"updateEpoch\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"}],\"name\":\"updatePool\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"epoch\",\"type\":\"uint256\"},{\"internalType\":\"uint64\",\"name\":\"lastRewardBlock\",\"type\":\"uint64\"}],\"internalType\":\"struct GaugeController.PoolInfo\",\"name\":\"_poolInfo\",\"type\":\"tuple\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_increase\",\"type\":\"bool\"}],\"name\":\"updateReward\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"userInfo\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"indexOfRewardToken\",\"type\":\"uint256\"}],\"name\":\"userRewardByToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"pending_\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pool\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"userRewards\",\"outputs\":[{\"internalType\":\"int256[8]\",\"name\":\"\",\"type\":\"int256[8]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"errors\":{\"AccessControlBadConfirmation()\":[{\"details\":\"The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\"}],\"AccessControlUnauthorizedAccount(address,bytes32)\":[{\"details\":\"The `account` is missing a role.\"}],\"AddressEmptyCode(address)\":[{\"details\":\"There's no code at `target` (it is not a contract).\"}],\"AddressInsufficientBalance(address)\":[{\"details\":\"The ETH balance of the account is not enough to perform the operation.\"}],\"FailedInnerCall()\":[{\"details\":\"A call to an address target failed. The target may have reverted.\"}],\"SafeERC20FailedOperation(address)\":[{\"details\":\"An operation with an ERC20 token failed.\"}]},\"events\":{\"RoleAdminChanged(bytes32,bytes32,bytes32)\":{\"details\":\"Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted signaling this.\"},\"RoleGranted(bytes32,address,address)\":{\"details\":\"Emitted when `account` is granted `role`. `sender` is the account that originated the contract call, an admin role bearer except when using {AccessControl-_setupRole}.\"},\"RoleRevoked(bytes32,address,address)\":{\"details\":\"Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)\"}},\"kind\":\"dev\",\"methods\":{\"addPool(address,address,(address,uint256,uint256)[])\":{\"params\":{\"_lpToken\":\"Address of the LP ERC-20 token.\"}},\"addRewardToken(address,(address,uint256,uint256)[])\":{\"params\":{\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_reward\":\"array of reward token info to add in pool\"}},\"claim(address,address)\":{\"params\":{\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_to\":\"Receiver of syUSD rewards.\"}},\"claimForToken(address,address,uint256)\":{\"params\":{\"_index\":\"token index in reward tokens of pool.\",\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_to\":\"Receiver of syUSD rewards.\"}},\"decreaseRewardAndClaim(address,uint256,address)\":{\"params\":{\"_amount\":\"LP token amount to withdraw.\",\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_to\":\"Receiver of the LP tokens and syUSD rewards.\"}},\"getRoleAdmin(bytes32)\":{\"details\":\"Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.\"},\"grantRole(bytes32,address)\":{\"details\":\"Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event.\"},\"hasRole(bytes32,address)\":{\"details\":\"Returns `true` if `account` has been granted `role`.\"},\"pendingReward(address,address)\":{\"params\":{\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_user\":\"Address of user.\"},\"returns\":{\"pending_\":\"reward for a given user.\"}},\"pendingRewardAtBlock(address,address,uint256)\":{\"params\":{\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_user\":\"Address of user.\"},\"returns\":{\"pending_\":\"reward for a given user.\"}},\"renounceRole(bytes32,address)\":{\"details\":\"Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event.\"},\"revokeRole(bytes32,address)\":{\"details\":\"Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event.\"},\"supportsInterface(bytes4)\":{\"details\":\"See {IERC165-supportsInterface}.\"},\"updateEpoch(address,address,uint256[],uint256[],uint256[])\":{\"params\":{\"_indexes\":\"index of rewardInfo array.\",\"_pool\":\"Pool address of pool to be updated. Make sure to update all active pools.\",\"_rewardPerBlock\":\"array of rewardPerBlock\"}},\"updatePool(address)\":{\"params\":{\"_pool\":\"The address of the pool. See `poolInfo`.\"},\"returns\":{\"_poolInfo\":\"Returns the pool that was updated.\"}},\"updateReward(address,address,uint256,bool)\":{\"params\":{\"_amount\":\"LP token amount to deposit.\",\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_to\":\"The receiver of `amount` deposit benefit.\"}},\"userRewardByToken(address,address,uint256)\":{\"params\":{\"_pool\":\"The address of the pool. See `poolInfo`.\",\"_user\":\"Address of user.\"},\"returns\":{\"pending_\":\"reward for a given user.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"addPool(address,address,(address,uint256,uint256)[])\":{\"notice\":\"Add a new LP to the pool. Can only be called by the owner. DO NOT add the same LP token more than once. Rewards will be messed up if you do.\"},\"addRewardToken(address,(address,uint256,uint256)[])\":{\"notice\":\"function to add reward token in pool on frontend.\"},\"claim(address,address)\":{\"notice\":\"Claim proceeds for transaction sender to `to`.\"},\"claimForToken(address,address,uint256)\":{\"notice\":\"Claim proceeds for transaction sender to `to`.\"},\"decreaseRewardAndClaim(address,uint256,address)\":{\"notice\":\"Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`.\"},\"lpToken(address)\":{\"notice\":\"Address of the LP token for each pool.\"},\"pendingReward(address,address)\":{\"notice\":\"View function to see pending reward at current block on frontend.\"},\"pendingRewardAtBlock(address,address,uint256)\":{\"notice\":\"View function to see pending reward at future block on frontend.\"},\"poolInfo(address)\":{\"notice\":\"Info of each pool.\"},\"updateEpoch(address,address,uint256[],uint256[],uint256[])\":{\"notice\":\"update epoch for given pool\"},\"updatePool(address)\":{\"notice\":\"Update reward variables of the given pool.\"},\"updateReward(address,address,uint256,bool)\":{\"notice\":\"Deposit LP tokens to pool for syUSD allocation.\"},\"userInfo(address,address)\":{\"notice\":\"Info of each user that stakes LP tokens.\"},\"userRewardByToken(address,address,uint256)\":{\"notice\":\"View function to see pending reward of by token on frontend.\"}},\"notice\":\"depositer get reward tokens on the basis or reward per block\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/controller/GaugeController.sol\":\"GaugeController\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":2000},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts/access/AccessControl.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (access/AccessControl.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IAccessControl} from \\\"./IAccessControl.sol\\\";\\nimport {Context} from \\\"../utils/Context.sol\\\";\\nimport {ERC165} from \\\"../utils/introspection/ERC165.sol\\\";\\n\\n/**\\n * @dev Contract module that allows children to implement role-based access\\n * control mechanisms. This is a lightweight version that doesn't allow enumerating role\\n * members except through off-chain means by accessing the contract event logs. Some\\n * applications may benefit from on-chain enumerability, for those cases see\\n * {AccessControlEnumerable}.\\n *\\n * Roles are referred to by their `bytes32` identifier. These should be exposed\\n * in the external API and be unique. The best way to achieve this is by\\n * using `public constant` hash digests:\\n *\\n * ```solidity\\n * bytes32 public constant MY_ROLE = keccak256(\\\"MY_ROLE\\\");\\n * ```\\n *\\n * Roles can be used to represent a set of permissions. To restrict access to a\\n * function call, use {hasRole}:\\n *\\n * ```solidity\\n * function foo() public {\\n *     require(hasRole(MY_ROLE, msg.sender));\\n *     ...\\n * }\\n * ```\\n *\\n * Roles can be granted and revoked dynamically via the {grantRole} and\\n * {revokeRole} functions. Each role has an associated admin role, and only\\n * accounts that have a role's admin role can call {grantRole} and {revokeRole}.\\n *\\n * By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which means\\n * that only accounts with this role will be able to grant or revoke other\\n * roles. More complex role relationships can be created by using\\n * {_setRoleAdmin}.\\n *\\n * WARNING: The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission to\\n * grant and revoke this role. Extra precautions should be taken to secure\\n * accounts that have been granted it. We recommend using {AccessControlDefaultAdminRules}\\n * to enforce additional security measures for this role.\\n */\\nabstract contract AccessControl is Context, IAccessControl, ERC165 {\\n    struct RoleData {\\n        mapping(address account => bool) hasRole;\\n        bytes32 adminRole;\\n    }\\n\\n    mapping(bytes32 role => RoleData) private _roles;\\n\\n    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;\\n\\n    /**\\n     * @dev Modifier that checks that an account has a specific role. Reverts\\n     * with an {AccessControlUnauthorizedAccount} error including the required role.\\n     */\\n    modifier onlyRole(bytes32 role) {\\n        _checkRole(role);\\n        _;\\n    }\\n\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);\\n    }\\n\\n    /**\\n     * @dev Returns `true` if `account` has been granted `role`.\\n     */\\n    function hasRole(bytes32 role, address account) public view virtual returns (bool) {\\n        return _roles[role].hasRole[account];\\n    }\\n\\n    /**\\n     * @dev Reverts with an {AccessControlUnauthorizedAccount} error if `_msgSender()`\\n     * is missing `role`. Overriding this function changes the behavior of the {onlyRole} modifier.\\n     */\\n    function _checkRole(bytes32 role) internal view virtual {\\n        _checkRole(role, _msgSender());\\n    }\\n\\n    /**\\n     * @dev Reverts with an {AccessControlUnauthorizedAccount} error if `account`\\n     * is missing `role`.\\n     */\\n    function _checkRole(bytes32 role, address account) internal view virtual {\\n        if (!hasRole(role, account)) {\\n            revert AccessControlUnauthorizedAccount(account, role);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the admin role that controls `role`. See {grantRole} and\\n     * {revokeRole}.\\n     *\\n     * To change a role's admin, use {_setRoleAdmin}.\\n     */\\n    function getRoleAdmin(bytes32 role) public view virtual returns (bytes32) {\\n        return _roles[role].adminRole;\\n    }\\n\\n    /**\\n     * @dev Grants `role` to `account`.\\n     *\\n     * If `account` had not been already granted `role`, emits a {RoleGranted}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     *\\n     * May emit a {RoleGranted} event.\\n     */\\n    function grantRole(bytes32 role, address account) public virtual onlyRole(getRoleAdmin(role)) {\\n        _grantRole(role, account);\\n    }\\n\\n    /**\\n     * @dev Revokes `role` from `account`.\\n     *\\n     * If `account` had been granted `role`, emits a {RoleRevoked} event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function revokeRole(bytes32 role, address account) public virtual onlyRole(getRoleAdmin(role)) {\\n        _revokeRole(role, account);\\n    }\\n\\n    /**\\n     * @dev Revokes `role` from the calling account.\\n     *\\n     * Roles are often managed via {grantRole} and {revokeRole}: this function's\\n     * purpose is to provide a mechanism for accounts to lose their privileges\\n     * if they are compromised (such as when a trusted device is misplaced).\\n     *\\n     * If the calling account had been revoked `role`, emits a {RoleRevoked}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must be `callerConfirmation`.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function renounceRole(bytes32 role, address callerConfirmation) public virtual {\\n        if (callerConfirmation != _msgSender()) {\\n            revert AccessControlBadConfirmation();\\n        }\\n\\n        _revokeRole(role, callerConfirmation);\\n    }\\n\\n    /**\\n     * @dev Sets `adminRole` as ``role``'s admin role.\\n     *\\n     * Emits a {RoleAdminChanged} event.\\n     */\\n    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {\\n        bytes32 previousAdminRole = getRoleAdmin(role);\\n        _roles[role].adminRole = adminRole;\\n        emit RoleAdminChanged(role, previousAdminRole, adminRole);\\n    }\\n\\n    /**\\n     * @dev Attempts to grant `role` to `account` and returns a boolean indicating if `role` was granted.\\n     *\\n     * Internal function without access restriction.\\n     *\\n     * May emit a {RoleGranted} event.\\n     */\\n    function _grantRole(bytes32 role, address account) internal virtual returns (bool) {\\n        if (!hasRole(role, account)) {\\n            _roles[role].hasRole[account] = true;\\n            emit RoleGranted(role, account, _msgSender());\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n\\n    /**\\n     * @dev Attempts to revoke `role` to `account` and returns a boolean indicating if `role` was revoked.\\n     *\\n     * Internal function without access restriction.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function _revokeRole(bytes32 role, address account) internal virtual returns (bool) {\\n        if (hasRole(role, account)) {\\n            _roles[role].hasRole[account] = false;\\n            emit RoleRevoked(role, account, _msgSender());\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xa0e92d42942f4f57c5be50568dac11e9d00c93efcb458026e18d2d9b9b2e7308\",\"license\":\"MIT\"},\"@openzeppelin/contracts/access/IAccessControl.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (access/IAccessControl.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev External interface of AccessControl declared to support ERC165 detection.\\n */\\ninterface IAccessControl {\\n    /**\\n     * @dev The `account` is missing a role.\\n     */\\n    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);\\n\\n    /**\\n     * @dev The caller of a function is not the expected one.\\n     *\\n     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\\n     */\\n    error AccessControlBadConfirmation();\\n\\n    /**\\n     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`\\n     *\\n     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite\\n     * {RoleAdminChanged} not being emitted signaling this.\\n     */\\n    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);\\n\\n    /**\\n     * @dev Emitted when `account` is granted `role`.\\n     *\\n     * `sender` is the account that originated the contract call, an admin role\\n     * bearer except when using {AccessControl-_setupRole}.\\n     */\\n    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);\\n\\n    /**\\n     * @dev Emitted when `account` is revoked `role`.\\n     *\\n     * `sender` is the account that originated the contract call:\\n     *   - if using `revokeRole`, it is the admin role bearer\\n     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)\\n     */\\n    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);\\n\\n    /**\\n     * @dev Returns `true` if `account` has been granted `role`.\\n     */\\n    function hasRole(bytes32 role, address account) external view returns (bool);\\n\\n    /**\\n     * @dev Returns the admin role that controls `role`. See {grantRole} and\\n     * {revokeRole}.\\n     *\\n     * To change a role's admin, use {AccessControl-_setRoleAdmin}.\\n     */\\n    function getRoleAdmin(bytes32 role) external view returns (bytes32);\\n\\n    /**\\n     * @dev Grants `role` to `account`.\\n     *\\n     * If `account` had not been already granted `role`, emits a {RoleGranted}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     */\\n    function grantRole(bytes32 role, address account) external;\\n\\n    /**\\n     * @dev Revokes `role` from `account`.\\n     *\\n     * If `account` had been granted `role`, emits a {RoleRevoked} event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     */\\n    function revokeRole(bytes32 role, address account) external;\\n\\n    /**\\n     * @dev Revokes `role` from the calling account.\\n     *\\n     * Roles are often managed via {grantRole} and {revokeRole}: this function's\\n     * purpose is to provide a mechanism for accounts to lose their privileges\\n     * if they are compromised (such as when a trusted device is misplaced).\\n     *\\n     * If the calling account had been granted `role`, emits a {RoleRevoked}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must be `callerConfirmation`.\\n     */\\n    function renounceRole(bytes32 role, address callerConfirmation) external;\\n}\\n\",\"keccak256\":\"0xb6b36edd6a2999fd243ff226d6cbf84bd71af2432bbd0dfe19392996a1d9cb41\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n\\n    /**\\n     * @dev Returns the value of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the value of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves a `value` amount of tokens from the caller's account to `to`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address to, uint256 value) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets a `value` amount of tokens as the allowance of `spender` over the\\n     * caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 value) external returns (bool);\\n\\n    /**\\n     * @dev Moves a `value` amount of tokens from `from` to `to` using the\\n     * allowance mechanism. `value` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(address from, address to, uint256 value) external returns (bool);\\n}\\n\",\"keccak256\":\"0xc6a8ff0ea489379b61faa647490411b80102578440ab9d84e9a957cc12164e70\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/extensions/IERC20Permit.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in\\n * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].\\n *\\n * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by\\n * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't\\n * need to send a transaction, and thus is not required to hold Ether at all.\\n *\\n * ==== Security Considerations\\n *\\n * There are two important considerations concerning the use of `permit`. The first is that a valid permit signature\\n * expresses an allowance, and it should not be assumed to convey additional meaning. In particular, it should not be\\n * considered as an intention to spend the allowance in any specific way. The second is that because permits have\\n * built-in replay protection and can be submitted by anyone, they can be frontrun. A protocol that uses permits should\\n * take this into consideration and allow a `permit` call to fail. Combining these two aspects, a pattern that may be\\n * generally recommended is:\\n *\\n * ```solidity\\n * function doThingWithPermit(..., uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {\\n *     try token.permit(msg.sender, address(this), value, deadline, v, r, s) {} catch {}\\n *     doThing(..., value);\\n * }\\n *\\n * function doThing(..., uint256 value) public {\\n *     token.safeTransferFrom(msg.sender, address(this), value);\\n *     ...\\n * }\\n * ```\\n *\\n * Observe that: 1) `msg.sender` is used as the owner, leaving no ambiguity as to the signer intent, and 2) the use of\\n * `try/catch` allows the permit to fail and makes the code tolerant to frontrunning. (See also\\n * {SafeERC20-safeTransferFrom}).\\n *\\n * Additionally, note that smart contract wallets (such as Argent or Safe) are not able to produce permit signatures, so\\n * contracts should have entry points that don't rely on permit.\\n */\\ninterface IERC20Permit {\\n    /**\\n     * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,\\n     * given ``owner``'s signed approval.\\n     *\\n     * IMPORTANT: The same issues {IERC20-approve} has related to transaction\\n     * ordering also apply here.\\n     *\\n     * Emits an {Approval} event.\\n     *\\n     * Requirements:\\n     *\\n     * - `spender` cannot be the zero address.\\n     * - `deadline` must be a timestamp in the future.\\n     * - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner`\\n     * over the EIP712-formatted function arguments.\\n     * - the signature must use ``owner``'s current nonce (see {nonces}).\\n     *\\n     * For more information on the signature format, see the\\n     * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP\\n     * section].\\n     *\\n     * CAUTION: See Security Considerations above.\\n     */\\n    function permit(\\n        address owner,\\n        address spender,\\n        uint256 value,\\n        uint256 deadline,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) external;\\n\\n    /**\\n     * @dev Returns the current nonce for `owner`. This value must be\\n     * included whenever a signature is generated for {permit}.\\n     *\\n     * Every successful call to {permit} increases ``owner``'s nonce by one. This\\n     * prevents a signature from being used multiple times.\\n     */\\n    function nonces(address owner) external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.\\n     */\\n    // solhint-disable-next-line func-name-mixedcase\\n    function DOMAIN_SEPARATOR() external view returns (bytes32);\\n}\\n\",\"keccak256\":\"0x6008dabfe393240d73d7dd7688033f72740d570aa422254d29a7dce8568f3aff\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/utils/SafeERC20.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IERC20} from \\\"../IERC20.sol\\\";\\nimport {IERC20Permit} from \\\"../extensions/IERC20Permit.sol\\\";\\nimport {Address} from \\\"../../../utils/Address.sol\\\";\\n\\n/**\\n * @title SafeERC20\\n * @dev Wrappers around ERC20 operations that throw on failure (when the token\\n * contract returns false). Tokens that return no value (and instead revert or\\n * throw on failure) are also supported, non-reverting calls are assumed to be\\n * successful.\\n * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,\\n * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.\\n */\\nlibrary SafeERC20 {\\n    using Address for address;\\n\\n    /**\\n     * @dev An operation with an ERC20 token failed.\\n     */\\n    error SafeERC20FailedOperation(address token);\\n\\n    /**\\n     * @dev Indicates a failed `decreaseAllowance` request.\\n     */\\n    error SafeERC20FailedDecreaseAllowance(address spender, uint256 currentAllowance, uint256 requestedDecrease);\\n\\n    /**\\n     * @dev Transfer `value` amount of `token` from the calling contract to `to`. If `token` returns no value,\\n     * non-reverting calls are assumed to be successful.\\n     */\\n    function safeTransfer(IERC20 token, address to, uint256 value) internal {\\n        _callOptionalReturn(token, abi.encodeCall(token.transfer, (to, value)));\\n    }\\n\\n    /**\\n     * @dev Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the\\n     * calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.\\n     */\\n    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {\\n        _callOptionalReturn(token, abi.encodeCall(token.transferFrom, (from, to, value)));\\n    }\\n\\n    /**\\n     * @dev Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,\\n     * non-reverting calls are assumed to be successful.\\n     */\\n    function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {\\n        uint256 oldAllowance = token.allowance(address(this), spender);\\n        forceApprove(token, spender, oldAllowance + value);\\n    }\\n\\n    /**\\n     * @dev Decrease the calling contract's allowance toward `spender` by `requestedDecrease`. If `token` returns no\\n     * value, non-reverting calls are assumed to be successful.\\n     */\\n    function safeDecreaseAllowance(IERC20 token, address spender, uint256 requestedDecrease) internal {\\n        unchecked {\\n            uint256 currentAllowance = token.allowance(address(this), spender);\\n            if (currentAllowance < requestedDecrease) {\\n                revert SafeERC20FailedDecreaseAllowance(spender, currentAllowance, requestedDecrease);\\n            }\\n            forceApprove(token, spender, currentAllowance - requestedDecrease);\\n        }\\n    }\\n\\n    /**\\n     * @dev Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,\\n     * non-reverting calls are assumed to be successful. Meant to be used with tokens that require the approval\\n     * to be set to zero before setting it to a non-zero value, such as USDT.\\n     */\\n    function forceApprove(IERC20 token, address spender, uint256 value) internal {\\n        bytes memory approvalCall = abi.encodeCall(token.approve, (spender, value));\\n\\n        if (!_callOptionalReturnBool(token, approvalCall)) {\\n            _callOptionalReturn(token, abi.encodeCall(token.approve, (spender, 0)));\\n            _callOptionalReturn(token, approvalCall);\\n        }\\n    }\\n\\n    /**\\n     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement\\n     * on the return value: the return value is optional (but if data is returned, it must not be false).\\n     * @param token The token targeted by the call.\\n     * @param data The call data (encoded using abi.encode or one of its variants).\\n     */\\n    function _callOptionalReturn(IERC20 token, bytes memory data) private {\\n        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since\\n        // we're implementing it ourselves. We use {Address-functionCall} to perform this call, which verifies that\\n        // the target address contains contract code and also asserts for success in the low-level call.\\n\\n        bytes memory returndata = address(token).functionCall(data);\\n        if (returndata.length != 0 && !abi.decode(returndata, (bool))) {\\n            revert SafeERC20FailedOperation(address(token));\\n        }\\n    }\\n\\n    /**\\n     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement\\n     * on the return value: the return value is optional (but if data is returned, it must not be false).\\n     * @param token The token targeted by the call.\\n     * @param data The call data (encoded using abi.encode or one of its variants).\\n     *\\n     * This is a variant of {_callOptionalReturn} that silents catches all reverts and returns a bool instead.\\n     */\\n    function _callOptionalReturnBool(IERC20 token, bytes memory data) private returns (bool) {\\n        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since\\n        // we're implementing it ourselves. We cannot use {Address-functionCall} here since this should return false\\n        // and not revert is the subcall reverts.\\n\\n        (bool success, bytes memory returndata) = address(token).call(data);\\n        return success && (returndata.length == 0 || abi.decode(returndata, (bool))) && address(token).code.length > 0;\\n    }\\n}\\n\",\"keccak256\":\"0x37bb49513c49c87c4642a891b13b63571bc87013dde806617aa1efb54605f386\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Address.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary Address {\\n    /**\\n     * @dev The ETH balance of the account is not enough to perform the operation.\\n     */\\n    error AddressInsufficientBalance(address account);\\n\\n    /**\\n     * @dev There's no code at `target` (it is not a contract).\\n     */\\n    error AddressEmptyCode(address target);\\n\\n    /**\\n     * @dev A call to an address target failed. The target may have reverted.\\n     */\\n    error FailedInnerCall();\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.8.20/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        if (address(this).balance < amount) {\\n            revert AddressInsufficientBalance(address(this));\\n        }\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        if (!success) {\\n            revert FailedInnerCall();\\n        }\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason or custom error, it is bubbled\\n     * up by this function (like regular Solidity function calls). However, if\\n     * the call reverted with no returned reason, this function reverts with a\\n     * {FailedInnerCall} error.\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     */\\n    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {\\n        if (address(this).balance < value) {\\n            revert AddressInsufficientBalance(address(this));\\n        }\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResultFromTarget(target, success, returndata);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResultFromTarget(target, success, returndata);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a delegate call.\\n     */\\n    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {\\n        (bool success, bytes memory returndata) = target.delegatecall(data);\\n        return verifyCallResultFromTarget(target, success, returndata);\\n    }\\n\\n    /**\\n     * @dev Tool to verify that a low level call to smart-contract was successful, and reverts if the target\\n     * was not a contract or bubbling up the revert reason (falling back to {FailedInnerCall}) in case of an\\n     * unsuccessful call.\\n     */\\n    function verifyCallResultFromTarget(\\n        address target,\\n        bool success,\\n        bytes memory returndata\\n    ) internal view returns (bytes memory) {\\n        if (!success) {\\n            _revert(returndata);\\n        } else {\\n            // only check if target is a contract if the call was successful and the return data is empty\\n            // otherwise we already know that it was a contract\\n            if (returndata.length == 0 && target.code.length == 0) {\\n                revert AddressEmptyCode(target);\\n            }\\n            return returndata;\\n        }\\n    }\\n\\n    /**\\n     * @dev Tool to verify that a low level call was successful, and reverts if it wasn't, either by bubbling the\\n     * revert reason or with a default {FailedInnerCall} error.\\n     */\\n    function verifyCallResult(bool success, bytes memory returndata) internal pure returns (bytes memory) {\\n        if (!success) {\\n            _revert(returndata);\\n        } else {\\n            return returndata;\\n        }\\n    }\\n\\n    /**\\n     * @dev Reverts with returndata if present. Otherwise reverts with {FailedInnerCall}.\\n     */\\n    function _revert(bytes memory returndata) private pure {\\n        // Look for revert reason and bubble it up if present\\n        if (returndata.length > 0) {\\n            // The easiest way to bubble the revert reason is using memory via assembly\\n            /// @solidity memory-safe-assembly\\n            assembly {\\n                let returndata_size := mload(returndata)\\n                revert(add(32, returndata), returndata_size)\\n            }\\n        } else {\\n            revert FailedInnerCall();\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract Context {\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    function _contextSuffixLength() internal view virtual returns (uint256) {\\n        return 0;\\n    }\\n}\\n\",\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/ERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/ERC165.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IERC165} from \\\"./IERC165.sol\\\";\\n\\n/**\\n * @dev Implementation of the {IERC165} interface.\\n *\\n * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check\\n * for the additional interface id that will be supported. For example:\\n *\\n * ```solidity\\n * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);\\n * }\\n * ```\\n */\\nabstract contract ERC165 is IERC165 {\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {\\n        return interfaceId == type(IERC165).interfaceId;\\n    }\\n}\\n\",\"keccak256\":\"0x9e8778b14317ba9e256c30a76fd6c32b960af621987f56069e1e819c77c6a133\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Interface of the ERC165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[EIP].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b\",\"license\":\"MIT\"},\"contracts/controller/GaugeController.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity =0.8.24;\\n\\nimport \\\"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\\\";\\nimport \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\nimport \\\"@openzeppelin/contracts/access/AccessControl.sol\\\";\\n\\n/// @notice depositer get reward tokens on the basis or reward per block\\ncontract GaugeController is AccessControl {\\n    using SafeERC20 for IERC20;\\n\\n    bytes32 public constant CONTROLLER_ROLE = keccak256(\\\"CONTROLLER_ROLE\\\");\\n    bytes32 public constant POOL_ROLE = keccak256(\\\"POOL_ROLE\\\");\\n    uint256 public constant ACC_REWARD_PRECISION = 1e18;\\n    uint256 public constant MAX_REWARD_TOKEN = 8;\\n\\n    /// @notice Info of each gauge controller user.\\n    /// `amount` LP token amount the user has provided.\\n    /// `rewardDebt` The amount of reward token entitled to the user.\\n    struct UserInfo {\\n        uint256 amount;\\n        int256[8] rewardDebt;\\n    }\\n\\n    /// @notice Info of each gauge pool.\\n    struct PoolInfo {\\n        uint256 index;\\n        uint256 epoch;\\n        uint64 lastRewardBlock;\\n    }\\n\\n    /// @notice Info of each token in pool.\\n    struct RewardInfo {\\n        address token;\\n        uint256 rewardPerBlock;\\n        uint256 accRewardPerShare;\\n    }\\n\\n    /// @notice Info of each pool.\\n    mapping(address => PoolInfo) public poolInfo;\\n    /// @notice Address of the LP token for each pool.\\n    mapping(address => IERC20) public lpToken;\\n\\n    mapping(address => RewardInfo[8]) public reward;\\n\\n    /// @notice Info of each user that stakes LP tokens.\\n    mapping(address => mapping(address => UserInfo)) public userInfo;\\n\\n    event Claimed(address indexed user, address indexed pool, uint256 amount);\\n    event LogPoolAddition(address indexed pool, address indexed lpToken);\\n    event LogSetPool(address indexed pool, RewardInfo[] poolReward);\\n    event LogUpdatePool(address indexed pool, uint64 lastRewardBlock);\\n    event EpochUpdated(address indexed pool, uint256 newMaxRewardToken);\\n    event SetMaxRewardToken(uint256 newMaxRewardToken);\\n\\n    constructor(address _admin) {\\n        _grantRole(CONTROLLER_ROLE, _admin);\\n    }\\n\\n    function userRewards(address _pool, address _user) external view returns (int256[MAX_REWARD_TOKEN] memory) {\\n        return userInfo[_pool][_user].rewardDebt;\\n    }\\n\\n    /// @notice View function to see pending reward of by token on frontend.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _user Address of user.\\n    /// @return pending_ reward for a given user.\\n    function userRewardByToken(address _pool, address _user, uint256 indexOfRewardToken)\\n        external\\n        view\\n        returns (uint256 pending_)\\n    {\\n        PoolInfo memory _poolInfo = poolInfo[_pool];\\n        UserInfo memory user = userInfo[_pool][_user];\\n        RewardInfo[MAX_REWARD_TOKEN] memory _rewardInfo = reward[_pool];\\n        uint256 lpSupply = lpToken[_pool].balanceOf(_pool);\\n        if (block.number > _poolInfo.lastRewardBlock && lpSupply != 0) {\\n            pending_ += _pendingRewardForToken(\\n                user.amount,\\n                user.rewardDebt[indexOfRewardToken],\\n                lpSupply,\\n                _rewardInfo[indexOfRewardToken].accRewardPerShare,\\n                _rewardInfo[indexOfRewardToken].rewardPerBlock,\\n                _poolInfo.lastRewardBlock,\\n                block.number\\n            );\\n        }\\n    }\\n\\n    /// @notice View function to see pending reward at current block on frontend.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _user Address of user.\\n    /// @return pending_ reward for a given user.\\n    function pendingReward(address _pool, address _user) external view returns (uint256 pending_) {\\n        pending_ = _pendingRewardAmount(_pool, _user, block.number);\\n    }\\n\\n    /// @notice View function to see pending reward at future block on frontend.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _user Address of user.\\n    /// @return pending_ reward for a given user.\\n    function pendingRewardAtBlock(address _pool, address _user, uint256 _blockNumber)\\n        external\\n        view\\n        returns (uint256 pending_)\\n    {\\n        pending_ = _pendingRewardAmount(_pool, _user, _blockNumber);\\n    }\\n\\n    /// @notice Add a new LP to the pool. Can only be called by the owner.\\n    /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.\\n    /// @param _lpToken Address of the LP ERC-20 token.\\n    function addPool(address _lpToken, address _pool, RewardInfo[] memory _reward) external {\\n        require(hasRole(CONTROLLER_ROLE, msg.sender), \\\"GaugeController: not authorized\\\");\\n        lpToken[_pool] = IERC20(_lpToken);\\n\\n        poolInfo[_pool] = PoolInfo({epoch: 0, lastRewardBlock: uint64(block.number), index: _reward.length - 1});\\n\\n        RewardInfo[MAX_REWARD_TOKEN] storage _rewardInfo = reward[_pool];\\n        for (uint256 i = 0; i < _reward.length; ++i) {\\n            _rewardInfo[i] = _reward[i];\\n        }\\n\\n        _grantRole(POOL_ROLE, _pool);\\n        emit LogPoolAddition(_pool, address(_lpToken));\\n    }\\n\\n    /// @notice function to add reward token in pool on frontend.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _reward array of reward token info to add in pool\\n    function addRewardToken(address _pool, RewardInfo[] memory _reward) external {\\n        require(hasRole(CONTROLLER_ROLE, msg.sender), \\\"GaugeController: not authorized\\\");\\n        PoolInfo memory _poolInfo = poolInfo[_pool];\\n        uint256 _index = _poolInfo.index + 1;\\n        require(_index + _reward.length <= MAX_REWARD_TOKEN, \\\"GaugeController: excced reward tokens\\\");\\n        RewardInfo[MAX_REWARD_TOKEN] storage _rewardInfo = reward[_pool];\\n        uint256 _len = _index + _reward.length;\\n        for (uint256 i = _index; i < _len; ++i) {\\n            _rewardInfo[i] = _reward[i - _index];\\n        }\\n        poolInfo[_pool].index += _reward.length;\\n        emit LogSetPool(_pool, _reward);\\n    }\\n\\n    /// @notice update epoch for given pool\\n    /// @param _pool Pool address of pool to be updated. Make sure to update all active pools.\\n    /// @param _indexes index of rewardInfo array.\\n    /// @param _rewardPerBlock array of rewardPerBlock\\n    function updateEpoch(\\n        address _pool,\\n        address _user,\\n        uint256[] memory _indexes,\\n        uint256[] memory _rewardPerBlock,\\n        uint256[] memory _rewardAmount\\n    ) external {\\n        require(hasRole(CONTROLLER_ROLE, msg.sender), \\\"GaugeController: not authorized\\\");\\n        require(_indexes.length == _rewardPerBlock.length, \\\"GaugeController: length of array doesn't mach\\\");\\n\\n        RewardInfo[MAX_REWARD_TOKEN] storage _rewardInfo = reward[_pool];\\n\\n        for (uint256 i = 0; i < _indexes.length; ++i) {\\n            _rewardInfo[_indexes[i]].rewardPerBlock = _rewardPerBlock[i];\\n            IERC20(_rewardInfo[_indexes[i]].token).safeTransferFrom(_user, address(this), _rewardAmount[i]);\\n        }\\n\\n        poolInfo[_pool].epoch++;\\n        emit EpochUpdated(_pool, poolInfo[_pool].epoch);\\n    }\\n\\n    /// @notice Deposit LP tokens to pool for syUSD allocation.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _amount LP token amount to deposit.\\n    /// @param _to The receiver of `amount` deposit benefit.\\n    function updateReward(address _pool, address _to, uint256 _amount, bool _increase) external {\\n        require(hasRole(POOL_ROLE, msg.sender), \\\"GaugeController: not authorized\\\");\\n        PoolInfo memory _poolInfo = updatePool(_pool);\\n        UserInfo memory _user = userInfo[_pool][_to];\\n        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];\\n\\n        int256[MAX_REWARD_TOKEN] memory _rewardDebt = _user.rewardDebt;\\n\\n        // Effects\\n        for (uint256 i = 0; i <= _poolInfo.index; ++i) {\\n            int256 _calRewardDebt = _calAccReward(rewardInfo[i].accRewardPerShare, _amount);\\n            if (_increase) {\\n                _user.amount += _amount;\\n                _rewardDebt[i] += _calRewardDebt;\\n            } else {\\n                _user.amount -= _amount;\\n                _rewardDebt[i] -= _calRewardDebt;\\n            }\\n        }\\n\\n        _user.rewardDebt = _rewardDebt;\\n        userInfo[_pool][_to] = _user;\\n    }\\n\\n    /// @notice Claim proceeds for transaction sender to `to`.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _to Receiver of syUSD rewards.\\n    function claim(address _pool, address _to) external {\\n        PoolInfo memory _poolInfo = updatePool(_pool);\\n        UserInfo memory _user = userInfo[_pool][msg.sender];\\n        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];\\n        uint256 _totalPendingReward;\\n        for (uint256 i = 0; i <= _poolInfo.index; ++i) {\\n            (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(\\n                _user.amount, _user.rewardDebt[i], rewardInfo[i].accRewardPerShare, rewardInfo[i].token, _to\\n            );\\n            // Effects\\n            _user.rewardDebt[i] = accumulatedReward;\\n            _totalPendingReward += _pendingReward;\\n        }\\n        userInfo[_pool][msg.sender] = _user;\\n        emit Claimed(msg.sender, _pool, _totalPendingReward);\\n    }\\n\\n    /// @notice Claim proceeds for transaction sender to `to`.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _to Receiver of syUSD rewards.\\n    /// @param _index token index in reward tokens of pool.\\n    function claimForToken(address _pool, address _to, uint256 _index) external {\\n        updatePool(_pool);\\n        UserInfo memory _user = userInfo[_pool][msg.sender];\\n        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];\\n\\n        (int256 accumulatedReward, uint256 _pendingReward) = _claimForToken(\\n            _user.amount, _user.rewardDebt[_index], rewardInfo[_index].accRewardPerShare, rewardInfo[_index].token, _to\\n        );\\n\\n        _user.rewardDebt[_index] = accumulatedReward;\\n\\n        userInfo[_pool][msg.sender] = _user;\\n        emit Claimed(msg.sender, _pool, _pendingReward);\\n    }\\n\\n    /// @notice Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @param _amount LP token amount to withdraw.\\n    /// @param _to Receiver of the LP tokens and syUSD rewards.\\n    function decreaseRewardAndClaim(address _pool, uint256 _amount, address _to) external {\\n        require(hasRole(POOL_ROLE, msg.sender), \\\"GaugeController: not authorized\\\");\\n        PoolInfo memory _poolInfo = updatePool(_pool);\\n        UserInfo memory _user = userInfo[_pool][_to];\\n        RewardInfo[MAX_REWARD_TOKEN] memory rewardInfo = reward[_pool];\\n        uint256 _totalPendingReward;\\n        for (uint256 i = 0; i <= _poolInfo.index; ++i) {\\n            int256 accumulatedReward = _calAccReward(rewardInfo[i].accRewardPerShare, _user.amount);\\n            uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt[i]));\\n\\n            // Effects\\n            _user.rewardDebt[i] = accumulatedReward - (_calAccReward(_amount, rewardInfo[i].accRewardPerShare));\\n            // Interactions\\n            if (_pendingReward != 0) {\\n                IERC20(rewardInfo[i].token).safeTransfer(_to, _pendingReward);\\n                _totalPendingReward += _pendingReward;\\n            }\\n        }\\n\\n        _user.amount -= _amount;\\n        userInfo[_pool][_to] = _user;\\n\\n        emit Claimed(_to, _pool, _totalPendingReward);\\n    }\\n\\n    /// @notice Update reward variables of the given pool.\\n    /// @param _pool The address of the pool. See `poolInfo`.\\n    /// @return _poolInfo Returns the pool that was updated.\\n    function updatePool(address _pool) public returns (PoolInfo memory _poolInfo) {\\n        _poolInfo = poolInfo[_pool];\\n        RewardInfo[MAX_REWARD_TOKEN] storage _rewardInfo = reward[_pool];\\n\\n        uint256 lpSupply = lpToken[_pool].balanceOf(_pool);\\n        if (block.number > _poolInfo.lastRewardBlock && lpSupply > 0) {\\n            uint256 _index = _poolInfo.index + 1;\\n            for (uint256 i = 0; i < _index; ++i) {\\n                _rewardInfo[i].accRewardPerShare += _calAccFromRewardPerBlock(\\n                    _poolInfo.lastRewardBlock, _rewardInfo[i].rewardPerBlock, lpSupply, block.number\\n                );\\n            }\\n        }\\n        _poolInfo.lastRewardBlock = uint64(block.number);\\n        poolInfo[_pool] = _poolInfo;\\n        emit LogUpdatePool(_pool, uint64(block.number));\\n    }\\n\\n    function _calAccReward(uint256 _accRewardPerShare, uint256 _amount) internal pure returns (int256) {\\n        return int256((_amount * _accRewardPerShare) / ACC_REWARD_PRECISION);\\n    }\\n\\n    function _calAccRewardPerShare(uint256 _rewardAmount, uint256 _lpSupply) internal pure returns (uint256) {\\n        return (_rewardAmount * ACC_REWARD_PRECISION) / _lpSupply;\\n    }\\n\\n    function _calRewardAmount(uint256 _lastRewardBlock, uint256 _rewardPerBlock, uint256 _blockNumber)\\n        internal\\n        pure\\n        returns (uint256)\\n    {\\n        uint256 blocks = _blockNumber - _lastRewardBlock;\\n        return blocks * _rewardPerBlock;\\n    }\\n\\n    function _calAccFromRewardPerBlock(\\n        uint256 _lastRewardBlock,\\n        uint256 _rewardPerBlock,\\n        uint256 _lpSupply,\\n        uint256 _blockNumber\\n    ) internal pure returns (uint256) {\\n        uint256 rewardAmount = _calRewardAmount(_lastRewardBlock, _rewardPerBlock, _blockNumber);\\n        return _calAccRewardPerShare(rewardAmount, _lpSupply);\\n    }\\n\\n    function _pendingRewardForToken(\\n        uint256 _amount,\\n        int256 _rewardDebt,\\n        uint256 _lpSupply,\\n        uint256 _accRewardPerShare,\\n        uint256 _rewardPerBlock,\\n        uint256 _lastRewardBlock,\\n        uint256 _blockNumber\\n    ) internal pure returns (uint256 _pending) {\\n        _accRewardPerShare += _calAccFromRewardPerBlock(_lastRewardBlock, _rewardPerBlock, _lpSupply, _blockNumber);\\n        _pending = uint256(_calAccReward(_accRewardPerShare, _amount) - (_rewardDebt));\\n    }\\n\\n    function _pendingRewardAmount(address _pool, address _user, uint256 _blockNumber)\\n        internal\\n        view\\n        returns (uint256 pending_)\\n    {\\n        PoolInfo memory _poolInfo = poolInfo[_pool];\\n        UserInfo memory user = userInfo[_pool][_user];\\n        RewardInfo[MAX_REWARD_TOKEN] memory _rewardInfo = reward[_pool];\\n        uint256 lpSupply = lpToken[_pool].balanceOf(_pool);\\n        if (block.number > _poolInfo.lastRewardBlock && lpSupply != 0) {\\n            for (uint256 i = 0; i <= _poolInfo.index; ++i) {\\n                pending_ += _pendingRewardForToken(\\n                    user.amount,\\n                    user.rewardDebt[i],\\n                    lpSupply,\\n                    _rewardInfo[i].accRewardPerShare,\\n                    _rewardInfo[i].rewardPerBlock,\\n                    _poolInfo.lastRewardBlock,\\n                    _blockNumber\\n                );\\n            }\\n        }\\n    }\\n\\n    function _claimForToken(\\n        uint256 _amount,\\n        int256 _rewardDebt,\\n        uint256 _accRewardPerShare,\\n        address _token,\\n        address _to\\n    ) internal returns (int256 _accmulatedReward, uint256 _pendingReward) {\\n        _accmulatedReward = _calAccReward(_accRewardPerShare, _amount);\\n\\n        _pendingReward = uint256(_accmulatedReward - _rewardDebt);\\n\\n        if (_pendingReward != 0) {\\n            IERC20(_token).safeTransfer(_to, _pendingReward);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x38b72fecece7871dc8ddd5353684465cfa42283769f178bd205ccd08fc035f3b\",\"license\":\"UNLICENSED\"}},\"version\":1}",
+  "bytecode": "0x6080346200007057601f6200255138819003918201601f19168301916001600160401b0383118484101762000075578084926020946040528339810103126200007057516001600160a01b038116810362000070576200005f906200008b565b5060405161241290816200013f8239f35b600080fd5b634e487b7160e01b600052604160045260246000fd5b6001600160a01b031660008181527fd4b1ef424fcb83dce82b8e6790fbd9bbcd76978bd34427cec18daa7ab216754360205260408120549091907f7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c5702233579060ff166200013957808352826020526040832082845260205260408320600160ff198254161790557f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d339380a4600190565b50509056fe608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a7146116e957508063092c5b3b146116ae5780630f051a5c146114925780630f208beb1461144057806312c96c5f1461129557806321670f221461122857806321c0b3421461105e578063248a9ca31461102f5780632f2ff15d14610ff057806336568abe14610f9157806337dd499414610d38578063404ccd0714610cfd57806376a562a414610cc25780637b46c54f14610c7957806391d1485414610c2b57806394f3e80b1461097e578063976df6bb1461096557806397eaf40f146106eb5780639a7b5f11146106905780639ced7e761461065b5780639d1d2b9d1461063f578063a217fddf14610623578063a980356a14610590578063ba6a07311461032a578063cd6b8fe0146101b1578063d1c6a2311461018e5763d547741f1461014857600080fd5b346101895760406003193601126101895761018760043561016761179d565b90806000526000602052610182600160406000200154611e59565b611eb6565b005b600080fd5b34610189576000600319360112610189576020604051670de0b6b3a76400008152f35b34610189576101bf36611922565b6101ca839293611b15565b506001600160a01b03809216918260005260209160048352604060002033600052835260406000209160405191610200836117e5565b835483526102116001809501611a94565b9185840192835286600052600380875260406000206040519161023383611801565b6000835b600882106102f457505050509761027f91610289989986519161025b868851611ad8565b519061027687604061026d8287611ad8565b51015194611ad8565b51511692611e1a565b9690918351611ad8565b52856000526004845260406000203360005284526040600020915182555160005b600881106102e15786867ff7a40077ff7a04c7e61f6f26fb13774259ddf1b6bce9ecf26a8276cdd3992683876040519283523392a3005b81518382018501559084019083016102aa565b828b8b92604051610304816117b3565b898854168152848801548382015260028801546040820152815201940191019092610237565b346101895761033836611922565b6000916001600160a01b038416600052600160205260406000209067ffffffffffffffff60026040519361036b856117b3565b805485526001810154602086015201541660408301526001600160a01b03851660005260046020526001600160a01b03604060002091166000526020526040600020906103ca6001604051936103c0856117e5565b8054855201611a94565b60208301526001600160a01b0385166000526003602052604060002090604051916103f483611801565b6000835b60088210610550575050506001600160a01b038616600052600260205260206001600160a01b036024816040600020541698604051998a9384926370a0823160e01b84521660048301525afa9081156105445760009161050f575b6020965067ffffffffffffffff604082015116431180610506575b61047d575b8686604051908152f35b6104fc95506104f6926104ea85936104e56104f0946104e067ffffffffffffffff60408e6104d36104bd8f670de0b6b3a76400009f8490519e0151611ad8565b519e836104ca828d611ad8565b5101519a611ad8565b5101519301511643611a0f565b611ae9565b61221a565b90611a02565b90611ae9565b04611afc565b8280808080610473565b5081151561046e565b90506020863d60201161053c575b8161052a6020938361181e565b81010312610189576020955190610453565b3d915061051d565b6040513d6000823e3d90fd5b60036020600192604051610563816117b3565b6001600160a01b0387541681528487015483820152600287015460408201528152019301910190916103f8565b34610189576040600319360112610189576105a9611787565b6105b161179d565b90604051916105bf83611801565b61010080933690376001600160a01b0380921660005260209160046020526040600020911660005260205260016105fc6001604060002001611a94565b604051926000845b60088210610610578686f35b8351815292820192908401908201610604565b3461018957600060031936011261018957602060405160008152f35b3461018957600060031936011261018957602060405160088152f35b34610189576040600319360112610189576020610688610679611787565b61068161179d565b4391611f92565b604051908152f35b34610189576020600319360112610189576001600160a01b036106b1611787565b1660005260016020526060604060002080549067ffffffffffffffff60026001830154920154169060405192835260208301526040820152f35b346101895760a08060031936011261018957610705611787565b61070d61179d565b906044926044359067ffffffffffffffff9182811161018957610734903690600401611957565b90606480358481116101895761074e903690600401611957565b9660843585811161018957610767903690600401611957565b957f7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c57022335760005260209860008a526040600020336000528a526107af60ff604060002054166119b7565b85518151036108fb576001600160a01b03918216600081815260038c5260408120919a8416979192905b82518110156108a2576107ec8183611a1c565b5160016108036107fc8487611a1c565b51876118f8565b5001558c8b61082a838861082161081a838a611a1c565b518a6118f8565b50541692611a1c565b517f23b872dd00000000000000000000000000000000000000000000000000000000604051938401526024908c82850152308a8501528a8401528983528a8301908d8483109083111761088e57506040526001929161088891612254565b016107d9565b634e487b7160e01b60005260416004526000fd5b8b7f3494c2b85ef51fdae9b028074b5794f2062305e376ceaa0304d7b4263ca9fb868e826000526001815260016040600020016108df8154611ac9565b90558260005260018152600160406000200154604051908152a2005b60848a6040519062461bcd60e51b82526004820152602d60248201527f4761756765436f6e74726f6c6c65723a206c656e677468206f6620617272617960448201527f20646f65736e2774206d616368000000000000000000000000000000000000006064820152fd5b3461018957602061068861097836611922565b91611f92565b3461018957606060031936011261018957610997611787565b6001600160a01b036044351660443503610189573360009081527ffb9dd8ab9cf34223246019bd9b6dfde686a4b48c0be67d0a5ec8c38a7d8f067c60205260409020546109e69060ff166119b7565b6109ef81611b15565b6001600160a01b038216600052600460205260406000206001600160a01b0360443516600052602052604060002091610a3a600160405194610a30866117e5565b8054865201611a94565b60208401526001600160a01b038116600052600360205260406000209060405191610a6483611801565b6000835b60088210610beb5750505060009060005b84518111610b3c57670de0b6b3a7640000610ae281610aa76040610a9d868a611ad8565b5101518a51611ae9565b04610ac0610ab98560208c0151611ad8565b5182611afc565b92610adb6024356040610ad3888c611ad8565b510151611ae9565b0490611afc565b610af08360208a0151611ad8565b5280610b06575b50610b0190611ac9565b610a79565b80610b019294610b30610b35936044356001600160a01b03610b288a8c611ad8565b515116611f2c565b611a02565b9290610af7565b858383610b4c6024358451611a0f565b83526001600160a01b038116600052600460205260406000206001600160a01b0360443516600052602052602060406000209380518555015160005b60088110610bd557836001600160a01b038460405192835216907ff7a40077ff7a04c7e61f6f26fb13774259ddf1b6bce9ecf26a8276cdd399268360206001600160a01b036044351692a3005b6001906020835193019282828801015501610b88565b60036020600192604051610bfe816117b3565b6001600160a01b038754168152848701548382015260028701546040820152815201930191019091610a68565b3461018957604060031936011261018957610c4461179d565b60043560005260006020526001600160a01b0360406000209116600052602052602060ff604060002054166040519015158152f35b34610189576020600319360112610189576060610c9c610c97611787565b611b15565b67ffffffffffffffff604080519280518452602081015160208501520151166040820152f35b346101895760206003193601126101895760206001600160a01b0380610ce6611787565b166000526002825260406000205416604051908152f35b346101895760006003193601126101895760206040517fb8179c2726c8d8961ef054875ab3f4c1c3d34e1cb429c3d5e0bc97958e4cab9d8152f35b3461018957608060031936011261018957610d51611787565b610d5961179d565b606435151560643503610189573360009081527ffb9dd8ab9cf34223246019bd9b6dfde686a4b48c0be67d0a5ec8c38a7d8f067c6020526040902054610da19060ff166119b7565b610daa82611b15565b906001600160a01b038316600052600460205260406000206001600160a01b038216600052602052604060002090610dea6001604051936103c0856117e5565b60208301526001600160a01b038416600052600360205260406000209060405191610e1483611801565b6000835b60088210610f515750505060208301519460005b85518111610ef157670de0b6b3a7640000610e576040610e4c8488611ad8565b510151604435611ae9565b049060643515610ec157610e6e6044358751611a02565b8652610e7a8189611ad8565b5160008382019384129112908015821691151617610eab57610ea691610ea0828a611ad8565b52611ac9565b610e2c565b634e487b7160e01b600052601160045260246000fd5b610ee7610ea692610ed56044358951611a0f565b8852610ee1838b611ad8565b51611afc565b610ea0828a611ad8565b84836001600160a01b03848a60208501521660005260046020526001600160a01b0360406000209116600052602052602060406000209180518355015160005b60088110610f3b57005b6001906020835193019282828601015501610f31565b60036020600192604051610f64816117b3565b6001600160a01b038754168152848701548382015260028701546040820152815201930191019091610e18565b3461018957604060031936011261018957610faa61179d565b336001600160a01b03821603610fc65761018790600435611eb6565b60046040517f6697b232000000000000000000000000000000000000000000000000000000008152fd5b346101895760406003193601126101895761018760043561100f61179d565b9080600052600060205261102a600160406000200154611e59565b611da0565b346101895760206003193601126101895760043560005260006020526020600160406000200154604051908152f35b3461018957604060031936011261018957611077611787565b61107f61179d565b9061108981611b15565b906110d16001600160a01b0380921693846000526020926004845260406000203360005284526040600020604051926110c1846117e5565b8154845260019485809301611a94565b928685019384528860005260038088526040600020604051916110f383611801565b60008a845b600883106111e55750505050506000986000945b611180575b5050505050856000526004845260406000203360005284526040600020915182555160005b6008811061116d5786867ff7a40077ff7a04c7e61f6f26fb13774259ddf1b6bce9ecf26a8276cdd3992683876040519283523392a3005b8151838201850155908401908301611136565b909192939881518a116111df57906111d96111d36111cd85948d6111c38a8c8f9c9b9a8f856111b191519351611ad8565b518c61027687604061026d8287611ad8565b9390918c51611ad8565b52611a02565b9a611ac9565b9461110c565b98611111565b908394959697989293916040516111fb816117b3565b898854168152848801548382015260028801546040820152815201940191018a8a979695949392936110f8565b3461018957604060031936011261018957611241611787565b602435906001600160a01b0380911660005260036020526040600020600883101561018957606092611272916118f8565b509081541690600260018201549101549060405192835260208301526040820152f35b34610189576060600319360112610189576112ae611787565b6112b661179d565b67ffffffffffffffff90604435828111610189576112d8903690600401611859565b3360009081527fd4b1ef424fcb83dce82b8e6790fbd9bbcd76978bd34427cec18daa7ab216754360209081526040909120549193909161131a9060ff166119b7565b6001600160a01b038095169483169384600052600283526040600020867fffffffffffffffffffffffff00000000000000000000000000000000000000008254161790558051926000198401938411610eab5760405194936003919061137f876117b3565b86528086019360008552604087019080431682528860005260026001988997600186526040600020915182555160018201550191511667ffffffffffffffff19825416179055526040600020906000945b611408575b86866113e086611cee565b507f1779d0d51e45c2a0963668be843293f9b3e72a894128b9b8a676682467454520600080a3005b805185101561143b57828561143361142283979885611a1c565b5161142d83876118f8565b90611a30565b0194936113d0565b6113d5565b3461018957604060031936011261018957611459611787565b61146161179d565b906001600160a01b038091166000526004602052604060002091166000526020526020604060002054604051908152f35b34610189576040600319360112610189576114ab611787565b67ffffffffffffffff90602435828111610189576114cd903690600401611859565b3360009081527fd4b1ef424fcb83dce82b8e6790fbd9bbcd76978bd34427cec18daa7ab216754360209081526040909120549193909161150f9060ff166119b7565b6001600160a01b0380931692836000526001918284526040600020906040805191611539836117b3565b60028454948585528781015489860152015416910152828101809111610eab576008611566875183611a02565b116116445784600052600384526040600020611583875183611a02565b91805b8381106116265750505050908451846000528184526115ab6040600020918254611a02565b90556040519280840190808552865180925280604086019701936000905b8382106115f957877f9d15ceb0439adc65c83965a44754088a2b0c037443f69142d7b6359f8c932ccc888b0389a2005b8551805182168a5283810151848b0152604090810151908a015260609098019794820194908401906115c9565b8061163e611422611638858a95611a0f565b8c611a1c565b01611586565b6084846040519062461bcd60e51b82526004820152602560248201527f4761756765436f6e74726f6c6c65723a2065786363656420726577617264207460448201527f6f6b656e730000000000000000000000000000000000000000000000000000006064820152fd5b346101895760006003193601126101895760206040517f7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c5702233578152f35b3461018957602060031936011261018957600435907fffffffff00000000000000000000000000000000000000000000000000000000821680920361018957817f7965db0b000000000000000000000000000000000000000000000000000000006020931490811561175d575b5015158152f35b7f01ffc9a70000000000000000000000000000000000000000000000000000000091501483611756565b600435906001600160a01b038216820361018957565b602435906001600160a01b038216820361018957565b6060810190811067ffffffffffffffff8211176117cf57604052565b634e487b7160e01b600052604160045260246000fd5b6040810190811067ffffffffffffffff8211176117cf57604052565b610100810190811067ffffffffffffffff8211176117cf57604052565b90601f601f19910116810190811067ffffffffffffffff8211176117cf57604052565b67ffffffffffffffff81116117cf5760051b60200190565b81601f8201121561018957803590602061187283611841565b936040611882604051968761181e565b8486528286019183606080970286010194818611610189578401925b8584106118af575050505050505090565b8684830312610189578251906118c4826117b3565b8435906001600160a01b0382168203610189578287928a94528287013583820152858701358682015281520193019261189e565b90600881101561190c576003020190600090565b634e487b7160e01b600052603260045260246000fd5b6003196060910112610189576001600160a01b0390600435828116810361018957916024359081168103610189579060443590565b9080601f8301121561018957602090823561197181611841565b9361197f604051958661181e565b81855260208086019260051b82010192831161018957602001905b8282106119a8575050505090565b8135815290830190830161199a565b156119be57565b606460405162461bcd60e51b815260206004820152601f60248201527f4761756765436f6e74726f6c6c65723a206e6f7420617574686f72697a6564006044820152fd5b91908201809211610eab57565b91908203918211610eab57565b805182101561190c5760209160051b010190565b9190611a7e576040816001600160a01b0360029351167fffffffffffffffffffffffff0000000000000000000000000000000000000000855416178455602081015160018501550151910155565b634e487b7160e01b600052600060045260246000fd5b60405191906000835b60088210611ab357505050611ab182611801565b565b6001602081928554815201930191019091611a9d565b6000198114610eab5760010190565b90600881101561190c5760051b0190565b81810292918115918404141715610eab57565b81810392916000138015828513169184121617610eab57565b6040918251611b23816117b3565b6000908181528185602092828482015201526001600160a01b0380941691828152600195868352808220958151611b59816117b3565b87548152888801549085810191825267ffffffffffffffff91826002809b01541693858301948552829a898852600389528688209160028a528789205416898b60248a51809481936370a0823160e01b835260048301525afa908115611ce4578991611cb3575b5085875116431180611caa575b611c31575b505050907f284e92cbf2bf11376e95f3444888f77e16471a71e8d71420260330dfc206f8819798999a60029286854316988988528c8152838b52209251835551908201550191511667ffffffffffffffff1982541617905551908152a2565b908d92918551938401809411611c9657895b848110611c51575050611bd2565b8f90611c76836104e58b8d51166104e086611c6c878c6118f8565b5001549143611a0f565b611c8e85611c8484896118f8565b5001918254611a02565b905501611c43565b60248a634e487b7160e01b81526011600452fd5b50801515611bcd565b90508981813d8311611cdd575b611cca818361181e565b81010312611cd9575138611bc0565b8880fd5b503d611cc0565b88513d8b823e3d90fd5b6001600160a01b031660008181527ffb9dd8ab9cf34223246019bd9b6dfde686a4b48c0be67d0a5ec8c38a7d8f067c60205260408120549091907fb8179c2726c8d8961ef054875ab3f4c1c3d34e1cb429c3d5e0bc97958e4cab9d9060ff16611d9b57808352826020526040832082845260205260408320600160ff198254161790557f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d339380a4600190565b505090565b90600091808352826020526001600160a01b036040842092169182845260205260ff60408420541615600014611d9b57808352826020526040832082845260205260408320600160ff198254161790557f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d339380a4600190565b611e33611e3b92969493670de0b6b3a764000092611ae9565b049485611afc565b809381611e4757505050565b6001600160a01b03611ab19316611f2c565b80600052600060205260406000203360005260205260ff6040600020541615611e7f5750565b604490604051907fe2517d3f0000000000000000000000000000000000000000000000000000000082523360048301526024820152fd5b90600091808352826020526001600160a01b036040842092169182845260205260ff604084205416600014611d9b5780835282602052604083208284526020526040832060ff1981541690557ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b339380a4600190565b916001600160a01b03604051927fa9059cbb000000000000000000000000000000000000000000000000000000006020850152166024830152604482015260448152608081019181831067ffffffffffffffff8411176117cf57611ab192604052612254565b9092916000936001600160a01b0383166000526001928360205260406000209167ffffffffffffffff600260405194611fca866117b3565b8054865287810154602087015201541660408401526001600160a01b03821660005260046020526001600160a01b036040600020911660005260205260406000209161201d8560405194610a30866117e5565b60208401526001600160a01b03821660005260036020526040600020936040519461204786611801565b600087875b600883106121da57505050506001600160a01b038316600052600260205260206001600160a01b03602481604060002054169560405196879384926370a0823160e01b84521660048301525afa928315610544576000936121a6575b5067ffffffffffffffff60408301511643118061219d575b6120cd575b505050505050565b9085949392916000965b6120e2575b506120c5565b90919293949597825189116121975784518960208701519061210391611ad8565b519061210f8b89611ad8565b51604001518661211f8d8b611ad8565b5160200151604088015167ffffffffffffffff1661213d9088611a0f565b9061214791611ae9565b906121519161221a565b61215a91611a02565b61216391611ae9565b670de0b6b3a764000090049061217891611afc565b61218191611a02565b9761218b90611ac9565b959493929190856120d7565b976120dc565b508215156120c0565b9092506020813d6020116121d2575b816121c26020938361181e565b81010312610189575191386120a8565b3d91506121b5565b60206003916040516121eb816117b3565b6001600160a01b038754168152848701548382015260028701546040820152815201930191019091889061204c565b670de0b6b3a764000090818102918183041490151715610eab57811561223e570490565b634e487b7160e01b600052601260045260246000fd5b6001600160a01b031690600080826020829451910182865af13d1561233d573d9067ffffffffffffffff821161232957906122b191604051916122a16020601f19601f840116018461181e565b82523d84602084013e5b84612349565b9081519182151592836122fa575b5050506122c95750565b602490604051907f5274afe70000000000000000000000000000000000000000000000000000000082526004820152fd5b81929350906020918101031261232557602001519081159182150361232257503880806122bf565b80fd5b5080fd5b602483634e487b7160e01b81526041600452fd5b6122b1906060906122ab565b90612388575080511561235e57805190602001fd5b60046040517f1425ea42000000000000000000000000000000000000000000000000000000008152fd5b815115806123d3575b612399575090565b6024906001600160a01b03604051917f9996b315000000000000000000000000000000000000000000000000000000008352166004820152fd5b50803b1561239156fea2646970667358221220d64ed03a100e7f6a5f5d1c50b70b244ef3562fc60d2083dfd35b7f23294e1c8b64736f6c63430008180033",
+  "deployedBytecode": "0x608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a7146116e957508063092c5b3b146116ae5780630f051a5c146114925780630f208beb1461144057806312c96c5f1461129557806321670f221461122857806321c0b3421461105e578063248a9ca31461102f5780632f2ff15d14610ff057806336568abe14610f9157806337dd499414610d38578063404ccd0714610cfd57806376a562a414610cc25780637b46c54f14610c7957806391d1485414610c2b57806394f3e80b1461097e578063976df6bb1461096557806397eaf40f146106eb5780639a7b5f11146106905780639ced7e761461065b5780639d1d2b9d1461063f578063a217fddf14610623578063a980356a14610590578063ba6a07311461032a578063cd6b8fe0146101b1578063d1c6a2311461018e5763d547741f1461014857600080fd5b346101895760406003193601126101895761018760043561016761179d565b90806000526000602052610182600160406000200154611e59565b611eb6565b005b600080fd5b34610189576000600319360112610189576020604051670de0b6b3a76400008152f35b34610189576101bf36611922565b6101ca839293611b15565b506001600160a01b03809216918260005260209160048352604060002033600052835260406000209160405191610200836117e5565b835483526102116001809501611a94565b9185840192835286600052600380875260406000206040519161023383611801565b6000835b600882106102f457505050509761027f91610289989986519161025b868851611ad8565b519061027687604061026d8287611ad8565b51015194611ad8565b51511692611e1a565b9690918351611ad8565b52856000526004845260406000203360005284526040600020915182555160005b600881106102e15786867ff7a40077ff7a04c7e61f6f26fb13774259ddf1b6bce9ecf26a8276cdd3992683876040519283523392a3005b81518382018501559084019083016102aa565b828b8b92604051610304816117b3565b898854168152848801548382015260028801546040820152815201940191019092610237565b346101895761033836611922565b6000916001600160a01b038416600052600160205260406000209067ffffffffffffffff60026040519361036b856117b3565b805485526001810154602086015201541660408301526001600160a01b03851660005260046020526001600160a01b03604060002091166000526020526040600020906103ca6001604051936103c0856117e5565b8054855201611a94565b60208301526001600160a01b0385166000526003602052604060002090604051916103f483611801565b6000835b60088210610550575050506001600160a01b038616600052600260205260206001600160a01b036024816040600020541698604051998a9384926370a0823160e01b84521660048301525afa9081156105445760009161050f575b6020965067ffffffffffffffff604082015116431180610506575b61047d575b8686604051908152f35b6104fc95506104f6926104ea85936104e56104f0946104e067ffffffffffffffff60408e6104d36104bd8f670de0b6b3a76400009f8490519e0151611ad8565b519e836104ca828d611ad8565b5101519a611ad8565b5101519301511643611a0f565b611ae9565b61221a565b90611a02565b90611ae9565b04611afc565b8280808080610473565b5081151561046e565b90506020863d60201161053c575b8161052a6020938361181e565b81010312610189576020955190610453565b3d915061051d565b6040513d6000823e3d90fd5b60036020600192604051610563816117b3565b6001600160a01b0387541681528487015483820152600287015460408201528152019301910190916103f8565b34610189576040600319360112610189576105a9611787565b6105b161179d565b90604051916105bf83611801565b61010080933690376001600160a01b0380921660005260209160046020526040600020911660005260205260016105fc6001604060002001611a94565b604051926000845b60088210610610578686f35b8351815292820192908401908201610604565b3461018957600060031936011261018957602060405160008152f35b3461018957600060031936011261018957602060405160088152f35b34610189576040600319360112610189576020610688610679611787565b61068161179d565b4391611f92565b604051908152f35b34610189576020600319360112610189576001600160a01b036106b1611787565b1660005260016020526060604060002080549067ffffffffffffffff60026001830154920154169060405192835260208301526040820152f35b346101895760a08060031936011261018957610705611787565b61070d61179d565b906044926044359067ffffffffffffffff9182811161018957610734903690600401611957565b90606480358481116101895761074e903690600401611957565b9660843585811161018957610767903690600401611957565b957f7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c57022335760005260209860008a526040600020336000528a526107af60ff604060002054166119b7565b85518151036108fb576001600160a01b03918216600081815260038c5260408120919a8416979192905b82518110156108a2576107ec8183611a1c565b5160016108036107fc8487611a1c565b51876118f8565b5001558c8b61082a838861082161081a838a611a1c565b518a6118f8565b50541692611a1c565b517f23b872dd00000000000000000000000000000000000000000000000000000000604051938401526024908c82850152308a8501528a8401528983528a8301908d8483109083111761088e57506040526001929161088891612254565b016107d9565b634e487b7160e01b60005260416004526000fd5b8b7f3494c2b85ef51fdae9b028074b5794f2062305e376ceaa0304d7b4263ca9fb868e826000526001815260016040600020016108df8154611ac9565b90558260005260018152600160406000200154604051908152a2005b60848a6040519062461bcd60e51b82526004820152602d60248201527f4761756765436f6e74726f6c6c65723a206c656e677468206f6620617272617960448201527f20646f65736e2774206d616368000000000000000000000000000000000000006064820152fd5b3461018957602061068861097836611922565b91611f92565b3461018957606060031936011261018957610997611787565b6001600160a01b036044351660443503610189573360009081527ffb9dd8ab9cf34223246019bd9b6dfde686a4b48c0be67d0a5ec8c38a7d8f067c60205260409020546109e69060ff166119b7565b6109ef81611b15565b6001600160a01b038216600052600460205260406000206001600160a01b0360443516600052602052604060002091610a3a600160405194610a30866117e5565b8054865201611a94565b60208401526001600160a01b038116600052600360205260406000209060405191610a6483611801565b6000835b60088210610beb5750505060009060005b84518111610b3c57670de0b6b3a7640000610ae281610aa76040610a9d868a611ad8565b5101518a51611ae9565b04610ac0610ab98560208c0151611ad8565b5182611afc565b92610adb6024356040610ad3888c611ad8565b510151611ae9565b0490611afc565b610af08360208a0151611ad8565b5280610b06575b50610b0190611ac9565b610a79565b80610b019294610b30610b35936044356001600160a01b03610b288a8c611ad8565b515116611f2c565b611a02565b9290610af7565b858383610b4c6024358451611a0f565b83526001600160a01b038116600052600460205260406000206001600160a01b0360443516600052602052602060406000209380518555015160005b60088110610bd557836001600160a01b038460405192835216907ff7a40077ff7a04c7e61f6f26fb13774259ddf1b6bce9ecf26a8276cdd399268360206001600160a01b036044351692a3005b6001906020835193019282828801015501610b88565b60036020600192604051610bfe816117b3565b6001600160a01b038754168152848701548382015260028701546040820152815201930191019091610a68565b3461018957604060031936011261018957610c4461179d565b60043560005260006020526001600160a01b0360406000209116600052602052602060ff604060002054166040519015158152f35b34610189576020600319360112610189576060610c9c610c97611787565b611b15565b67ffffffffffffffff604080519280518452602081015160208501520151166040820152f35b346101895760206003193601126101895760206001600160a01b0380610ce6611787565b166000526002825260406000205416604051908152f35b346101895760006003193601126101895760206040517fb8179c2726c8d8961ef054875ab3f4c1c3d34e1cb429c3d5e0bc97958e4cab9d8152f35b3461018957608060031936011261018957610d51611787565b610d5961179d565b606435151560643503610189573360009081527ffb9dd8ab9cf34223246019bd9b6dfde686a4b48c0be67d0a5ec8c38a7d8f067c6020526040902054610da19060ff166119b7565b610daa82611b15565b906001600160a01b038316600052600460205260406000206001600160a01b038216600052602052604060002090610dea6001604051936103c0856117e5565b60208301526001600160a01b038416600052600360205260406000209060405191610e1483611801565b6000835b60088210610f515750505060208301519460005b85518111610ef157670de0b6b3a7640000610e576040610e4c8488611ad8565b510151604435611ae9565b049060643515610ec157610e6e6044358751611a02565b8652610e7a8189611ad8565b5160008382019384129112908015821691151617610eab57610ea691610ea0828a611ad8565b52611ac9565b610e2c565b634e487b7160e01b600052601160045260246000fd5b610ee7610ea692610ed56044358951611a0f565b8852610ee1838b611ad8565b51611afc565b610ea0828a611ad8565b84836001600160a01b03848a60208501521660005260046020526001600160a01b0360406000209116600052602052602060406000209180518355015160005b60088110610f3b57005b6001906020835193019282828601015501610f31565b60036020600192604051610f64816117b3565b6001600160a01b038754168152848701548382015260028701546040820152815201930191019091610e18565b3461018957604060031936011261018957610faa61179d565b336001600160a01b03821603610fc65761018790600435611eb6565b60046040517f6697b232000000000000000000000000000000000000000000000000000000008152fd5b346101895760406003193601126101895761018760043561100f61179d565b9080600052600060205261102a600160406000200154611e59565b611da0565b346101895760206003193601126101895760043560005260006020526020600160406000200154604051908152f35b3461018957604060031936011261018957611077611787565b61107f61179d565b9061108981611b15565b906110d16001600160a01b0380921693846000526020926004845260406000203360005284526040600020604051926110c1846117e5565b8154845260019485809301611a94565b928685019384528860005260038088526040600020604051916110f383611801565b60008a845b600883106111e55750505050506000986000945b611180575b5050505050856000526004845260406000203360005284526040600020915182555160005b6008811061116d5786867ff7a40077ff7a04c7e61f6f26fb13774259ddf1b6bce9ecf26a8276cdd3992683876040519283523392a3005b8151838201850155908401908301611136565b909192939881518a116111df57906111d96111d36111cd85948d6111c38a8c8f9c9b9a8f856111b191519351611ad8565b518c61027687604061026d8287611ad8565b9390918c51611ad8565b52611a02565b9a611ac9565b9461110c565b98611111565b908394959697989293916040516111fb816117b3565b898854168152848801548382015260028801546040820152815201940191018a8a979695949392936110f8565b3461018957604060031936011261018957611241611787565b602435906001600160a01b0380911660005260036020526040600020600883101561018957606092611272916118f8565b509081541690600260018201549101549060405192835260208301526040820152f35b34610189576060600319360112610189576112ae611787565b6112b661179d565b67ffffffffffffffff90604435828111610189576112d8903690600401611859565b3360009081527fd4b1ef424fcb83dce82b8e6790fbd9bbcd76978bd34427cec18daa7ab216754360209081526040909120549193909161131a9060ff166119b7565b6001600160a01b038095169483169384600052600283526040600020867fffffffffffffffffffffffff00000000000000000000000000000000000000008254161790558051926000198401938411610eab5760405194936003919061137f876117b3565b86528086019360008552604087019080431682528860005260026001988997600186526040600020915182555160018201550191511667ffffffffffffffff19825416179055526040600020906000945b611408575b86866113e086611cee565b507f1779d0d51e45c2a0963668be843293f9b3e72a894128b9b8a676682467454520600080a3005b805185101561143b57828561143361142283979885611a1c565b5161142d83876118f8565b90611a30565b0194936113d0565b6113d5565b3461018957604060031936011261018957611459611787565b61146161179d565b906001600160a01b038091166000526004602052604060002091166000526020526020604060002054604051908152f35b34610189576040600319360112610189576114ab611787565b67ffffffffffffffff90602435828111610189576114cd903690600401611859565b3360009081527fd4b1ef424fcb83dce82b8e6790fbd9bbcd76978bd34427cec18daa7ab216754360209081526040909120549193909161150f9060ff166119b7565b6001600160a01b0380931692836000526001918284526040600020906040805191611539836117b3565b60028454948585528781015489860152015416910152828101809111610eab576008611566875183611a02565b116116445784600052600384526040600020611583875183611a02565b91805b8381106116265750505050908451846000528184526115ab6040600020918254611a02565b90556040519280840190808552865180925280604086019701936000905b8382106115f957877f9d15ceb0439adc65c83965a44754088a2b0c037443f69142d7b6359f8c932ccc888b0389a2005b8551805182168a5283810151848b0152604090810151908a015260609098019794820194908401906115c9565b8061163e611422611638858a95611a0f565b8c611a1c565b01611586565b6084846040519062461bcd60e51b82526004820152602560248201527f4761756765436f6e74726f6c6c65723a2065786363656420726577617264207460448201527f6f6b656e730000000000000000000000000000000000000000000000000000006064820152fd5b346101895760006003193601126101895760206040517f7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c5702233578152f35b3461018957602060031936011261018957600435907fffffffff00000000000000000000000000000000000000000000000000000000821680920361018957817f7965db0b000000000000000000000000000000000000000000000000000000006020931490811561175d575b5015158152f35b7f01ffc9a70000000000000000000000000000000000000000000000000000000091501483611756565b600435906001600160a01b038216820361018957565b602435906001600160a01b038216820361018957565b6060810190811067ffffffffffffffff8211176117cf57604052565b634e487b7160e01b600052604160045260246000fd5b6040810190811067ffffffffffffffff8211176117cf57604052565b610100810190811067ffffffffffffffff8211176117cf57604052565b90601f601f19910116810190811067ffffffffffffffff8211176117cf57604052565b67ffffffffffffffff81116117cf5760051b60200190565b81601f8201121561018957803590602061187283611841565b936040611882604051968761181e565b8486528286019183606080970286010194818611610189578401925b8584106118af575050505050505090565b8684830312610189578251906118c4826117b3565b8435906001600160a01b0382168203610189578287928a94528287013583820152858701358682015281520193019261189e565b90600881101561190c576003020190600090565b634e487b7160e01b600052603260045260246000fd5b6003196060910112610189576001600160a01b0390600435828116810361018957916024359081168103610189579060443590565b9080601f8301121561018957602090823561197181611841565b9361197f604051958661181e565b81855260208086019260051b82010192831161018957602001905b8282106119a8575050505090565b8135815290830190830161199a565b156119be57565b606460405162461bcd60e51b815260206004820152601f60248201527f4761756765436f6e74726f6c6c65723a206e6f7420617574686f72697a6564006044820152fd5b91908201809211610eab57565b91908203918211610eab57565b805182101561190c5760209160051b010190565b9190611a7e576040816001600160a01b0360029351167fffffffffffffffffffffffff0000000000000000000000000000000000000000855416178455602081015160018501550151910155565b634e487b7160e01b600052600060045260246000fd5b60405191906000835b60088210611ab357505050611ab182611801565b565b6001602081928554815201930191019091611a9d565b6000198114610eab5760010190565b90600881101561190c5760051b0190565b81810292918115918404141715610eab57565b81810392916000138015828513169184121617610eab57565b6040918251611b23816117b3565b6000908181528185602092828482015201526001600160a01b0380941691828152600195868352808220958151611b59816117b3565b87548152888801549085810191825267ffffffffffffffff91826002809b01541693858301948552829a898852600389528688209160028a528789205416898b60248a51809481936370a0823160e01b835260048301525afa908115611ce4578991611cb3575b5085875116431180611caa575b611c31575b505050907f284e92cbf2bf11376e95f3444888f77e16471a71e8d71420260330dfc206f8819798999a60029286854316988988528c8152838b52209251835551908201550191511667ffffffffffffffff1982541617905551908152a2565b908d92918551938401809411611c9657895b848110611c51575050611bd2565b8f90611c76836104e58b8d51166104e086611c6c878c6118f8565b5001549143611a0f565b611c8e85611c8484896118f8565b5001918254611a02565b905501611c43565b60248a634e487b7160e01b81526011600452fd5b50801515611bcd565b90508981813d8311611cdd575b611cca818361181e565b81010312611cd9575138611bc0565b8880fd5b503d611cc0565b88513d8b823e3d90fd5b6001600160a01b031660008181527ffb9dd8ab9cf34223246019bd9b6dfde686a4b48c0be67d0a5ec8c38a7d8f067c60205260408120549091907fb8179c2726c8d8961ef054875ab3f4c1c3d34e1cb429c3d5e0bc97958e4cab9d9060ff16611d9b57808352826020526040832082845260205260408320600160ff198254161790557f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d339380a4600190565b505090565b90600091808352826020526001600160a01b036040842092169182845260205260ff60408420541615600014611d9b57808352826020526040832082845260205260408320600160ff198254161790557f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d339380a4600190565b611e33611e3b92969493670de0b6b3a764000092611ae9565b049485611afc565b809381611e4757505050565b6001600160a01b03611ab19316611f2c565b80600052600060205260406000203360005260205260ff6040600020541615611e7f5750565b604490604051907fe2517d3f0000000000000000000000000000000000000000000000000000000082523360048301526024820152fd5b90600091808352826020526001600160a01b036040842092169182845260205260ff604084205416600014611d9b5780835282602052604083208284526020526040832060ff1981541690557ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b339380a4600190565b916001600160a01b03604051927fa9059cbb000000000000000000000000000000000000000000000000000000006020850152166024830152604482015260448152608081019181831067ffffffffffffffff8411176117cf57611ab192604052612254565b9092916000936001600160a01b0383166000526001928360205260406000209167ffffffffffffffff600260405194611fca866117b3565b8054865287810154602087015201541660408401526001600160a01b03821660005260046020526001600160a01b036040600020911660005260205260406000209161201d8560405194610a30866117e5565b60208401526001600160a01b03821660005260036020526040600020936040519461204786611801565b600087875b600883106121da57505050506001600160a01b038316600052600260205260206001600160a01b03602481604060002054169560405196879384926370a0823160e01b84521660048301525afa928315610544576000936121a6575b5067ffffffffffffffff60408301511643118061219d575b6120cd575b505050505050565b9085949392916000965b6120e2575b506120c5565b90919293949597825189116121975784518960208701519061210391611ad8565b519061210f8b89611ad8565b51604001518661211f8d8b611ad8565b5160200151604088015167ffffffffffffffff1661213d9088611a0f565b9061214791611ae9565b906121519161221a565b61215a91611a02565b61216391611ae9565b670de0b6b3a764000090049061217891611afc565b61218191611a02565b9761218b90611ac9565b959493929190856120d7565b976120dc565b508215156120c0565b9092506020813d6020116121d2575b816121c26020938361181e565b81010312610189575191386120a8565b3d91506121b5565b60206003916040516121eb816117b3565b6001600160a01b038754168152848701548382015260028701546040820152815201930191019091889061204c565b670de0b6b3a764000090818102918183041490151715610eab57811561223e570490565b634e487b7160e01b600052601260045260246000fd5b6001600160a01b031690600080826020829451910182865af13d1561233d573d9067ffffffffffffffff821161232957906122b191604051916122a16020601f19601f840116018461181e565b82523d84602084013e5b84612349565b9081519182151592836122fa575b5050506122c95750565b602490604051907f5274afe70000000000000000000000000000000000000000000000000000000082526004820152fd5b81929350906020918101031261232557602001519081159182150361232257503880806122bf565b80fd5b5080fd5b602483634e487b7160e01b81526041600452fd5b6122b1906060906122ab565b90612388575080511561235e57805190602001fd5b60046040517f1425ea42000000000000000000000000000000000000000000000000000000008152fd5b815115806123d3575b612399575090565b6024906001600160a01b03604051917f9996b315000000000000000000000000000000000000000000000000000000008352166004820152fd5b50803b1561239156fea2646970667358221220d64ed03a100e7f6a5f5d1c50b70b244ef3562fc60d2083dfd35b7f23294e1c8b64736f6c63430008180033",
+  "devdoc": {
+    "errors": {
+      "AccessControlBadConfirmation()": [
+        {
+          "details": "The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}."
+        }
+      ],
+      "AccessControlUnauthorizedAccount(address,bytes32)": [
+        {
+          "details": "The `account` is missing a role."
+        }
+      ],
+      "AddressEmptyCode(address)": [
+        {
+          "details": "There's no code at `target` (it is not a contract)."
+        }
+      ],
+      "AddressInsufficientBalance(address)": [
+        {
+          "details": "The ETH balance of the account is not enough to perform the operation."
+        }
+      ],
+      "FailedInnerCall()": [
+        {
+          "details": "A call to an address target failed. The target may have reverted."
+        }
+      ],
+      "SafeERC20FailedOperation(address)": [
+        {
+          "details": "An operation with an ERC20 token failed."
+        }
+      ]
+    },
+    "events": {
+      "RoleAdminChanged(bytes32,bytes32,bytes32)": {
+        "details": "Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted signaling this."
+      },
+      "RoleGranted(bytes32,address,address)": {
+        "details": "Emitted when `account` is granted `role`. `sender` is the account that originated the contract call, an admin role bearer except when using {AccessControl-_setupRole}."
+      },
+      "RoleRevoked(bytes32,address,address)": {
+        "details": "Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)"
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "addPool(address,address,(address,uint256,uint256)[])": {
+        "params": {
+          "_lpToken": "Address of the LP ERC-20 token."
+        }
+      },
+      "addRewardToken(address,(address,uint256,uint256)[])": {
+        "params": {
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_reward": "array of reward token info to add in pool"
+        }
+      },
+      "claim(address,address)": {
+        "params": {
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_to": "Receiver of syUSD rewards."
+        }
+      },
+      "claimForToken(address,address,uint256)": {
+        "params": {
+          "_index": "token index in reward tokens of pool.",
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_to": "Receiver of syUSD rewards."
+        }
+      },
+      "decreaseRewardAndClaim(address,uint256,address)": {
+        "params": {
+          "_amount": "LP token amount to withdraw.",
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_to": "Receiver of the LP tokens and syUSD rewards."
+        }
+      },
+      "getRoleAdmin(bytes32)": {
+        "details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
+      },
+      "grantRole(bytes32,address)": {
+        "details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
+      },
+      "hasRole(bytes32,address)": {
+        "details": "Returns `true` if `account` has been granted `role`."
+      },
+      "pendingReward(address,address)": {
+        "params": {
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_user": "Address of user."
+        },
+        "returns": {
+          "pending_": "reward for a given user."
+        }
+      },
+      "pendingRewardAtBlock(address,address,uint256)": {
+        "params": {
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_user": "Address of user."
+        },
+        "returns": {
+          "pending_": "reward for a given user."
+        }
+      },
+      "renounceRole(bytes32,address)": {
+        "details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event."
+      },
+      "revokeRole(bytes32,address)": {
+        "details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event."
+      },
+      "supportsInterface(bytes4)": {
+        "details": "See {IERC165-supportsInterface}."
+      },
+      "updateEpoch(address,address,uint256[],uint256[],uint256[])": {
+        "params": {
+          "_indexes": "index of rewardInfo array.",
+          "_pool": "Pool address of pool to be updated. Make sure to update all active pools.",
+          "_rewardPerBlock": "array of rewardPerBlock"
+        }
+      },
+      "updatePool(address)": {
+        "params": {
+          "_pool": "The address of the pool. See `poolInfo`."
+        },
+        "returns": {
+          "_poolInfo": "Returns the pool that was updated."
+        }
+      },
+      "updateReward(address,address,uint256,bool)": {
+        "params": {
+          "_amount": "LP token amount to deposit.",
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_to": "The receiver of `amount` deposit benefit."
+        }
+      },
+      "userRewardByToken(address,address,uint256)": {
+        "params": {
+          "_pool": "The address of the pool. See `poolInfo`.",
+          "_user": "Address of user."
+        },
+        "returns": {
+          "pending_": "reward for a given user."
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "addPool(address,address,(address,uint256,uint256)[])": {
+        "notice": "Add a new LP to the pool. Can only be called by the owner. DO NOT add the same LP token more than once. Rewards will be messed up if you do."
+      },
+      "addRewardToken(address,(address,uint256,uint256)[])": {
+        "notice": "function to add reward token in pool on frontend."
+      },
+      "claim(address,address)": {
+        "notice": "Claim proceeds for transaction sender to `to`."
+      },
+      "claimForToken(address,address,uint256)": {
+        "notice": "Claim proceeds for transaction sender to `to`."
+      },
+      "decreaseRewardAndClaim(address,uint256,address)": {
+        "notice": "Withdraw LP tokens from pool and claim proceeds for transaction sender to `to`."
+      },
+      "lpToken(address)": {
+        "notice": "Address of the LP token for each pool."
+      },
+      "pendingReward(address,address)": {
+        "notice": "View function to see pending reward at current block on frontend."
+      },
+      "pendingRewardAtBlock(address,address,uint256)": {
+        "notice": "View function to see pending reward at future block on frontend."
+      },
+      "poolInfo(address)": {
+        "notice": "Info of each pool."
+      },
+      "updateEpoch(address,address,uint256[],uint256[],uint256[])": {
+        "notice": "update epoch for given pool"
+      },
+      "updatePool(address)": {
+        "notice": "Update reward variables of the given pool."
+      },
+      "updateReward(address,address,uint256,bool)": {
+        "notice": "Deposit LP tokens to pool for syUSD allocation."
+      },
+      "userInfo(address,address)": {
+        "notice": "Info of each user that stakes LP tokens."
+      },
+      "userRewardByToken(address,address,uint256)": {
+        "notice": "View function to see pending reward of by token on frontend."
+      }
+    },
+    "notice": "depositer get reward tokens on the basis or reward per block",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 26,
+        "contract": "contracts/controller/GaugeController.sol:GaugeController",
+        "label": "_roles",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_bytes32,t_struct(RoleData)21_storage)"
+      },
+      {
+        "astId": 9270,
+        "contract": "contracts/controller/GaugeController.sol:GaugeController",
+        "label": "poolInfo",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_address,t_struct(PoolInfo)9256_storage)"
+      },
+      {
+        "astId": 9276,
+        "contract": "contracts/controller/GaugeController.sol:GaugeController",
+        "label": "lpToken",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_address,t_contract(IERC20)1485)"
+      },
+      {
+        "astId": 9283,
+        "contract": "contracts/controller/GaugeController.sol:GaugeController",
+        "label": "reward",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_mapping(t_address,t_array(t_struct(RewardInfo)9264_storage)8_storage)"
+      },
+      {
+        "astId": 9291,
+        "contract": "contracts/controller/GaugeController.sol:GaugeController",
+        "label": "userInfo",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_mapping(t_address,t_mapping(t_address,t_struct(UserInfo)9248_storage))"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_int256)8_storage": {
+        "base": "t_int256",
+        "encoding": "inplace",
+        "label": "int256[8]",
+        "numberOfBytes": "256"
+      },
+      "t_array(t_struct(RewardInfo)9264_storage)8_storage": {
+        "base": "t_struct(RewardInfo)9264_storage",
+        "encoding": "inplace",
+        "label": "struct GaugeController.RewardInfo[8]",
+        "numberOfBytes": "768"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_contract(IERC20)1485": {
+        "encoding": "inplace",
+        "label": "contract IERC20",
+        "numberOfBytes": "20"
+      },
+      "t_int256": {
+        "encoding": "inplace",
+        "label": "int256",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_array(t_struct(RewardInfo)9264_storage)8_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct GaugeController.RewardInfo[8])",
+        "numberOfBytes": "32",
+        "value": "t_array(t_struct(RewardInfo)9264_storage)8_storage"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_address,t_contract(IERC20)1485)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => contract IERC20)",
+        "numberOfBytes": "32",
+        "value": "t_contract(IERC20)1485"
+      },
+      "t_mapping(t_address,t_mapping(t_address,t_struct(UserInfo)9248_storage))": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => mapping(address => struct GaugeController.UserInfo))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_address,t_struct(UserInfo)9248_storage)"
+      },
+      "t_mapping(t_address,t_struct(PoolInfo)9256_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct GaugeController.PoolInfo)",
+        "numberOfBytes": "32",
+        "value": "t_struct(PoolInfo)9256_storage"
+      },
+      "t_mapping(t_address,t_struct(UserInfo)9248_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct GaugeController.UserInfo)",
+        "numberOfBytes": "32",
+        "value": "t_struct(UserInfo)9248_storage"
+      },
+      "t_mapping(t_bytes32,t_struct(RoleData)21_storage)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+        "numberOfBytes": "32",
+        "value": "t_struct(RoleData)21_storage"
+      },
+      "t_struct(PoolInfo)9256_storage": {
+        "encoding": "inplace",
+        "label": "struct GaugeController.PoolInfo",
+        "members": [
+          {
+            "astId": 9251,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "index",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 9253,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "epoch",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 9255,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "lastRewardBlock",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint64"
+          }
+        ],
+        "numberOfBytes": "96"
+      },
+      "t_struct(RewardInfo)9264_storage": {
+        "encoding": "inplace",
+        "label": "struct GaugeController.RewardInfo",
+        "members": [
+          {
+            "astId": 9259,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "token",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 9261,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "rewardPerBlock",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 9263,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "accRewardPerShare",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256"
+          }
+        ],
+        "numberOfBytes": "96"
+      },
+      "t_struct(RoleData)21_storage": {
+        "encoding": "inplace",
+        "label": "struct AccessControl.RoleData",
+        "members": [
+          {
+            "astId": 18,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "hasRole",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_bool)"
+          },
+          {
+            "astId": 20,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "adminRole",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bytes32"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_struct(UserInfo)9248_storage": {
+        "encoding": "inplace",
+        "label": "struct GaugeController.UserInfo",
+        "members": [
+          {
+            "astId": 9243,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "amount",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 9247,
+            "contract": "contracts/controller/GaugeController.sol:GaugeController",
+            "label": "rewardDebt",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_int256)8_storage"
+          }
+        ],
+        "numberOfBytes": "288"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint64": {
+        "encoding": "inplace",
+        "label": "uint64",
+        "numberOfBytes": "8"
+      }
+    }
+  }
+}
