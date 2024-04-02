@@ -198,7 +198,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         int256 accumulatedReward = _calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount);
         uint256 _pendingReward = uint256(accumulatedReward - _user.rewardDebt);
         uint256 _exccessReward = _calculateExcessRewardAtBlock(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock, block.number);
-        if (_pendingReward < _exccessReward) {
+        if (_pendingReward >= _exccessReward) {
             _pendingReward -= _exccessReward;
         }
         // Effects
@@ -226,7 +226,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step {
         uint256 _pendingReward = uint256(accumulatedReward - (_user.rewardDebt));
         uint256 _exccessReward = _calculateExcessRewardAtBlock(_user.lockEnd, _user.amount, _poolInfo.rewardPerBlock, block.number);
 
-        if (_pendingReward < _exccessReward) {
+        if (_pendingReward >= _exccessReward) {
             _pendingReward -= _exccessReward;
         }
 
