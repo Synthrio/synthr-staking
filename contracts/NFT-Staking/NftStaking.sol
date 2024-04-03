@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ISynthrNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "../interfaces/IVotingEscrow.sol";
 
 contract NftStaking is IERC721Receiver, AccessControl {
     using SafeERC20 for IERC20;
@@ -40,6 +41,9 @@ contract NftStaking is IERC721Receiver, AccessControl {
 
     /// @notice Total lock amount of users in VotingEscrow
     uint256 public totalLockAmount;
+
+    /// @notice voting escrow instance
+    IVotingEscrow public votingEscrow;
 
     /// @notice Info of each pool.
     mapping(address => NFTPoolInfo) public poolInfo;
@@ -80,8 +84,9 @@ contract NftStaking is IERC721Receiver, AccessControl {
     );
     event totalLockAmountUpdated(address owner, uint256 totalLockAmount);
 
-    constructor(address _admin, address _rewardToken) {
+    constructor(address _admin, address _rewardToken, address _votingEscrow) {
         REWARD_TOKEN = IERC20(_rewardToken);
+        votingEscrow = IVotingEscrow(_votingEscrow);
         _grantRole(CONTROLLER_ROLE, _admin);
         _setRoleAdmin(CONTROLLER_ROLE, CONTROLLER_ROLE);
         _setRoleAdmin(CONTROLLER_ROLE, PAUSE_ROLE);
@@ -143,6 +148,26 @@ contract NftStaking is IERC721Receiver, AccessControl {
             _userInfo.pendingReward += _pendingReward;
             userInfo[_pool][_users[i]] = _userInfo;
         }
+    }
+
+    function unpuaseReward(address _pool) external {
+        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+
+        UserInfo memory _user = userInfo[_pool][msg.sender];
+        require(_user.isPause, "NftStaking: user is not paused");
+        require(_user.tokenId != 0, "NftStaking: token id not deposited");
+        require(votingEscrow.lockedEnd(msg.sender) > block.timestamp, "NftStaking: lock time expired");
+
+        // Effects
+        int256 _calRewardDebt = _calAccRewardPerShare(
+            _poolInfo.accRewardPerShare,
+            _user.amount
+        );
+
+        _user.rewardDebt += _calRewardDebt;
+        _user.isPause = false;
+
+        userInfo[_pool][msg.sender] = _user;
     }
 
     function withdrawPendingReward(address _pool) external {
