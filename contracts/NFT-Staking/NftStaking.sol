@@ -66,7 +66,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
         address indexed user,
         uint256 pendingRewardAmount
     );
-    event withdrawPendingRewardAmount(
+    event WithdrawPendingRewardAmount(
         address indexed pool,
         address indexed user,
         uint256 pendingRewardAmount
@@ -89,7 +89,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
         votingEscrow = IVotingEscrow(_votingEscrow);
         _grantRole(CONTROLLER_ROLE, _admin);
         _setRoleAdmin(CONTROLLER_ROLE, CONTROLLER_ROLE);
-        _setRoleAdmin(CONTROLLER_ROLE, PAUSE_ROLE);
+        _setRoleAdmin(PAUSE_ROLE, CONTROLLER_ROLE);
     }
 
     /// @dev retuen user reward debt
@@ -150,7 +150,8 @@ contract NftStaking is IERC721Receiver, AccessControl {
         }
     }
 
-    function unpuaseReward(address _pool) external {
+    /// @notice user will need to call this immediately after re-createLock
+    function unpauseReward(address _pool) external {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
 
         UserInfo memory _user = userInfo[_pool][msg.sender];
@@ -174,13 +175,12 @@ contract NftStaking is IERC721Receiver, AccessControl {
         UserInfo memory _userInfo = userInfo[_pool][msg.sender];
         uint256 _pendingAmount = _userInfo.pendingReward;
         if (_pendingAmount != 0) {
+            _userInfo.pendingReward = 0;
+            userInfo[_pool][msg.sender] = _userInfo;
             REWARD_TOKEN.safeTransfer(msg.sender, _pendingAmount);
         }
 
-        _userInfo.pendingReward = 0;
-        userInfo[_pool][msg.sender] = _userInfo;
-
-        emit withdrawPendingRewardAmount(_pool, msg.sender, _pendingAmount);
+        emit WithdrawPendingRewardAmount(_pool, msg.sender, _pendingAmount);
     }
 
     /// @notice set total locked token for lpSupply
