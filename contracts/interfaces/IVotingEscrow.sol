@@ -5,4 +5,6 @@ interface IVotingEscrow {
     function token() external view returns (address);
 
     function balanceOf(address _user, uint256 _t) external view returns (uint256);
+
+    function lockedEnd(address _user) external view returns (uint256);
 }
