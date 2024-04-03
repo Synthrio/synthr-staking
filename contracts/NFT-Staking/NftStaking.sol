@@ -164,7 +164,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
             _user.amount
         );
 
-        _user.rewardDebt += _calRewardDebt;
+        _user.rewardDebt = _calRewardDebt;
         _user.isPause = false;
 
         userInfo[_pool][msg.sender] = _user;
