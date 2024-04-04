@@ -132,6 +132,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         for (uint256 i; i < _users.length; i++) {
             UserInfo memory _userInfo = userInfo[_pool][_users[i]];
+            require(votingEscrow.lockedEnd(_users[i]) <= block.timestamp, "NftStaking: lock time not expired");
             (
                 int256 accumulatedReward,
                 uint256 _pendingReward
