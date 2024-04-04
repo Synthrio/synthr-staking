@@ -168,6 +168,18 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         }
     }
 
+    /***
+     *@notice Calculate total voting power
+     *@dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
+     *@return Total voting power
+     */
+    function totalSupply() external view returns (uint256) {
+        uint256 _epoch = epoch;
+        Point memory _last_point = pointHistory[_epoch];
+
+        return _supplyAt(_last_point, block.timestamp);
+    }
+
     function totalSupply(uint256 _t) external view returns (uint256) {
         uint256 _epoch = epoch;
         Point memory lastPoint = pointHistory[_epoch];
