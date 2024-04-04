@@ -54,11 +54,6 @@ contract VeYieldDistributor is Ownable2Step, ReentrancyGuard {
     // Admin booleans for emergencies
     bool public yieldCollectionPaused = false; // For emergencies
 
-    struct LockedBalance {
-        int128 amount;
-        uint256 end;
-    }
-
     /* ========== MODIFIERS ========== */
 
     modifier onlyByOwnGov() {

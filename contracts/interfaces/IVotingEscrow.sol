@@ -3,7 +3,7 @@ pragma solidity =0.8.24;
 
 interface IVotingEscrow {
     struct LockedBalance {
-        int128 amount;
+        int256 amount;
         uint256 end;
     }
     
