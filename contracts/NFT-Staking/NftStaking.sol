@@ -13,6 +13,8 @@ contract NftStaking is IERC721Receiver, AccessControl {
     bytes32 public constant CONTROLLER_ROLE = keccak256("CONTROLLER_ROLE");
     bytes32 public constant PAUSE_ROLE = keccak256("PAUSE_ROLE");
 
+    uint256 public constant STAKE_AMOUNT = 1000 * 1e18;
+
     /// @notice Address of reward token contract.
     IERC20 public immutable REWARD_TOKEN;
 
@@ -55,6 +57,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
     mapping(address => mapping(uint256 => address)) public tokenOwner;
 
     event Deposit(address indexed pool, address indexed user, uint256 tokenId);
+    event IncreaseDeposit(address indexed pool, address indexed user, uint256 amount);
     event Withdraw(address indexed pool, address indexed user, uint256 tokenId);
     event Claimed(
         address indexed pool,
@@ -153,20 +156,22 @@ contract NftStaking is IERC721Receiver, AccessControl {
 
     /// @notice user will need to call this immediately after re-createLock
     function unpauseReward(address _pool) external {
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        uint256 _amount = _checkStakeAmountAndLockEnd();
 
         UserInfo memory _user = userInfo[_pool][msg.sender];
         require(_user.isPause, "NftStaking: user is not paused");
         require(_user.tokenId != 0, "NftStaking: token id not deposited");
-        require(votingEscrow.lockedEnd(msg.sender) > block.timestamp, "NftStaking: lock time expired");
+
+        NFTPoolInfo memory _poolInfo = updatePool(_pool);
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(
             _poolInfo.accRewardPerShare,
-            _user.amount
+            _amount
         );
 
         _user.rewardDebt = _calRewardDebt;
+        _user.amount = _amount;
         _user.isPause = false;
 
         userInfo[_pool][msg.sender] = _user;
@@ -273,19 +278,20 @@ contract NftStaking is IERC721Receiver, AccessControl {
     /// @notice Deposit NFT token.
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
     function deposit(address _pool, uint256 _tokenId) external {
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        uint256 _amount = _checkStakeAmountAndLockEnd();
 
         UserInfo memory _user = userInfo[_pool][msg.sender];
         require(_user.tokenId == 0, "NftStaking: already exist");
-        (uint256 _lockAmount, ) = ISynthrNFT(_pool).getuserData(_tokenId);
+
+        NFTPoolInfo memory _poolInfo = updatePool(_pool);
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(
             _poolInfo.accRewardPerShare,
-            _lockAmount
+            _amount
         );
 
-        _user.amount += _lockAmount;
+        _user.amount = _amount;
         _user.rewardDebt += _calRewardDebt;
         _user.tokenId = _tokenId;
         _user.isPause = false;
@@ -297,19 +303,43 @@ contract NftStaking is IERC721Receiver, AccessControl {
         emit Deposit(_pool, msg.sender, _tokenId);
     }
 
+    function increaseDeposit(address _pool) external {
+        uint256 _amount = _checkStakeAmountAndLockEnd();
+
+        UserInfo memory _user = userInfo[_pool][msg.sender];
+        require(_user.tokenId != 0, "NftStaking: token not deposit");
+
+        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+
+        uint256 _updatedAmount = _amount - _user.amount;
+
+        // Effects
+        int256 _calRewardDebt = _calAccRewardPerShare(
+            _poolInfo.accRewardPerShare,
+            _updatedAmount
+        );
+
+        _user.amount = _amount;
+        _user.rewardDebt += _calRewardDebt;
+        _user.isPause = false;
+
+        userInfo[_pool][msg.sender] = _user;
+
+        emit IncreaseDeposit(_pool, msg.sender, _updatedAmount);
+    }
+
     function withdraw(address _pool) external {
         NFTPoolInfo memory _poolInfo = updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
-        (uint256 _lockAmount, ) = ISynthrNFT(_pool).getuserData(_user.tokenId);
         int256 _calRewardDebt = _calAccRewardPerShare(
             _poolInfo.accRewardPerShare,
-            _lockAmount
+            _user.amount
         );
 
         uint256 _tokenId = _user.tokenId;
 
-        _user.amount -= _lockAmount;
+        _user.amount = 0;
         _user.rewardDebt -= _calRewardDebt;
         _user.tokenId = 0;
 
@@ -362,8 +392,6 @@ contract NftStaking is IERC721Receiver, AccessControl {
         UserInfo memory _user = userInfo[_pool][msg.sender];
         require(!_user.isPause, "NftStaking: reward paused");
 
-        (uint256 _lockAmount, ) = ISynthrNFT(_pool).getuserData(_user.tokenId);
-
         (
             int256 accumulatedReward,
             uint256 _pendingReward
@@ -376,8 +404,9 @@ contract NftStaking is IERC721Receiver, AccessControl {
         // Effects
         _user.rewardDebt =
             accumulatedReward -
-            (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount));
-        _user.amount -= _lockAmount;
+            (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount));
+        
+        _user.amount = 0;
         uint256 _tokenId = _user.tokenId;
         _user.tokenId = 0;
         userInfo[_pool][msg.sender] = _user;
@@ -441,5 +470,14 @@ contract NftStaking is IERC721Receiver, AccessControl {
     {
         _accumulatedReward = _calAccRewardPerShare(_accRewardPerShare, _amount);
         _pendingReward = uint256(_accumulatedReward - (_rewardDebt));
+    }
+
+    function _checkStakeAmountAndLockEnd() internal view returns(uint256) {
+        IVotingEscrow.LockedBalance memory userBalance = votingEscrow.locked(msg.sender);
+        uint256 _amount = uint256(userBalance.amount);
+        require(_amount >= STAKE_AMOUNT, "NftStaking: low amount staked");
+        require(userBalance.end > block.timestamp, "NftStaking: lock time expired");
+
+        return uint256(userBalance.amount);
     }
 }
