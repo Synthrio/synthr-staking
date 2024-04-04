@@ -182,7 +182,7 @@ async function pauseUser() {
     Roy.address,
     Alice.address,
   ]);
-  return [tx];
+  return tx;
 }
 
 async function unpauesTx() {
@@ -270,7 +270,7 @@ describe.only("NFTStaking Pause functionality", function () {
       expect(newUserInfoAlice.isPause).to.equal(true);
       expect(newUserInfoRoy.isPause).to.equal(true);
 
-      let blkDiff = tx[0].blockNumber - txs[4].blockNumber;
+      let blkDiff = tx.blockNumber - txs[4].blockNumber;
 
       let accPerShare = calAccPerShare(rewardPerBlk.mul(blkDiff), lpSupp);
       let rewardAmountAlice = calAccRewardPerShare(
@@ -334,6 +334,40 @@ describe.only("NFTStaking Pause functionality", function () {
       ).to.be.revertedWith("NftStaking: lock time expired");
     });
 
+    it("Should not allow to pause if user lock time not end", async function () {
+        await addPoolFunc();
+        await approveNFT();
+
+        await lpTtoken.mint(
+            Alice.address,
+            parseUnits("100000000000000000000000", 18)
+          );
+        
+          await lpTtoken
+            .connect(Alice)
+            .approve(votingEscrow.address, parseUnits("1000", 18));
+          const blockNum = await ethers.provider.getBlockNumber();
+          const block = await ethers.provider.getBlock(blockNum);
+          const timestamp = block.timestamp;
+          await votingEscrow
+            .connect(Alice)
+            .createLock(parseUnits("1000", 18), timestamp + 1000000);
+        
+            await lpTtoken.mint(
+                Alice.address,
+                parseUnits("100000000000000000000000", 18)
+              );
+            
+
+        await depositNfts();  
+
+        let tx = nftStaking.pauseUserReward(syCHAD.address, [
+            Roy.address,
+            Alice.address,
+          ]);
+        await expect(tx).to.revertedWith("NftStaking: lock time not expired");
+      });
+
     it("Should allow to unpause if user increase lock time", async function () {
       await addPoolFunc();
       await approveNFT();
@@ -369,7 +403,7 @@ describe.only("NFTStaking Pause functionality", function () {
 
       expect(userInfo.isPause).to.equal(false);
 
-      let blkDiff = tx1.blockNumber - tx[0].blockNumber;
+      let blkDiff = tx1.blockNumber - tx.blockNumber;
       let lpSupp = await nftStaking.totalLockAmount();
       let accPerShare = calAccPerShare(rewardPerBlk.mul(blkDiff), lpSupp);
 
