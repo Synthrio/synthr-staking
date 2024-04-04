@@ -305,8 +305,11 @@ contract NftStaking is IERC721Receiver, AccessControl {
             _lockAmount
         );
 
+        uint256 _tokenId = _user.tokenId;
+
         _user.amount -= _lockAmount;
         _user.rewardDebt -= _calRewardDebt;
+        _user.tokenId = 0;
 
         userInfo[_pool][msg.sender] = _user;
 
@@ -314,10 +317,10 @@ contract NftStaking is IERC721Receiver, AccessControl {
         ISynthrNFT(_pool).transferFrom(
             address(this),
             msg.sender,
-            _user.tokenId
+            _tokenId
         );
 
-        emit Withdraw(_pool, msg.sender, _user.tokenId);
+        emit Withdraw(_pool, msg.sender, _tokenId);
     }
 
     /// @notice Claim proceeds for transaction sender to `to`.
@@ -373,6 +376,8 @@ contract NftStaking is IERC721Receiver, AccessControl {
             accumulatedReward -
             (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _lockAmount));
         _user.amount -= _lockAmount;
+        uint256 _tokenId = _user.tokenId;
+        _user.tokenId = 0;
         userInfo[_pool][msg.sender] = _user;
 
         // Interactions
@@ -383,7 +388,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
         ISynthrNFT(_pool).transferFrom(
             address(this),
             msg.sender,
-            _user.tokenId
+            _tokenId
         );
 
         emit WithdrawAndClaim(_pool, msg.sender, _pendingReward);
