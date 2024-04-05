@@ -337,6 +337,19 @@ describe("NFTStaking", function () {
             expect(pendingNow).to.equal(0);
         });
 
+        it("Should fail while claiming to a zero address", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(2000);
+
+            let invalidAddress = ethers.constants.AddressZero;
+
+            await expect(nftStaking.connect(Alice)
+            .claim(pools[0],invalidAddress))
+            .to.be.reverted;
+        });
+
         it("Should withdraw nft to user", async function () {
             await addPoolFunc();
             await approveNFT();
