@@ -48,9 +48,6 @@ async function setUp() {
     parseUnits("10000000000000000000000", 18)
   );
 
-  const GaugeController = await ethers.getContractFactory("GaugeController");
-  gaugeController = await GaugeController.deploy(owner.address);
-
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await VotingEscrow.deploy(
     lpTtoken.address,
@@ -221,7 +218,7 @@ function calAccPerShare(
   return rewardAmount.mul(ACC_REWARD_PRECISION).div(lpSupply);
 }
 
-describe.only("NFTStaking Pause functionality", function () {
+describe("NFTStaking Pause functionality", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
