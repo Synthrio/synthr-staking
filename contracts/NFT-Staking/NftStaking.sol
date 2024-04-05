@@ -13,7 +13,6 @@ contract NftStaking is IERC721Receiver, AccessControl {
     bytes32 public constant CONTROLLER_ROLE = keccak256("CONTROLLER_ROLE");
     bytes32 public constant PAUSE_ROLE = keccak256("PAUSE_ROLE");
 
-    uint256 public constant STAKE_AMOUNT = 1000 * 1e18;
 
     /// @notice Address of reward token contract.
     IERC20 public immutable REWARD_TOKEN;
@@ -40,6 +39,8 @@ contract NftStaking is IERC721Receiver, AccessControl {
         uint256 currentEpoch;
         uint256 epoch;
     }
+
+    uint256 public stakeAmount = 1000 * 1e18;
 
     /// @notice Total lock amount of users in VotingEscrow
     uint256 public totalLockAmount;
@@ -83,6 +84,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
         uint256[] rewardPerBlock
     );
     event totalLockAmountUpdated(address owner, uint256 totalLockAmount);
+    event LogUpdatedStakeAmount(address owner, uint256 stakeAmount);
 
     constructor(address _admin, address _rewardToken, address _votingEscrow) {
         REWARD_TOKEN = IERC20(_rewardToken);
@@ -202,6 +204,11 @@ contract NftStaking is IERC721Receiver, AccessControl {
         bytes calldata
     ) external override returns (bytes4) {
         return this.onERC721Received.selector;
+    }
+
+    function setStakeAmount(uint256 _stakeAmount) external onlyRole(CONTROLLER_ROLE) {
+        stakeAmount = _stakeAmount;
+        emit LogUpdatedStakeAmount(msg.sender, stakeAmount);
     }
 
     /// @notice Add a new NFT pool. Can only be called by the owner.
@@ -472,7 +479,7 @@ contract NftStaking is IERC721Receiver, AccessControl {
     function _checkStakeAmountAndLockEnd() internal view returns(uint256) {
         IVotingEscrow.LockedBalance memory userBalance = votingEscrow.locked(msg.sender);
         uint256 _amount = uint256(userBalance.amount);
-        require(_amount >= STAKE_AMOUNT, "NftStaking: low amount staked");
+        require(_amount >= stakeAmount, "NftStaking: low amount staked");
         require(userBalance.end > block.timestamp, "NftStaking: lock time expired");
 
         return uint256(userBalance.amount);
