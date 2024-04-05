@@ -111,7 +111,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return _balanceOf(_user, block.timestamp);
     }
 
-    function balanceOf(address _user, uint256 _t) external view returns (uint256) {
+    function balanceOfAtTime(address _user, uint256 _t) external view returns (uint256) {
         return _balanceOf(_user, _t);
     }
 
@@ -132,7 +132,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         }
     }
 
-    function balanceOfAt(address _user, uint256 _block) external view returns (uint256) {
+    function balanceOfAtBlock(address _user, uint256 _block) external view returns (uint256) {
         require(_block <= block.number, "VotingEscrow: Wrong condition");
         uint256 _min;
         uint256 _max = userPointEpoch[_user];
@@ -183,7 +183,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return _totalSupply(block.timestamp);
     }
 
-    function totalSupply(uint256 _t) external view returns (uint256) {
+    function totalSupplyAtTime(uint256 _t) external view returns (uint256) {
         return _totalSupply(_t);
     }
 
@@ -196,7 +196,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return _supplyAt(lastPoint, _t);
     }
 
-    function totalSupplyAt(uint256 _block) external view returns (uint256) {
+    function totalSupplyBlock(uint256 _block) external view returns (uint256) {
         require(_block <= block.number, "VotingEscrow: Invalid Block Number");
         uint256 _epoch = epoch;
         uint256 targetEpoch = _findBlockEpoch(_block, _epoch);

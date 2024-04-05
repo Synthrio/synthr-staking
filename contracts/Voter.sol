@@ -120,7 +120,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         nonReentrant
     {
         address _sender = _msgSender();
-        uint256 _weight = IVotingEscrow(ve).balanceOf(_sender, block.timestamp);
+        uint256 _weight = IVotingEscrow(ve).balanceOfAtTime(_sender, block.timestamp);
         require(_weight != 0, "Voter: no voting power");
 
         if (_poolVote.length != _weights.length) revert UnequalLengths();
@@ -180,7 +180,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (block.timestamp <= Time.epochVoteStart(block.timestamp)) {
             revert DistributeWindow();
         }
-        uint256 _weight = IVotingEscrow(ve).balanceOf(msg.sender, block.timestamp);
+        uint256 _weight = IVotingEscrow(ve).balanceOfAtTime(msg.sender, block.timestamp);
         _poke(msg.sender, _weight);
     }
 
