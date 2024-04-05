@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./interfaces/ISmartWalletChecker.sol";
-import "./interfaces/IGaugeController.sol";
 
 contract VotingEscrow is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -52,7 +51,6 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
     address public token;
     address public controller;
-    address public gaugeController;
 
     bool public transfersEnabled;
 
@@ -71,18 +69,15 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     event Deposited(address indexed provider, uint256 value, uint256 indexed locktime, uint256 _type, uint256 ts);
     event Withdrew(address indexed provider, uint256 value, uint256 timeStamp);
     event Supply(uint256 prevSupply, uint256 supply);
-    event GaugeUpdated(address indexed newGauge);
 
     constructor(
         address _tokenAddr,
-        address _gaugeController,
         string memory _name,
         string memory _symbol,
         string memory _version
     ) {
         admin = msg.sender;
         token = _tokenAddr;
-        gaugeController = _gaugeController;
         pointHistory[0].blockNumber = block.number;
         pointHistory[0].timeStamp = block.timestamp;
         controller = msg.sender;
@@ -217,11 +212,6 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         emit ControllerChanged(msg.sender, _newController);
     }
 
-    function setGaugeController(address _newController) external {
-        gaugeController = _newController;
-        emit GaugeUpdated(_newController);
-    }
-
     function checkpoint() external {
         _checkpoint(address(0), LockedBalance(0, 0), LockedBalance(0, 0));
     }
@@ -311,7 +301,6 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
 
         _checkpoint(msg.sender, oldLocked, _locked);
         IERC20(token).safeTransfer(msg.sender, _value);
-        IGaugeController(gaugeController).updateReward(address(this), msg.sender, _value, false);
         delete createLockTs[msg.sender];
         emit Withdrew(msg.sender, _value, block.timestamp);
         emit Supply(supply + _value, supply);
@@ -546,7 +535,6 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         _checkpoint(_user, oldLocked, _locked);
         if (_value != 0) {
             IERC20(token).safeTransferFrom(_user, address(this), _value);
-            IGaugeController(gaugeController).updateReward(address(this), _user, _value, true);
         }
         emit Deposited(_user, _value, _locked.end, _type, block.timestamp);
         emit Supply(supplyBefore, supplyBefore + _value);
