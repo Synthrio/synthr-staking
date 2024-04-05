@@ -53,9 +53,6 @@ contract NftStaking is IERC721Receiver, AccessControl {
     /// @notice Info of each user that stakes LP tokens.
     mapping(address => mapping(address => UserInfo)) public userInfo;
 
-    /// @notice token id of user has deposited in pool.
-    mapping(address => mapping(uint256 => address)) public tokenOwner;
-
     event Deposit(address indexed pool, address indexed user, uint256 tokenId);
     event IncreaseDeposit(address indexed pool, address indexed user, uint256 amount);
     event Withdraw(address indexed pool, address indexed user, uint256 tokenId);
