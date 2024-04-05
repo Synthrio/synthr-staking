@@ -13,7 +13,7 @@ let nftStaking: any,
 let syCHAD: any, syBULL: any, syHODL: any, syDIAMOND: any, syMAXI: any;
 let pools: any;
 let totalLockAmount: any;
-let votingEscrow: any, lpTtoken:any;
+let votingEscrow: any, lpTtoken:any;  
 async function setUp() {
     // Contracts are deployed using the first signer/account by default
     [owner, addr1, addr2, Alice, Bob, Joy, Roy, Matt] = await ethers.getSigners();
@@ -307,17 +307,38 @@ describe("NFTStaking", function () {
             const blockNum = await ethers.provider.getBlockNumber();
             const block = await ethers.provider.getBlock(blockNum);
             let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
-            let userInfo = await nftStaking.userInfo(pools[0], Alice.address);
-            const rewardDebtBeforeClaim = userInfo.rewardDebt;
+            const rewardDebtBeforeClaim = await nftStaking.userRewardsDebt(pools[0], Alice.address);
             let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
             await expect(tx)
                 .to.emit(nftStaking, "Claimed")
-                .withArgs(Alice.address, pools[0], expectedReward);
-            let userInfo2 = await nftStaking.userInfo(pools[0], Alice.address);   
-            const rewardDebtAfterClaim = userInfo2.rewardDebt;
+                .withArgs(Alice.address, pools[0], expectedReward);  
+            const rewardDebtAfterClaim = await nftStaking.userRewardsDebt(pools[0], Alice.address);
             let actualReward = await rewardToken.balanceOf(Alice.address);
             expect(expectedReward).to.equal(actualReward);
             expect(rewardDebtAfterClaim-rewardDebtBeforeClaim).to.equal(expectedReward);
+
+        });
+
+        it("Should be able to pause user rewards", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(10000000);
+
+            await nftStaking.connect(owner)
+                .grantRole(nftStaking.PAUSE_ROLE(),addr1.address);
+
+            await nftStaking.connect(addr1)
+                .pauseUserReward(pools[0],[Alice.address]);
+
+            const blockNum = await ethers.provider.getBlockNumber();
+            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            expect(expectedReward).to.be.equal(0);
+
+            await expect(
+                nftStaking.connect(Alice)
+                .claim(pools[0], Alice.address)
+            ).to.be.revertedWith("NftStaking: reward paused");
 
         });
 
