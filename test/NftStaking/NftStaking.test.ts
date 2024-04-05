@@ -342,6 +342,39 @@ describe("NFTStaking", function () {
 
         });
 
+        it("Should be able to unpause user rewards", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(1000000);
+
+            await nftStaking.connect(owner)
+                .grantRole(nftStaking.PAUSE_ROLE(),addr1.address);
+
+            await nftStaking.connect(addr1)
+                .pauseUserReward(pools[0],[Alice.address]);
+
+            const blockNum = await ethers.provider.getBlockNumber();
+            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+            expect(expectedReward).to.be.equal(0);
+
+            await votingEscrow.connect(Alice).withdraw(); 
+            const lock = await votingEscrow.connect(Alice).locked(Alice.address);
+    
+            await createLockTx(Alice);
+            await nftStaking.connect(Alice)
+                .unpauseReward(pools[0]);
+            
+            const blockNum2 = await ethers.provider.getBlockNumber();
+            let expectedReward2 = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum2);    
+
+            let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
+            await expect(tx)
+                .to.emit(nftStaking, "Claimed")
+                .withArgs(Alice.address, pools[0], expectedReward2);  
+
+        });
+
         it("Should have 0 pending reward at that block after claiming is done", async function () {
             await addPoolFunc();
             await approveNFT();
