@@ -116,6 +116,9 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     }
 
     function _balanceOf(address _user, uint256 _t) internal view returns (uint256) {
+        if (_t == 0) {
+            _t = block.timestamp;
+        }
         uint256 _epoch = userPointEpoch[_user];
         if (_epoch == 0) {
             return 0;
@@ -177,13 +180,17 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
      *@return Total voting power
      */
     function totalSupply() external view returns (uint256) {
-        uint256 _epoch = epoch;
-        Point memory _last_point = pointHistory[_epoch];
-
-        return _supplyAt(_last_point, block.timestamp);
+        return _totalSupply(block.timestamp);
     }
 
     function totalSupply(uint256 _t) external view returns (uint256) {
+        return _totalSupply(_t);
+    }
+
+    function _totalSupply(uint256 _t) internal view returns (uint256) {
+        if (_t == 0) {
+            _t = block.timestamp;
+        }
         uint256 _epoch = epoch;
         Point memory lastPoint = pointHistory[_epoch];
         return _supplyAt(lastPoint, _t);
