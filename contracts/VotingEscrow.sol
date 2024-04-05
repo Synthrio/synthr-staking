@@ -107,7 +107,15 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return locked[_user].end;
     }
 
+    function balanceOf(address _user) external view returns (uint256) {
+        return _balanceOf(_user, block.timestamp);
+    }
+
     function balanceOf(address _user, uint256 _t) external view returns (uint256) {
+        return _balanceOf(_user, _t);
+    }
+
+    function _balanceOf(address _user, uint256 _t) internal view returns (uint256) {
         uint256 _epoch = userPointEpoch[_user];
         if (_epoch == 0) {
             return 0;
