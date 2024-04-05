@@ -196,7 +196,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         return _supplyAt(lastPoint, _t);
     }
 
-    function totalSupplyBlock(uint256 _block) external view returns (uint256) {
+    function totalSupplyAtBlock(uint256 _block) external view returns (uint256) {
         require(_block <= block.number, "VotingEscrow: Invalid Block Number");
         uint256 _epoch = epoch;
         uint256 targetEpoch = _findBlockEpoch(_block, _epoch);
