@@ -54,7 +54,6 @@ async function setUp() {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await VotingEscrow.deploy(
     lpTtoken.address,
-    gaugeController.address,
     "vot",
     "vt",
     "v.0.1"
@@ -86,33 +85,6 @@ async function setUp() {
 
   await rewardToken.mint(owner.address, parseUnits("1000000000", 18));
 
-  const epoch = 0;
-
-  let reward: RewardInfo[] = [
-    {
-      token: rewardToken.address,
-      rewardPerBlock: parseUnits("1000", 18),
-      accRewardPerShare: 0,
-    },
-  ];
-
-  let tx = await gaugeController.addPool(
-    lpTtoken.address,
-    votingEscrow.address,
-    reward
-  );
-
-  await rewardToken
-    .connect(addr2)
-    .approve(gaugeController.address, parseUnits("1000000000000000000", 18));
-
-  await gaugeController.updateEpoch(
-    votingEscrow.address,
-    addr2.address,
-    [0],
-    [parseUnits("100000000000", 18)],
-    [parseUnits("1000000000000000000", 18)]
-  );
 }
 
 async function mintNFTsToLpProviders() {
@@ -126,17 +98,17 @@ async function mintNFTsToLpProviders() {
 
   await syCHAD
     .connect(owner)
-    .safeMint(Alice.address, lpAmount.Alice, times + 1296000);
-  await syCHAD.connect(owner).safeMint(Roy.address, lpAmount.Roy, times + 1000);
+    .safeMint(Alice.address);
+  await syCHAD.connect(owner).safeMint(Roy.address);
   await syBULL
     .connect(owner)
-    .safeMint(Bob.address, lpAmount.Bob, times + 1296000 * 2);
+    .safeMint(Bob.address);
   await syHODL
     .connect(owner)
-    .safeMint(Joy.address, lpAmount.Joy, times + 1296000 * 3);
+    .safeMint(Joy.address);
   await syDIAMOND
     .connect(owner)
-    .safeMint(Roy.address, lpAmount.Roy, times + 1296000 * 4);
+    .safeMint(Roy.address);
   return lpAmount.Alice.add(
     lpAmount.Bob.add(lpAmount.Joy.add(lpAmount.Roy.mul(2)))
   ); //sum of above lpAmount.user
@@ -169,6 +141,11 @@ async function approveNFT() {
 }
 
 async function depositNfts() {
+  await createLockTx(Alice);
+  await createLockTx(Roy);
+  await createLockTx(Joy);
+  await createLockTx(Bob);
+
   let tx1 = await nftStaking.connect(Alice).deposit(syCHAD.address, 1);
   let tx5 = await nftStaking.connect(Roy).deposit(syCHAD.address, 2);
   let tx2 = await nftStaking.connect(Bob).deposit(syBULL.address, 1);
@@ -185,7 +162,29 @@ async function pauseUser() {
   return tx;
 }
 
+async function createLockTx(user:any) {
+  await lpTtoken.mint(
+    user.address,
+    parseUnits("100000000000000000000000", 18)
+  );
+
+  await lpTtoken
+    .connect(user)
+    .approve(votingEscrow.address, parseUnits("10000", 18));
+  const blockNum = await ethers.provider.getBlockNumber();
+  const block = await ethers.provider.getBlock(blockNum);
+  const timestamp = block.timestamp;
+  await votingEscrow
+    .connect(user)
+    .createLock(parseUnits("10000", 18), timestamp + 1000000);
+}
+
 async function unpauesTx() {
+
+  await votingEscrow
+    .connect(Alice)
+    .withdraw();
+
   await lpTtoken.mint(
     Alice.address,
     parseUnits("100000000000000000000000", 18)
@@ -337,28 +336,6 @@ describe.only("NFTStaking Pause functionality", function () {
     it("Should not allow to pause if user lock time not end", async function () {
         await addPoolFunc();
         await approveNFT();
-
-        await lpTtoken.mint(
-            Alice.address,
-            parseUnits("100000000000000000000000", 18)
-          );
-        
-          await lpTtoken
-            .connect(Alice)
-            .approve(votingEscrow.address, parseUnits("1000", 18));
-          const blockNum = await ethers.provider.getBlockNumber();
-          const block = await ethers.provider.getBlock(blockNum);
-          const timestamp = block.timestamp;
-          await votingEscrow
-            .connect(Alice)
-            .createLock(parseUnits("1000", 18), timestamp + 1000000);
-        
-            await lpTtoken.mint(
-                Alice.address,
-                parseUnits("100000000000000000000000", 18)
-              );
-            
-
         await depositNfts();  
 
         let tx = nftStaking.pauseUserReward(syCHAD.address, [
@@ -378,27 +355,12 @@ describe.only("NFTStaking Pause functionality", function () {
 
       await mine(100);
 
-      await lpTtoken.mint(
-        Alice.address,
-        parseUnits("100000000000000000000000", 18)
-      );
-
-      await lpTtoken
-        .connect(Alice)
-        .approve(votingEscrow.address, parseUnits("1000", 18));
-      const blockNum = await ethers.provider.getBlockNumber();
-      const block = await ethers.provider.getBlock(blockNum);
-      const timestamp = block.timestamp;
-      await votingEscrow
-        .connect(Alice)
-        .createLock(parseUnits("1000", 18), timestamp + 1000000);
-
       let rewardPerBlk = (await nftStaking.poolInfo(syCHAD.address))
         .rewardPerBlock;
       let oldAccPerShare = (await nftStaking.poolInfo(syCHAD.address))
         .accRewardPerShare;
 
-      let tx1 = await nftStaking.connect(Alice).unpauseReward(syCHAD.address);
+      let tx1 = await unpauesTx();
       let userInfo = await nftStaking.userInfo(syCHAD.address, Alice.address);
 
       expect(userInfo.isPause).to.equal(false);
@@ -465,9 +427,28 @@ describe.only("NFTStaking Pause functionality", function () {
   
         await pauseUser();
   
-        let tx1 = await nftStaking.withdraw(syCHAD.address);
+        let tx1 = await nftStaking.connect(Alice).withdraw(syCHAD.address);
+
+        await votingEscrow
+    .connect(Alice)
+    .withdraw();
+
+  await lpTtoken.mint(
+    Alice.address,
+    parseUnits("100000000000000000000000", 18)
+  );
+
+  await lpTtoken
+    .connect(Alice)
+    .approve(votingEscrow.address, parseUnits("1000", 18));
+  const blockNum = await ethers.provider.getBlockNumber();
+  const block = await ethers.provider.getBlock(blockNum);
+  const timestamp = block.timestamp;
+  await votingEscrow
+    .connect(Alice)
+    .createLock(parseUnits("1000", 18), timestamp + 1000000);
         
-        await expect(nftStaking.unpauseReward(syCHAD.address)).to.revertedWith("NftStaking: user is not paused")
+        await expect(nftStaking.connect(Alice).unpauseReward(syCHAD.address)).to.revertedWith("NftStaking: token id not deposited")
     });
 
     it("Should allow to claim reward after unpause", async function () {
@@ -475,6 +456,8 @@ describe.only("NFTStaking Pause functionality", function () {
       await approveNFT();
       await depositNfts();
       await mine(1296000);
+      let cur = await time.latest();
+      await time.increaseTo(cur + 1296001);
 
       await pauseUser();
 
