@@ -440,6 +440,20 @@ describe("NFTStaking", function () {
             expect((await nftStaking.userInfo(syCHAD.address, Alice.address)).amount).to.equal(0);
         });
 
+        it("Should revert if claim is triggered without depositing nft", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await mine(1000);
+            const blockNum = await ethers.provider.getBlockNumber();
+            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Matt.address, blockNum);
+            let tx = await nftStaking.connect(Matt).claim(pools[0], Matt.address);
+            await expect(tx)
+                .to.emit(nftStaking, "Claimed")
+                .withArgs(Matt.address, pools[0], expectedReward);
+            let actualReward = await rewardToken.balanceOf(Alice.address);
+            expect(expectedReward).to.equal(actualReward);
+        });
+
         it("Should claim reward after withdraw is triggged", async function () {
             await addPoolFunc();
             await approveNFT();
