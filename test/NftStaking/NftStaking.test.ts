@@ -238,6 +238,27 @@ describe("NFTStaking", function () {
                 .withArgs(syDIAMOND.address, Roy.address, 1);
         })
 
+        it("Should be able to increase deposits", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+
+            mine(1000);
+
+            let userDetails = await votingEscrow.locked(Alice.address);
+            let amount1 = userDetails.amount;
+            let userDetails2 = await nftStaking.userInfo(pools[0], Alice.address);
+            let amount2 = userDetails2.amount;
+            let bal = amount1-amount2;
+
+            let tx = await nftStaking.connect(Alice)
+                .increaseDeposit(pools[0]);
+           
+            await expect(tx)
+            .to.emit(nftStaking, "IncreaseDeposit")
+            .withArgs(syCHAD.address, Alice.address,bal);
+        })
+
         it("Should transfer user's nft to contract successfully", async function () {
             await addPoolFunc();
             await approveNFT();
