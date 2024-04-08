@@ -13,14 +13,32 @@ let nftStaking: any,
 let syCHAD: any, syBULL: any, syHODL: any, syDIAMOND: any, syMAXI: any;
 let pools: any;
 let totalLockAmount: any;
+let votingEscrow: any, lpTtoken:any;
 async function setUp() {
     // Contracts are deployed using the first signer/account by default
     [owner, addr1, addr2, Alice, Bob, Joy, Roy, Matt] = await ethers.getSigners();
     const RewardToken = await ethers.getContractFactory("MockToken");
     rewardToken = await RewardToken.deploy()
 
+    const LpTtoken = await ethers.getContractFactory("MockToken");
+  lpTtoken = await LpTtoken.deploy();
+
+  await lpTtoken.mint(addr1.address, parseUnits("100000", 18));
+  await lpTtoken.mint(
+    addr2.address,
+    parseUnits("100000000000000000000000", 18)
+  );
+
+    const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
+  votingEscrow = await VotingEscrow.deploy(
+    lpTtoken.address,
+    "vot",
+    "vt",
+    "v.0.1"
+  );
+
     const NFTStaking = await ethers.getContractFactory("NftStaking");
-    nftStaking = await NFTStaking.deploy(owner.address, rewardToken.address);
+    nftStaking = await NFTStaking.deploy(owner.address, rewardToken.address, votingEscrow.address);
 
     const SynthrNFT = await ethers.getContractFactory("SynthrNFT");
     syCHAD = await SynthrNFT.deploy("syCHAD", "syCHAD", owner.address);
@@ -41,18 +59,18 @@ async function setUp() {
 
 async function mintNFTsToLpProviders() {
     const lpAmount = {
-        Alice: ethers.utils.parseEther("100"), // 100 * 10^18
-        Bob: ethers.utils.parseEther("2000"),
-        Joy: ethers.utils.parseEther("30000"),
-        Roy: ethers.utils.parseEther("400000"),
+        Alice: parseUnits("10000", 18), // 100 * 10^18
+        Bob: parseUnits("10000", 18),
+        Joy: parseUnits("10000", 18),
+        Roy: parseUnits("10000", 18),
     }
     let times = await time.latestBlock();
 
-    await syCHAD.connect(owner).safeMint(Alice.address, lpAmount.Alice, times + 1296000);
-    await syCHAD.connect(owner).safeMint(Roy.address, lpAmount.Roy, times + 1000);
-    await syBULL.connect(owner).safeMint(Bob.address, lpAmount.Bob, times + 1296000*2);
-    await syHODL.connect(owner).safeMint(Joy.address, lpAmount.Joy, times + 1296000*3);
-    await syDIAMOND.connect(owner).safeMint(Roy.address, lpAmount.Roy, times + 1296000*4);
+    await syCHAD.connect(owner).safeMint(Alice.address);
+    await syCHAD.connect(owner).safeMint(Roy.address);
+    await syBULL.connect(owner).safeMint(Bob.address);
+    await syHODL.connect(owner).safeMint(Joy.address);
+    await syDIAMOND.connect(owner).safeMint(Roy.address);
     return lpAmount.Alice.add(lpAmount.Bob.add(lpAmount.Joy.add(lpAmount.Roy.mul(2))));//sum of above lpAmount.user
 }
 
@@ -75,9 +93,29 @@ async function approveNFT() {
     expect(await syDIAMOND.getApproved(1)).to.equal(nftStaking.address);
 }
 
-
+async function createLockTx(user:any) {
+    await lpTtoken.mint(
+      user.address,
+      parseUnits("100000000000000000000000", 18)
+    );
+  
+    await lpTtoken
+      .connect(user)
+      .approve(votingEscrow.address, parseUnits("10000", 18));
+    const blockNum = await ethers.provider.getBlockNumber();
+    const block = await ethers.provider.getBlock(blockNum);
+    const timestamp = block.timestamp;
+    await votingEscrow
+      .connect(user)
+      .createLock(parseUnits("10000", 18), timestamp + 1000000);
+  }
 
 async function depositNfts() {
+    await createLockTx(Alice);
+  await createLockTx(Roy);
+  await createLockTx(Joy);
+  await createLockTx(Bob);
+
     let tx1 = await nftStaking.connect(Alice).deposit(syCHAD.address, 1);
     let tx2 = await nftStaking.connect(Bob).deposit(syBULL.address, 1);
     let tx3 = await nftStaking.connect(Joy).deposit(syHODL.address, 1);
@@ -96,7 +134,7 @@ function calAccPerShare(rewardAmount: BigNumber, lpSupply: BigNumber): BigNumber
     return rewardAmount.mul(ACC_REWARD_PRECISION).div(lpSupply);
 }
 
-describe.only("NFTStaking", function () {
+describe("NFTStaking", function () {
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
@@ -177,10 +215,10 @@ describe.only("NFTStaking", function () {
             let poolInfoSyMAXI = await nftStaking.poolInfo(syMAXI.address)
 
             const lockAmount = {
-                Alice: ethers.utils.parseEther("100"), // 100 * 10^18
-                Bob: ethers.utils.parseEther("2000"),
-                Joy: ethers.utils.parseEther("30000"),
-                Roy: ethers.utils.parseEther("400000"),
+                Alice: ethers.utils.parseEther("10000"), // 100 * 10^18
+                Bob: ethers.utils.parseEther("10000"),
+                Joy: ethers.utils.parseEther("10000"),
+                Roy: ethers.utils.parseEther("10000"),
             }
 
             let amt0 = calAccRewardPerShare(poolInfoSyCHAD.accRewardPerShare, lockAmount.Alice);
