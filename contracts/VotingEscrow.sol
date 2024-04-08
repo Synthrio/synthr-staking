@@ -60,7 +60,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
     mapping(address => uint256) public createLockTs;
     mapping(address => Point[1000000000]) public userPointHistory;
     mapping(address => uint256) public userPointEpoch;
-    mapping(uint256 => uint256) public slopeChanges;
+    mapping(uint256 => int256) public slopeChanges;
 
     event OwnershipCommited(address admin);
     event OwnershipApplied(address admin);
@@ -128,7 +128,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             if (lastPoint.bias < 0) {
                 lastPoint.bias = 0;
             }
-            return uint256(int256(lastPoint.bias));
+            return uint256(lastPoint.bias);
         }
     }
 
@@ -166,7 +166,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         if (blockDifference != 0) {
             blockTime += (timeStampDiffrence * (_block - point0.blockNumber)) / blockDifference;
         }
-        upoint.bias -= upoint.slope * int128(int256(blockTime - upoint.timeStamp));
+        upoint.bias -= upoint.slope * int256(blockTime - upoint.timeStamp);
         if (upoint.bias >= 0) {
             return uint256(int256(upoint.bias));
         } else {
@@ -355,11 +355,11 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         uint256 timeInterval = (lastPoint.timeStamp / WEEK) * WEEK;
         for (uint256 i; i < 255; ++i) {
             timeInterval += WEEK;
-            int128 dSlope;
+            int256 dSlope;
             if (timeInterval > _time) {
                 timeInterval = _time;
             } else {
-                dSlope = int128(int256(slopeChanges[timeInterval]));
+                dSlope = int256(slopeChanges[timeInterval]);
             }
             lastPoint.bias -= lastPoint.slope * int256(timeInterval - lastPoint.timeStamp);
             if (timeInterval == _time) {
@@ -371,7 +371,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         if (lastPoint.bias < 0) {
             lastPoint.bias = 0;
         }
-        return uint256(int256(lastPoint.bias));
+        return uint256(lastPoint.bias);
     }
 
     function _assertNotContract(address _user) internal {
@@ -412,7 +412,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             // Read values of scheduled changes in the slope
             // _oldLocked.end can be in the past and in the future
             // _newLocked.end can ONLY by in the FUTURE unless everything expired than zeros
-            _oldDslope = int256(slopeChanges[_oldLocked.end]);
+            _oldDslope = slopeChanges[_oldLocked.end];
             if (_newLocked.end != 0) {
                 if (_newLocked.end == _oldLocked.end) {
                     _newDslope = _oldDslope;
@@ -451,7 +451,7 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
             if (_timeInterval > block.timestamp) {
                 _timeInterval = block.timestamp;
             } else {
-                d_slope = int256(slopeChanges[_timeInterval]);
+                d_slope = slopeChanges[_timeInterval];
             }
             _lastPoint.bias = _lastPoint.bias - _lastPoint.slope * int256(_timeInterval - _lastCheckpoint);
             _lastPoint.slope += d_slope;
@@ -508,12 +508,12 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
                 if (_newLocked.end == _oldLocked.end) {
                     _oldDslope -= _uNew.slope; // It was a new deposit, not extension
                 }
-                slopeChanges[_oldLocked.end] = uint256(_oldDslope);
+                slopeChanges[_oldLocked.end] = _oldDslope;
             }
             if (_newLocked.end > block.timestamp) {
                 if (_newLocked.end > _oldLocked.end) {
                     _newDslope -= _uNew.slope; // old slope disappeared at this point
-                    slopeChanges[_newLocked.end] = uint256(_newDslope);
+                    slopeChanges[_newLocked.end] = _newDslope;
                 }
                 // else we recorded it already in _oldDslope
             }
@@ -538,11 +538,17 @@ contract VotingEscrow is AccessControl, ReentrancyGuard {
         LockedBalance memory lockedBalance,
         uint256 _type
     ) internal {
-        LockedBalance memory _locked = lockedBalance;
+        LockedBalance memory _locked = LockedBalance(
+            lockedBalance.amount,
+            lockedBalance.end
+        );
         uint256 supplyBefore = supply;
         supply = supplyBefore + _value;
-        LockedBalance memory oldLocked = _locked;
-        _locked.amount += int128(uint128(_value));
+        LockedBalance memory oldLocked = LockedBalance(
+            lockedBalance.amount,
+            lockedBalance.end
+        );
+        _locked.amount += int256(_value);
         if (_unlockTime != 0) {
             _locked.end = _unlockTime;
         }
