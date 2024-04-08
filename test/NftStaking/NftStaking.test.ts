@@ -165,8 +165,29 @@ describe("NFTStaking", function () {
             expect(poolInfoSyHODL.exist).to.equal(true);
             expect(poolInfoSyDIAMOND.exist).to.equal(true);
             expect(poolInfoSyMAXI.exist).to.equal(true);
+
+            
+            //check owner reward token balance after epoch update
+            expect(poolInfoSyCHAD.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyBULL.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyHODL.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyDIAMOND.rewardPerBlock).to.equal(1000);
+            expect(poolInfoSyMAXI.rewardPerBlock).to.equal(1000);
         });
 
+        it("Should revert when trying to add invalid pool in nftStaking", async function () {
+            let invalidAddress = ethers.constants.AddressZero;
+            await expect(nftStaking.addPool([invalidAddress]))
+            .to.be.reverted;
+        });
+
+        it("Should revert while updating epoch with different array length of pool and reward", async function () {
+            let tx = await nftStaking.addPool(pools);
+            await rewardToken.connect(owner)
+            .approve(nftStaking.address, ethers.utils.parseEther("100000"));
+            await expect(nftStaking.updateEpoch(owner.address, ethers.utils.parseEther("100000"), pools, [1000, 1000, 1000]))
+            .to.be.reverted;          
+        });
 
         it("Should have pending reward zero if user has not deposited in pool", async function () {
             await addPoolFunc();
@@ -186,6 +207,27 @@ describe("NFTStaking", function () {
             ).to.equal(0);
         });
 
+        it("Should not be able to deposit without approving the contract", async function () {
+            await addPoolFunc();
+            // should revert with insufficient allowance error
+                await expect(
+                 nftStaking.connect(Alice).deposit(syCHAD.address, 1)
+                 ).to.be.reverted;
+
+                await expect(
+                 nftStaking.connect(Bob).deposit(syBULL.address, 1)
+                 ).to.be.reverted;
+
+                await expect(
+                    nftStaking.connect(Joy).deposit(syHODL.address, 1)
+                    ).to.be.reverted;
+                    
+                await expect(
+                    nftStaking.connect(Roy).deposit(syDIAMOND.address, 1)
+                    ).to.be.reverted;        
+        })
+
+
         it("Should deposit user's nft", async function () {
             await addPoolFunc();
             await approveNFT();
@@ -203,6 +245,26 @@ describe("NFTStaking", function () {
                 .to.emit(nftStaking, "Deposit")
                 .withArgs(syDIAMOND.address, Roy.address, 1);
         })
+
+        it("Should transfer user's nft to contract successfully", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            let txns = await depositNfts();
+
+            //checks whether the ownership of nfts is transferred to the staking contract
+            expect(await syCHAD.ownerOf(1))
+            .to.equal(nftStaking.address);
+
+            expect(await syBULL.ownerOf(1))
+            .to.equal(nftStaking.address);
+
+            expect(await syHODL.ownerOf(1))
+            .to.equal(nftStaking.address);
+
+            expect(await syDIAMOND.ownerOf(1))
+            .to.equal(nftStaking.address);
+        })
+
         it("Should update user reward debt after deposits", async function () {
             await addPoolFunc();
             await approveNFT();
@@ -249,18 +311,52 @@ describe("NFTStaking", function () {
             await addPoolFunc();
             await approveNFT();
             await depositNfts();
-            await mine(1000);
+            await mine(2000);
             const blockNum = await ethers.provider.getBlockNumber();
             const block = await ethers.provider.getBlock(blockNum);
             let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
-            let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
+            let userInfo = await nftStaking.userInfo(pools[0], Alice.address);
+            const rewardDebtBeforeClaim = userInfo.rewardDebt;
+            let tx = await nftStaking.connect(Alice).claim(pools[0],Alice.address);
             await expect(tx)
                 .to.emit(nftStaking, "Claimed")
                 .withArgs(Alice.address, pools[0], expectedReward);
+    
+            let userInfo2 = await nftStaking.userInfo(pools[0], Alice.address);   
+            const rewardDebtAfterClaim = userInfo2.rewardDebt;
             let actualReward = await rewardToken.balanceOf(Alice.address);
             expect(expectedReward).to.equal(actualReward);
+            expect(rewardDebtAfterClaim-rewardDebtBeforeClaim).to.equal(expectedReward);
 
+        });
 
+        it("Should have 0 pending reward at that block after claiming is done", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(2000);
+           
+            let tx = await nftStaking
+            .connect(Alice)
+            .claim(pools[0],Alice.address);
+
+            const blockNumNow = await ethers.provider.getBlockNumber();
+            //check pending amount after claim
+            let pendingNow = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNumNow);
+            expect(pendingNow).to.equal(0);
+        });
+
+        it("Should fail while claiming to a zero address", async function () {
+            await addPoolFunc();
+            await approveNFT();
+            await depositNfts();
+            await mine(2000);
+           
+            let invalidAddress = ethers.constants.AddressZero;
+            
+            await expect(nftStaking.connect(Alice)
+            .claim(pools[0],invalidAddress))
+            .to.be.reverted;
         });
 
         it("Should withdraw nft to user", async function () {
