@@ -275,7 +275,7 @@ contract SynthrStaking is IERC721Receiver, Ownable, Pausable {
         require(_user.lockType < _newLockType, "SynthrStaking: Can only increase lock duration");
         require(_newlockInfo.totalStaked + _user.amount <= _newlockInfo.maxPoolSize, "SynthrStaking: max amount limit exceed");
 
-        lockInfo[_newLockType].totalStaked -= _user.amount;
+        lockInfo[_user.lockType].totalStaked -= _user.amount;
         uint256 _increaseTime = _newLockType - _user.lockType;
         _user.unlockEnd += _increaseTime;
         _user.lockType = _newLockType;
