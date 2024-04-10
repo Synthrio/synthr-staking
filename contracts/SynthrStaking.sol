@@ -164,7 +164,7 @@ contract SynthrStaking is Ownable, Pausable {
     }
 
     /// @notice Update reward variables of the pool.
-    function updatePool() internal returns (PoolInfo memory _poolInfo) {
+    function updatePool() public returns (PoolInfo memory _poolInfo) {
         _poolInfo = poolInfo;
         uint256 _lpSupply = totalSupply;
         if (block.number > _poolInfo.lastRewardBlock) {
