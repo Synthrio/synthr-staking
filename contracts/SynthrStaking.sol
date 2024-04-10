@@ -205,10 +205,11 @@ contract SynthrStaking is Ownable, Pausable {
 
         _user.amount += _amount;
         _user.rewardDebt += _calRewardDebt;
+        
         if (_user.amount == 0)  {
             _user.unlockEnd = block.timestamp + _lockType;
+            _user.lockType = _lockType;
         }
-        _user.lockType = _lockType;
 
         userInfo[msg.sender] = _user;
 
