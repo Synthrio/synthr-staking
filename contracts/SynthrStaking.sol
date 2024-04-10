@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract NftStaking is IERC721Receiver, Ownable, Pausable {
+contract SynthrStaking is IERC721Receiver, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
     /// @notice Address of reward token contract.
