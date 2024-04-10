@@ -116,15 +116,6 @@ contract SynthrStaking is IERC721Receiver, Ownable, Pausable {
         pending_ = _pendingRewardAmount(_user, _blockNumber);
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external override returns (bytes4) {
-        return this.onERC721Received.selector;
-    }
-
     /**
      * @dev pause pool to restrict pool functionality, can only by called by admin
      */
