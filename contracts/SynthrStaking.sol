@@ -195,7 +195,7 @@ contract SynthrStaking is Ownable, Pausable {
         PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
-        require(_user.amount == 0, "SynthrStaking: already deposit");
+        require(_user.lockType == 0 || _user.lockType == _lockType, "SynthrStaking: lock type differ");
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(
@@ -203,9 +203,11 @@ contract SynthrStaking is Ownable, Pausable {
             _amount
         );
 
-        _user.amount = _amount;
+        _user.amount += _amount;
         _user.rewardDebt += _calRewardDebt;
-        _user.unlockEnd = block.timestamp + _lockType;
+        if (_user.amount == 0)  {
+            _user.unlockEnd = block.timestamp + _lockType;
+        }
         _user.lockType = _lockType;
 
         userInfo[msg.sender] = _user;
@@ -281,18 +283,13 @@ contract SynthrStaking is Ownable, Pausable {
         UserInfo memory _user = userInfo[msg.sender];
 
         (
-            int256 accumulatedReward,
+            ,
             uint256 _pendingReward
         ) = _calAccumaltedAndPendingReward(
                 _poolInfo.accRewardPerShare,
                 _user.amount,
                 _user.rewardDebt
             );
-
-        // Effects
-        _user.rewardDebt =
-            accumulatedReward -
-            (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount));
 
         uint256 _amount = _user.amount;
         totalSupply -= _amount;
