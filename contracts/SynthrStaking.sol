@@ -45,6 +45,8 @@ contract SynthrStaking is Ownable, Pausable {
     /// @notice Total lock amount of users
     uint256 public totalSupply;
 
+    uint256 public penaltyAmount;
+
     PoolInfo public poolInfo;
 
     /// @notice Info of each user that stakes LP tokens.
@@ -55,14 +57,8 @@ contract SynthrStaking is Ownable, Pausable {
     mapping(uint256 => LockInfo) public lockInfo;
 
     event Deposit(address indexed user, uint256 tokenId);
-    event IncreaseDeposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 tokenId);
     event Claimed(address indexed user, uint256 pendingRewardAmount);
-    event WithdrawAndClaim(address indexed user, uint256 pendingRewardAmount);
-    event WithdrawPendingRewardAmount(
-        address indexed user,
-        uint256 pendingRewardAmount
-    );
     event LogUpdatePool(uint64 lastRewardBlock, uint256 accRewardPerShare);
     event EpochUpdated(address indexed owner, uint256 rewardPerBlock);
     event LogUpdatedLockTime(address owner, uint256 lockTime);
@@ -70,6 +66,8 @@ contract SynthrStaking is Ownable, Pausable {
     event PoolAlived(address indexed owner, bool _alive);
     event KillPool(address indexed owner, bool _killed);
     event RollOverReward(address indexed user, uint256 newUnlockType, uint256 unlockTime);
+    event RecoveredToken(address indexed owner, address indexed token, uint256 amount);
+    event WithdrawPenalty(address indexed owner, address indexed to, uint256 penaltyAmount);
 
     constructor(address _admin, address _rewardToken, uint256[] memory _lockType, LockInfo[] memory _lockInfo) Ownable(_admin) {
         require(_lockInfo.length == _lockType.length, "SynthrStaking: length not equal");
@@ -295,20 +293,20 @@ contract SynthrStaking is Ownable, Pausable {
             (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount));
 
         uint256 _amount = _user.amount;
+        totalSupply -= _amount;
         if (_user.unlockEnd > block.timestamp) {
             uint256 _lockType = _user.lockType;
             _amount = (_amount * (100 - lockInfo[_lockType].penalty)) / 100;
+            penaltyAmount += _user.amount - _amount;
         }
 
         delete userInfo[msg.sender];
         coolDownPeriod[msg.sender] = 0;
 
-        totalSupply -= _amount;
-
         // Interactions
         REWARD_TOKEN.safeTransfer(_to, _pendingReward + _amount);
 
-        emit WithdrawAndClaim(msg.sender, _pendingReward);
+        emit Withdraw(msg.sender, _pendingReward + _amount);
     }
 
     function emergencyWithdraw() public whenNotPaused {
@@ -324,6 +322,22 @@ contract SynthrStaking is Ownable, Pausable {
 
         emit EmergencyWithdraw(msg.sender, _amount);
     }
+
+    function recoverToken(address _token, address _to, uint256 _amount) external onlyOwner whenNotPaused {
+        if (_token == address(REWARD_TOKEN)) {
+            require(IERC20(_token).balanceOf(address(this)) - _amount >= totalSupply, "SynthrStaking: can not withdraw user token");
+        }
+        IERC20(_token).safeTransfer(_to, _amount);
+
+        emit RecoveredToken(msg.sender, _token, _amount);
+    }
+
+    function withdrawPenalty(address _to) external onlyOwner whenNotPaused {
+        REWARD_TOKEN.safeTransfer(_to, penaltyAmount);
+
+        emit WithdrawPenalty(msg.sender, _to, penaltyAmount);
+    }
+
 
     function _pendingRewardAmount(
         address _user,
