@@ -195,6 +195,8 @@ contract SynthrStaking is Ownable, Pausable {
         PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
+        require(_user.amount == 0, "SynthrStaking: already deposit");
+
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(
             _poolInfo.accRewardPerShare,
