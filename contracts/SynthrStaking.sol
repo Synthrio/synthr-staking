@@ -42,8 +42,6 @@ contract SynthrStaking is Ownable, Pausable {
     
     uint256 public lockTime;
 
-    uint256 public stakeAmount = 1000 * 1e18;
-
     /// @notice Total lock amount of users
     uint256 public totalSupply;
 
@@ -67,7 +65,6 @@ contract SynthrStaking is Ownable, Pausable {
     );
     event LogUpdatePool(uint64 lastRewardBlock, uint256 accRewardPerShare);
     event EpochUpdated(address indexed owner, uint256 rewardPerBlock);
-    event LogUpdatedStakeAmount(address owner, uint256 stakeAmount);
     event LogUpdatedLockTime(address owner, uint256 lockTime);
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event PoolAlived(address indexed owner, bool _alive);
@@ -142,13 +139,6 @@ contract SynthrStaking is Ownable, Pausable {
     function revivePool() external onlyOwner {
         killed = false;
         emit PoolAlived(msg.sender, false);
-    }
-
-    function setStakeAmount(
-        uint256 _stakeAmount
-    ) external onlyOwner {
-        stakeAmount = _stakeAmount;
-        emit LogUpdatedStakeAmount(msg.sender, stakeAmount);
     }
 
     function setLockTime(
