@@ -61,7 +61,6 @@ contract SynthrStaking is Ownable, Pausable {
     event Claimed(address indexed user, uint256 pendingRewardAmount);
     event LogUpdatePool(uint64 lastRewardBlock, uint256 accRewardPerShare);
     event EpochUpdated(address indexed owner, uint256 rewardPerBlock);
-    event LogUpdatedLockTime(address owner, uint256 lockTime);
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event PoolAlived(address indexed owner, bool _alive);
     event KillPool(address indexed owner, bool _killed);
@@ -70,7 +69,6 @@ contract SynthrStaking is Ownable, Pausable {
 
     constructor(address _admin, address _rewardToken, uint256[] memory _lockType, LockInfo[] memory _lockInfo) Ownable(_admin) {
         require(_lockInfo.length == _lockType.length, "SynthrStaking: length not equal");
-        lockTime = 10 days;
         REWARD_TOKEN = IERC20(_rewardToken);
 
         for (uint256 i; i < _lockType.length; i++) {
@@ -136,13 +134,6 @@ contract SynthrStaking is Ownable, Pausable {
     function revivePool() external onlyOwner {
         killed = false;
         emit PoolAlived(msg.sender, false);
-    }
-
-    function setLockTime(
-        uint256 _lockTime
-    ) external onlyOwner {
-        lockTime = _lockTime;
-        emit LogUpdatedLockTime(msg.sender, _lockTime);
     }
 
     /// @notice update epoch of pool
@@ -258,7 +249,7 @@ contract SynthrStaking is Ownable, Pausable {
     function withdraw(address _to) external whenNotPaused {
         uint256 _coolDownPeriod = coolDownPeriod[msg.sender];
         require(_coolDownPeriod != 0, "SynthrStaking: request for withdraw");
-        require(_coolDownPeriod + lockTime < block.timestamp, "SynthrStaking: lock time not end");
+        require(_coolDownPeriod < block.timestamp, "SynthrStaking: lock time not end");
         PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
 
