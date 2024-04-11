@@ -65,7 +65,6 @@ contract SynthrStaking is Ownable, Pausable {
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event PoolAlived(address indexed owner, bool _alive);
     event KillPool(address indexed owner, bool _killed);
-    event RollOverReward(address indexed user, uint256 newUnlockType, uint256 unlockTime);
     event RecoveredToken(address indexed owner, address indexed token, uint256 amount);
     event WithdrawPenalty(address indexed owner, address indexed to, uint256 penaltyAmount);
 
@@ -247,26 +246,6 @@ contract SynthrStaking is Ownable, Pausable {
         }
 
         emit Claimed(msg.sender, _pendingReward);
-    }
-
-    function rollOverTime(uint256 _newLockType) external whenNotPaused isAlive {
-        LockInfo memory _newlockInfo = lockInfo[_newLockType];
-        require(_newlockInfo.exist, "SynthrStaking: lock type not exist");
-
-        UserInfo memory _user = userInfo[msg.sender];
-        require(_user.lockType < _newLockType, "SynthrStaking: Can only increase lock duration");
-        require(_newlockInfo.totalStaked + _user.amount <= _newlockInfo.maxPoolSize, "SynthrStaking: max amount limit exceed");
-
-        lockInfo[_user.lockType].totalStaked -= _user.amount;
-        uint256 _increaseTime = _newLockType - _user.lockType;
-        _user.unlockEnd += _increaseTime;
-        _user.lockType = _newLockType;
-        userInfo[msg.sender] = _user;
-
-        _newlockInfo.totalStaked += _user.amount;
-        lockInfo[_newLockType] = _newlockInfo;
-
-        emit RollOverReward(msg.sender, _newLockType, _user.unlockEnd);
     }
 
     function withdrawRequest() external whenNotPaused {
