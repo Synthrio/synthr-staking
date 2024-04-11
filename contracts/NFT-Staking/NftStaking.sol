@@ -390,6 +390,13 @@ contract NftStaking is IERC721Receiver, Ownable {
             _calAccRewardPerShare(_accRewardPerShare, _userInfo.amount) -
                 _userInfo.rewardDebt
         );
+
+        uint256 _excessReward = _calculateExcessReward(msg.sender, _userInfo.amount, _poolInfo.rewardPerBlock);
+        if (_pending < _excessReward) {
+            _pending = 0;
+        } else {
+            _pending -= _excessReward;
+        }
     }
 
     function _calAccPerShare(
