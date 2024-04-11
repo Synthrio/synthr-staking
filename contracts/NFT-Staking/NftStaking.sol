@@ -339,7 +339,7 @@ contract NftStaking is IERC721Receiver, Ownable {
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
         (
-            int256 accumulatedReward,
+            ,
             uint256 _pendingReward
         ) = _calAccumaltedAndPendingReward(
                 _poolInfo.accRewardPerShare,
@@ -355,14 +355,8 @@ contract NftStaking is IERC721Receiver, Ownable {
         }
 
         // Effects
-        _user.rewardDebt =
-            accumulatedReward -
-            (_calAccRewardPerShare(_poolInfo.accRewardPerShare, _user.amount));
-        
-        _user.amount = 0;
         uint256 _tokenId = _user.tokenId;
-        _user.tokenId = 0;
-        userInfo[_pool][msg.sender] = _user;
+        delete userInfo[_pool][msg.sender];
 
         // Interactions
         if (_pendingReward != 0) {
