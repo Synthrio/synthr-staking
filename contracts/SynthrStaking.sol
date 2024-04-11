@@ -143,7 +143,7 @@ contract SynthrStaking is Ownable, Pausable {
         uint256 _rewardPerBlock
     ) external whenNotPaused isAlive onlyOwner {
         PoolInfo memory _poolInfo = poolInfo;
-        poolInfo.rewardPerBlock = _rewardPerBlock;
+        _poolInfo.rewardPerBlock = _rewardPerBlock;
         ++_poolInfo.epoch;
 
         poolInfo = _poolInfo;
