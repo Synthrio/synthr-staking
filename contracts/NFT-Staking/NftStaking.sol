@@ -312,12 +312,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _user.rewardDebt
             );
 
-        uint256 _excessReward = _calculateExcessReward(msg.sender, _user.amount, _poolInfo.rewardPerBlock);
-        if (_pendingReward < _excessReward) {
-            _pendingReward = 0;
-        } else {
-            _pendingReward -= _excessReward;
-        }
+        _pendingReward = _pendingRewardDeduction(_user.amount, _poolInfo.rewardPerBlock, _pendingReward);
 
         // Effects
         _user.rewardDebt = accumulatedReward;
@@ -347,12 +342,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _user.rewardDebt
             );
 
-        uint256 _excessReward = _calculateExcessReward(msg.sender, _user.amount, _poolInfo.rewardPerBlock);
-        if (_pendingReward < _excessReward) {
-            _pendingReward = 0;
-        } else {
-            _pendingReward -= _excessReward;
-        }
+        _pendingReward = _pendingRewardDeduction(_user.amount, _poolInfo.rewardPerBlock, _pendingReward);
 
         // Effects
         uint256 _tokenId = _user.tokenId;
@@ -391,12 +381,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _userInfo.rewardDebt
         );
 
-        uint256 _excessReward = _calculateExcessReward(msg.sender, _userInfo.amount, _poolInfo.rewardPerBlock);
-        if (_pending < _excessReward) {
-            _pending = 0;
-        } else {
-            _pending -= _excessReward;
-        }
+        _pending = _pendingRewardDeduction(_userInfo.amount, _poolInfo.rewardPerBlock, _pending);
     }
 
     function _calAccPerShare(
@@ -436,8 +421,21 @@ contract NftStaking is IERC721Receiver, Ownable {
 
     function _calculateExcessReward(address _user, uint256 _amount, uint256 _rewardPerBlock) internal view returns(uint256 _excessReward) {
         uint256 _lockEndTime = (synthrStaking.userInfo(_user)).unlockEnd;
-        uint256 _rewardAmount = ((block.timestamp - _lockEndTime) / secondPerBlock) * _rewardPerBlock;
-        uint256 _accPerShare = _calAccPerShare(_rewardAmount, totalLockAmount); 
-        _excessReward = uint256(_calAccRewardPerShare(_accPerShare, _amount));
+        if (block.timestamp > _lockEndTime) {
+            uint256 _rewardAmount = ((block.timestamp - _lockEndTime) / secondPerBlock) * _rewardPerBlock;
+            uint256 _accPerShare = _calAccPerShare(_rewardAmount, totalLockAmount); 
+            _excessReward = uint256(_calAccRewardPerShare(_accPerShare, _amount));
+        }
+    }
+
+    function _pendingRewardDeduction(uint256 _amount, uint256 _rewardPerBlock, uint256 _pendingReward) internal view returns(uint256) {
+        uint256 _excessReward = _calculateExcessReward(msg.sender, _amount, _rewardPerBlock);
+        if (_pendingReward < _excessReward) {
+            _pendingReward = 0;
+        } else {
+            _pendingReward -= _excessReward;
+        }
+
+        return _pendingReward;
     }
 }
