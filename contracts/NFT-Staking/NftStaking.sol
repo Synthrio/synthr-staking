@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "../interfaces/ISynthrNFT.sol";
 import "../interfaces/ISynthrStaking.sol";
 
+import "hardhat/console.sol";
+
 contract NftStaking is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
 
@@ -381,7 +383,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _userInfo.rewardDebt
         );
 
-        _pending = _pendingRewardDeduction(msg.sender, _userInfo.amount, _poolInfo.rewardPerBlock, _pending);
+        _pending = _pendingRewardDeduction(_user, _userInfo.amount, _poolInfo.rewardPerBlock, _pending);
     }
 
     function _calAccPerShare(
