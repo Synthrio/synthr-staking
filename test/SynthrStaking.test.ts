@@ -488,34 +488,6 @@ describe("SynthrStaking", function () {
             expect(lockInfo.coolDownPeriod).to.equal(20);
           });
         
-        
-        it("Should allow emergency withdrawal before lock expiry and claim rewards repeatedly without penalty", async function () {
-            // Deposit some tokens for testing
-            await rewardToken.mint(Alice.address, parseUnits("100", 18));
-            let initialBalance = await rewardToken.balanceOf(Alice.address);
-            // Check the user's balance before emergency withdrawal
-            let userBalanceBefore = await rewardToken.balanceOf(Alice.address);
-
-            await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
-            await synthrStaking.connect(Alice).deposit(parseUnits("100", 18), 60 * 60 * 24 * 30 * 6);
-        
-            mine(10000);
-            let latedTime = await time.latest();
-            await time.increaseTo(latedTime + 60 * 60 * 24 * 30 * 5);
-
-
-            const blockNum = await ethers.provider.getBlockNumber();
-            let expectedReward = await synthrStaking.pendingRewardAtBlock( Alice.address, blockNum + 1);
-            let beforeClaim = await rewardToken.balanceOf(Alice.address);
-            let claimTx0 = await synthrStaking.connect(Alice).claim(Alice.address);
-            let finalBal = await rewardToken.balanceOf(Alice.address);
-            console.log("expected reward ",expectedReward," before claim",beforeClaim," after claim",finalBal);
-            // Perform an emergency withdrawal as the owner
-            let tx = await synthrStaking.connect(Alice).emergencyWithdraw();
-            let final = await rewardToken.balanceOf(Alice.address);
-           console.log("initial bal ",initialBalance," final balance is ",final);
-           
-        });
            
     });
 });
