@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import exp from "constants";
 
 
 let owner: any, addr1: any, addr2: any, Alice: any, Bob: any, Joy: any, Roy: any, Matt: any;
@@ -459,6 +460,31 @@ describe("SynthrStaking", function () {
                     .deposit(parseUnits("1000001", 18), 60*60*24*30*6)
                 ).to.be.revertedWith('SynthrStaking: max amount limit exceed');
         });
+
+        it("Should allow contract owner to recover tokens sent to the contract address", async function () {
+
+            // Send tokens to the contract address (simulating accidental transfer)
+            await rewardToken.mint(owner.address, parseUnits("100", 18));
+            const tokenAmount = parseUnits("100", 18);
+            await rewardToken.connect(owner).transfer(synthrStaking.address, tokenAmount);
+        
+            // Check the contract's token balance before recovery
+            const contractBalanceBefore = await rewardToken.balanceOf(synthrStaking.address);
+
+            const ownerBalBef = await rewardToken.balanceOf(owner.address);
+            expect(ownerBalBef).to.be.equal(0);
+            // Call the recover function as the contract owner
+            await synthrStaking.connect(owner).recoverToken(rewardToken.address,owner.address,tokenAmount);
+            const ownerBalAft = await rewardToken.balanceOf(owner.address);
+            expect(ownerBalAft).to.be.equal(ethers.utils.parseEther("100"));
+        
+            // Check the contract's token balance after recovery
+            const contractBalanceAfter = await rewardToken.balanceOf(synthrStaking.address);
+            // expect(contractBalanceAfter+parseUnits("100",18)).to.equal(contractBalanceBefore);
+
+           
+        });
+        
            
     });
 });
