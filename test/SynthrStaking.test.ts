@@ -184,7 +184,7 @@ describe("SynthrStaking", function () {
             let AliceInfo = await synthrStaking.userInfo(Alice.address)
 
             expect(AliceInfo.amount).to.equal(lockAmount.Alice);
-
+            console.log(AliceInfo.lockType," ",AliceInfo.unlockEnd);
             expect(AliceInfo.rewardDebt).to.equal(amt0);
 
         })
@@ -428,6 +428,24 @@ describe("SynthrStaking", function () {
           
         });  
 
+        it("Should deposit tokens with multiple lock types and verify lock details", async function () {
+            await depositTx();
+
+            // Check user's lock type and unlock end time
+            let userLockType = await synthrStaking.userInfo(Alice.address);
+            let locktype1 =userLockType.lockType;
+            let userLockType2 = await synthrStaking.userInfo(Bob.address);
+            let locktype2 =userLockType2.lockType;
+            let userLockType3 = await synthrStaking.userInfo(Joy.address);
+            let locktype3 =userLockType3.lockType;
+            let userLockType4 = await synthrStaking.userInfo(Roy.address);
+            let locktype4 =userLockType4.lockType;
+
+            expect(locktype1*1.5).to.be.equal(locktype2);
+            expect(locktype1*2).to.be.equal(locktype3);
+            expect(locktype1*3).to.be.equal(locktype4);
+        });
+        
         
            
     });
