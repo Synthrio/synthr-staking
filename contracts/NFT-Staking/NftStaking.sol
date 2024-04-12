@@ -312,7 +312,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _user.rewardDebt
             );
 
-        _pendingReward = _pendingRewardDeduction(_user.amount, _poolInfo.rewardPerBlock, _pendingReward);
+        _pendingReward = _pendingRewardDeduction(msg.sender, _user.amount, _poolInfo.rewardPerBlock, _pendingReward);
 
         // Effects
         _user.rewardDebt = accumulatedReward;
@@ -342,7 +342,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _user.rewardDebt
             );
 
-        _pendingReward = _pendingRewardDeduction(_user.amount, _poolInfo.rewardPerBlock, _pendingReward);
+        _pendingReward = _pendingRewardDeduction(msg.sender, _user.amount, _poolInfo.rewardPerBlock, _pendingReward);
 
         // Effects
         uint256 _tokenId = _user.tokenId;
@@ -381,7 +381,7 @@ contract NftStaking is IERC721Receiver, Ownable {
                 _userInfo.rewardDebt
         );
 
-        _pending = _pendingRewardDeduction(_userInfo.amount, _poolInfo.rewardPerBlock, _pending);
+        _pending = _pendingRewardDeduction(msg.sender, _userInfo.amount, _poolInfo.rewardPerBlock, _pending);
     }
 
     function _calAccPerShare(
@@ -428,8 +428,8 @@ contract NftStaking is IERC721Receiver, Ownable {
         }
     }
 
-    function _pendingRewardDeduction(uint256 _amount, uint256 _rewardPerBlock, uint256 _pendingReward) internal view returns(uint256) {
-        uint256 _excessReward = _calculateExcessReward(msg.sender, _amount, _rewardPerBlock);
+    function _pendingRewardDeduction(address _user, uint256 _amount, uint256 _rewardPerBlock, uint256 _pendingReward) internal view returns(uint256) {
+        uint256 _excessReward = _calculateExcessReward(_user, _amount, _rewardPerBlock);
         if (_pendingReward < _excessReward) {
             _pendingReward = 0;
         } else {
