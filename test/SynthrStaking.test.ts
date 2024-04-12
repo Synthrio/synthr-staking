@@ -397,5 +397,41 @@ describe("SynthrStaking", function () {
             let tx = await synthrStaking.connect(Alice).withdraw( Alice.address);
         });
 
+        it("Should allow emergency withdrawals by the user", async function () {
+            // Deposit some tokens for testing
+            await rewardToken.mint(Alice.address, parseUnits("100", 18));
+
+            // Check the user's balance before emergency withdrawal
+            let userBalanceBefore = await rewardToken.balanceOf(Alice.address);
+
+            await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
+            await synthrStaking.connect(Alice).deposit(parseUnits("100", 18), 60 * 60 * 24 * 30 * 6);
+        
+            // Perform an emergency withdrawal as the owner
+            let tx = await synthrStaking.connect(Alice).emergencyWithdraw();
+        
+            // Check if the EmergencyWithdraw event was emitted
+            await expect(tx)
+                .to.emit(synthrStaking, "EmergencyWithdraw")
+                .withArgs(Alice.address, parseUnits("100", 18));
+        
+            let userBalanceAfter = await rewardToken.balanceOf(Alice.address);
+            expect(userBalanceAfter).to.equal(userBalanceBefore);
+        });
+        
+     it("Should not withdraw token to user before cooldown", async function () {
+            await depositTx();
+            await synthrStaking.connect(Alice).withdrawRequest();
+            let latedTime = await time.latest();
+            // await time.increaseTo(latedTime + 60*60*24);
+            const blockNum = await ethers.provider.getBlockNumber();
+            let expectedReward = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum + 1);
+          
+            await expect(synthrStaking.connect(Alice)
+                .withdraw(Alice.address))
+                .to.be.revertedWith("SynthrStaking: lock time not end")
+        
+          
+        });  
     });
 });
