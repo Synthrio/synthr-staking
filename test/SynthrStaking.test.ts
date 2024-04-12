@@ -446,7 +446,19 @@ describe("SynthrStaking", function () {
             expect(locktype1*3).to.be.equal(locktype4);
         });
         
-        
+        it("Should revert on depositing tokens more than max allowed", async function () {
+            await rewardToken.mint(Alice.address, parseUnits("1000001", 18));
+            await rewardToken.connect(Alice)
+                .approve(synthrStaking.address, parseUnits("1000001", 18)
+            );
+
+            // let tx = await synthrStaking.connect(Alice).deposit(parseUnits("1000001", 18), 60*60*24*30*6);
+            
+            await expect(
+                synthrStaking.connect(Alice)
+                    .deposit(parseUnits("1000001", 18), 60*60*24*30*6)
+                ).to.be.revertedWith('SynthrStaking: max amount limit exceed');
+        });
            
     });
 });
