@@ -136,6 +136,16 @@ contract SynthrStaking is Ownable, Pausable {
         emit PoolAlived(msg.sender, false);
     }
 
+    function setLockInfo(uint256 _lockType, uint256 _maxPoolSize, uint256 _penalty, uint256 _coolDownPeriod) external onlyOwner {
+        LockInfo memory _lockInfo = lockInfo[_lockType];
+        require(_lockInfo.exist, "SynthrStaking: not exist");
+        _lockInfo.coolDownPeriod = _coolDownPeriod;
+        _lockInfo.maxPoolSize = _maxPoolSize;
+        _lockInfo.penalty = _penalty;
+
+        lockInfo[_lockType] = _lockInfo;
+    }
+
     /// @notice update epoch of pool
     function updateEpoch(
         address _user,
