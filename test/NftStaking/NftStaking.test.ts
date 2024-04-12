@@ -197,6 +197,21 @@ describe("NFTStaking", function () {
             expect(poolInfoSyHODL.exist).to.equal(true);
             expect(poolInfoSyDIAMOND.exist).to.equal(true);
             expect(poolInfoSyMAXI.exist).to.equal(true);
+
+              //check owner reward token balance after epoch update
+              expect(poolInfoSyCHAD.rewardPerBlock).to.equal(1000);
+              expect(poolInfoSyBULL.rewardPerBlock).to.equal(1000);
+              expect(poolInfoSyHODL.rewardPerBlock).to.equal(1000);
+              expect(poolInfoSyDIAMOND.rewardPerBlock).to.equal(1000);
+              expect(poolInfoSyMAXI.rewardPerBlock).to.equal(1000);
+          });
+  
+          it("Should revert while updating epoch with different array length of pool and reward", async function () {
+              let tx = await nftStaking.addPool(pools);
+              await rewardToken.connect(owner)
+              .approve(nftStaking.address, ethers.utils.parseEther("100000"));
+              await expect(nftStaking.updateEpoch(owner.address, ethers.utils.parseEther("100000"), pools, [1000, 1000, 1000]))
+              .to.be.reverted;   
         });
 
 
