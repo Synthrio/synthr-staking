@@ -201,6 +201,7 @@ contract SynthrStaking is Ownable, Pausable {
 
         PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
+        require(_user.unlockEnd == 0 || _user.unlockEnd > block.timestamp, "SynthrStaking: withdraw locked token");
 
         require(_user.lockType == 0 || _user.lockType == _lockType, "SynthrStaking: lock type differ");
 
