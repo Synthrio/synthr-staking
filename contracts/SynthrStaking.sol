@@ -39,7 +39,7 @@ contract SynthrStaking is Ownable, Pausable {
     }
 
     bool public killed;
-    
+    bool public emergencyWithdrawAllowed;
     uint256 public lockTime;
 
     /// @notice Total lock amount of users
@@ -66,6 +66,7 @@ contract SynthrStaking is Ownable, Pausable {
     event KillPool(address indexed owner, bool _killed);
     event RecoveredToken(address indexed owner, address indexed token, uint256 amount);
     event WithdrawPenalty(address indexed owner, address indexed to, uint256 penaltyAmount);
+    event ToggleEmergencyWithdraw(address indexed owner, bool emergencyWithdrawAllowed);
 
     constructor(address _admin, address _rewardToken, uint256[] memory _lockType, LockInfo[] memory _lockInfo) Ownable(_admin) {
         require(_lockInfo.length == _lockType.length, "SynthrStaking: length not equal");
@@ -138,12 +139,18 @@ contract SynthrStaking is Ownable, Pausable {
 
     function setLockInfo(uint256 _lockType, uint256 _maxPoolSize, uint256 _penalty, uint256 _coolDownPeriod) external onlyOwner {
         LockInfo memory _lockInfo = lockInfo[_lockType];
-        require(_lockInfo.exist, "SynthrStaking: not exist");
         _lockInfo.coolDownPeriod = _coolDownPeriod;
         _lockInfo.maxPoolSize = _maxPoolSize;
         _lockInfo.penalty = _penalty;
+        _lockInfo.exist = true;
 
         lockInfo[_lockType] = _lockInfo;
+    }
+
+    function toggleEmergencyWithdraw() external onlyOwner {
+        emergencyWithdrawAllowed = !emergencyWithdrawAllowed;
+
+        emit ToggleEmergencyWithdraw(msg.sender, emergencyWithdrawAllowed);
     }
 
     /// @notice update epoch of pool
@@ -290,6 +297,7 @@ contract SynthrStaking is Ownable, Pausable {
     }
 
     function emergencyWithdraw() public whenNotPaused {
+        require(emergencyWithdrawAllowed, "SynthrStaking: emergency withdraw not allowed");
         UserInfo memory _user = userInfo[msg.sender];
         uint256 _amount = _user.amount;
 

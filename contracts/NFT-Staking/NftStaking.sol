@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "../interfaces/ISynthrNFT.sol";
 import "../interfaces/ISynthrStaking.sol";
 
-import "hardhat/console.sol";
-
 contract NftStaking is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
 
