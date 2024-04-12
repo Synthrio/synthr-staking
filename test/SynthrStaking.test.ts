@@ -477,14 +477,16 @@ describe("SynthrStaking", function () {
             await synthrStaking.connect(owner).recoverToken(rewardToken.address,owner.address,tokenAmount);
             const ownerBalAft = await rewardToken.balanceOf(owner.address);
             expect(ownerBalAft).to.be.equal(ethers.utils.parseEther("100"));
-        
-            // Check the contract's token balance after recovery
-            const contractBalanceAfter = await rewardToken.balanceOf(synthrStaking.address);
-            // expect(contractBalanceAfter+parseUnits("100",18)).to.equal(contractBalanceBefore);
-
            
         });
         
+        it("Should set lock info with a valid lock type, max pool size, penalty, and cooldown period", async function () {
+            await synthrStaking.setLockInfo(1, 2000, 20, 20);
+            const lockInfo = await synthrStaking.lockInfo(1);
+            expect(lockInfo.maxPoolSize).to.equal(2000);
+            expect(lockInfo.penalty).to.equal(20);
+            expect(lockInfo.coolDownPeriod).to.equal(20);
+          });
            
     });
 });
