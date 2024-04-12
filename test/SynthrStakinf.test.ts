@@ -99,7 +99,7 @@ function calAccPerShare(rewardAmount: BigNumber, lpSupply: BigNumber): BigNumber
     return rewardAmount.mul(ACC_REWARD_PRECISION).div(lpSupply);
 }
 
-describe.only("SynthrStaking", function () {
+describe("SynthrStaking", function () {
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
