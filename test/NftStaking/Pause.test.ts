@@ -92,20 +92,22 @@ async function mintNFTsToLpProviders() {
     Roy: ethers.utils.parseEther("400000"),
   };
   let times = await time.latestBlock();
+  const tokenURI = "https://qn-shared.quicknode-ipfs.com/ipfs/QmeVHZzKGEDbEbG5MVz4hUucNf4qZTRfW18AgdJNTrv22m";
+
 
   await syCHAD
     .connect(owner)
     .safeMint(Alice.address);
-  await syCHAD.connect(owner).safeMint(Roy.address);
+  await syCHAD.connect(owner).safeMint(Roy.address, tokenURI);
   await syBULL
     .connect(owner)
-    .safeMint(Bob.address);
+    .safeMint(Bob.address, tokenURI);
   await syHODL
     .connect(owner)
-    .safeMint(Joy.address);
+    .safeMint(Joy.address, tokenURI);
   await syDIAMOND
     .connect(owner)
-    .safeMint(Roy.address);
+    .safeMint(Roy.address, tokenURI);
   return lpAmount.Alice.add(
     lpAmount.Bob.add(lpAmount.Joy.add(lpAmount.Roy.mul(2)))
   ); //sum of above lpAmount.user
@@ -159,7 +161,7 @@ async function pauseUser() {
   return tx;
 }
 
-async function createLockTx(user:any) {
+async function createLockTx(user: any) {
   await lpTtoken.mint(
     user.address,
     parseUnits("100000000000000000000000", 18)
@@ -331,16 +333,16 @@ describe("NFTStaking Pause functionality", function () {
     });
 
     it("Should not allow to pause if user lock time not end", async function () {
-        await addPoolFunc();
-        await approveNFT();
-        await depositNfts();  
+      await addPoolFunc();
+      await approveNFT();
+      await depositNfts();
 
-        let tx = nftStaking.pauseUserReward(syCHAD.address, [
-            Roy.address,
-            Alice.address,
-          ]);
-        await expect(tx).to.revertedWith("NftStaking: lock time not expired");
-      });
+      let tx = nftStaking.pauseUserReward(syCHAD.address, [
+        Roy.address,
+        Alice.address,
+      ]);
+      await expect(tx).to.revertedWith("NftStaking: lock time not expired");
+    });
 
     it("Should allow to unpause if user increase lock time", async function () {
       await addPoolFunc();
@@ -417,35 +419,35 @@ describe("NFTStaking Pause functionality", function () {
     });
 
     it("Should not allow to unpause after withdraw and pause", async function () {
-        await addPoolFunc();
-        await approveNFT();
-        await depositNfts();
-        await mine(1296000);
-  
-        await pauseUser();
-  
-        let tx1 = await nftStaking.connect(Alice).withdraw(syCHAD.address);
+      await addPoolFunc();
+      await approveNFT();
+      await depositNfts();
+      await mine(1296000);
 
-        await votingEscrow
-    .connect(Alice)
-    .withdraw();
+      await pauseUser();
 
-  await lpTtoken.mint(
-    Alice.address,
-    parseUnits("100000000000000000000000", 18)
-  );
+      let tx1 = await nftStaking.connect(Alice).withdraw(syCHAD.address);
 
-  await lpTtoken
-    .connect(Alice)
-    .approve(votingEscrow.address, parseUnits("1000", 18));
-  const blockNum = await ethers.provider.getBlockNumber();
-  const block = await ethers.provider.getBlock(blockNum);
-  const timestamp = block.timestamp;
-  await votingEscrow
-    .connect(Alice)
-    .createLock(parseUnits("1000", 18), timestamp + 1000000);
-        
-        await expect(nftStaking.connect(Alice).unpauseReward(syCHAD.address)).to.revertedWith("NftStaking: token id not deposited")
+      await votingEscrow
+        .connect(Alice)
+        .withdraw();
+
+      await lpTtoken.mint(
+        Alice.address,
+        parseUnits("100000000000000000000000", 18)
+      );
+
+      await lpTtoken
+        .connect(Alice)
+        .approve(votingEscrow.address, parseUnits("1000", 18));
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp;
+      await votingEscrow
+        .connect(Alice)
+        .createLock(parseUnits("1000", 18), timestamp + 1000000);
+
+      await expect(nftStaking.connect(Alice).unpauseReward(syCHAD.address)).to.revertedWith("NftStaking: token id not deposited")
     });
 
     it("Should allow to claim reward after unpause", async function () {
