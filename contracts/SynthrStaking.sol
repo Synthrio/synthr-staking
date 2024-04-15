@@ -238,6 +238,7 @@ contract SynthrStaking is Ownable, Pausable {
     /// @param _to Receiver rewards.
     function claim(address _to) external whenNotPaused {
         UserInfo memory _user = userInfo[msg.sender];
+        require(_user.unlockEnd < block.timestamp, "SynthrStaking: claim after lock end");
         LockInfo memory _lockInfo = updatePool(_user.lockType);
 
         (
