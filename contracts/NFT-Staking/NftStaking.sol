@@ -11,7 +11,7 @@ contract NftStaking is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
 
     /// @notice Address of reward token contract.
-    IERC20 public immutable REWARD_TOKEN;
+    IERC20 public immutable SYNTH;
 
     uint256 public constant ACC_REWARD_PRECISION = 1e18;
 
@@ -81,8 +81,8 @@ contract NftStaking is IERC721Receiver, Ownable {
     event totalLockAmountUpdated(address owner, uint256 totalLockAmount);
     event LogUpdatedStakeAmount(address owner, uint256 stakeAmount);
 
-    constructor(address _admin, address _rewardToken, address _synthrStaking) Ownable(_admin) {
-        REWARD_TOKEN = IERC20(_rewardToken);
+    constructor(address _admin, address _SYNTH, address _synthrStaking) Ownable(_admin) {
+        SYNTH = IERC20(_SYNTH);
         synthrStaking = ISynthrStaking(_synthrStaking);
     }
 
@@ -185,7 +185,7 @@ contract NftStaking is IERC721Receiver, Ownable {
             poolInfo[_pool[i]] = _poolInfo;
         }
 
-        REWARD_TOKEN.safeTransferFrom(_user, address(this), _rewardAmount);
+        SYNTH.safeTransferFrom(_user, address(this), _rewardAmount);
 
         emit EpochUpdated(msg.sender, _pool, _rewardPerBlock);
     }
@@ -320,7 +320,7 @@ contract NftStaking is IERC721Receiver, Ownable {
 
         // Interactions
         if (_pendingReward != 0) {
-            REWARD_TOKEN.safeTransfer(_to, _pendingReward);
+            SYNTH.safeTransfer(_to, _pendingReward);
         }
 
         emit Claimed(msg.sender, _pool, _pendingReward);
@@ -350,7 +350,7 @@ contract NftStaking is IERC721Receiver, Ownable {
 
         // Interactions
         if (_pendingReward != 0) {
-            REWARD_TOKEN.safeTransfer(_to, _pendingReward);
+            SYNTH.safeTransfer(_to, _pendingReward);
         }
 
         ISynthrNFT(_pool).transferFrom(
