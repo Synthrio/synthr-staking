@@ -9,7 +9,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     let owner = deployer;
 
-    let ve = (await deployments.get("VotingEscrow")).address;
+    let ve = (await deployments.get("SynthrStaking")).address;
     console.log(ve);
 
     let rewardToken = process.env.REWARD_TOKEN_ARBITRUM_SEPOLIA_ADDRESS;

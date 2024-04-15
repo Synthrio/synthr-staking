@@ -154,7 +154,7 @@ contract NftStaking is IERC721Receiver, Ownable {
     function addPool(
         address[] memory _pool
     ) external onlyOwner {
-        for (uint256 i; i < _pool.length; i++) {
+        for (uint256 i; i < _pool.length; ++i) {
             poolInfo[_pool[i]].exist = true;
             poolInfo[_pool[i]].lastRewardBlock = uint64(block.number);
         }
@@ -176,7 +176,7 @@ contract NftStaking is IERC721Receiver, Ownable {
             "NftStaking: length of array doesn't mach"
         );
 
-        for (uint256 i; i < _pool.length; i++) {
+        for (uint256 i; i < _pool.length; ++i) {
             NFTPoolInfo memory _poolInfo = poolInfo[_pool[i]];
             require(_poolInfo.exist, "NftStaking: pool not exist");
             _poolInfo.rewardPerBlock = _rewardPerBlock[i];
