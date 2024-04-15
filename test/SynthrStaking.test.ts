@@ -84,39 +84,6 @@ async function setUp() {
     await synthrStaking.updateEpoch(owner.address, parseUnits("10000000000000000000000000000", 18), rewardPerBlock, lockAmount);
 
 }
-async function setUpCustom() {
-
-    let lockValue: any = [{
-        maxPoolSize: parseUnits("1000", 18),
-        penalty: 50,// 50% penalty
-        coolDownPeriod: 60*60, // 1-hr
-        totalStaked: 0,
-        exist: true,
-    }, {
-        maxPoolSize: parseUnits("1000", 18),
-        penalty: 50,
-        coolDownPeriod: 60*60,
-        totalStaked: 0,
-        exist: true,
-    }, {maxPoolSize: parseUnits("1000", 18),
-        penalty: 50,
-        coolDownPeriod: 60*60,
-        totalStaked: 0,
-        exist: true,
-    }, {maxPoolSize: parseUnits("1000", 18),
-        penalty: 50, 
-        coolDownPeriod: 60*60, 
-        totalStaked: 0,
-        exist: true,
-    }];
-    let lockAmount = [60*60*24*30*6, 60*60*24*30*9, 60*60*24*30*12, 60*60*24*30*18];
-
-    await rewardToken.mint(owner.address, parseUnits("10000000000000000000000000000", 18));
-
-    await rewardToken.approve(synthrStaking.address, parseUnits("10000000000000000000000000000", 18))
-    // rewardPerBlock = 5 * 10^18
-    await synthrStaking.updateEpoch(owner.address, parseUnits("10000000000000000000000000000", 18), parseUnits("5", 18));
-}
 
 
 async function depositTx() {
@@ -225,6 +192,8 @@ describe("SynthrStaking", function () {
         it("Should transfer reward amount after user triggered claim", async function () {
             await depositTx();
             await mine(1000);
+            let latedTime = await time.latest();
+            await time.increaseTo(latedTime + 60*60*24*30*6);
             const blockNum = await ethers.provider.getBlockNumber();
             let expectedReward = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum + 1);
             let tx = await synthrStaking.connect(Alice).claim(Alice.address);
