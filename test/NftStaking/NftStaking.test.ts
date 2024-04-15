@@ -178,7 +178,7 @@ describe("NFTStaking", function () {
         expect(await nftStaking.totalLockAmount()).to.equal(totalLockAmount);
     });
 
-    describe("Funtions", function () {
+    describe.only("Funtions", function () {
         it("Should add pool in nftStaking", async function () {
             let txns = await addPoolFunc();
             expect(txns[0])
@@ -211,7 +211,7 @@ describe("NFTStaking", function () {
               await rewardToken.connect(owner)
               .approve(nftStaking.address, ethers.utils.parseEther("100000"));
               await expect(nftStaking.updateEpoch(owner.address, ethers.utils.parseEther("100000"), pools, [1000, 1000, 1000]))
-              .to.be.reverted;   
+              .to.revertedWith("NftStaking: length of array doesn't mach")   
         });
 
         it("Should not be able to deposit without approving the contract", async function () {
@@ -219,19 +219,19 @@ describe("NFTStaking", function () {
             // should revert with insufficient allowance error
                 await expect(
                  nftStaking.connect(Alice).deposit(syCHAD.address, 1)
-                 ).to.be.reverted;
+                 ).to.revertedWith("NftStaking: low amount staked")   
 
                 await expect(
                  nftStaking.connect(Bob).deposit(syBULL.address, 1)
-                 ).to.be.reverted;
+                 ).to.revertedWith("NftStaking: low amount staked")   
 
                 await expect(
                     nftStaking.connect(Joy).deposit(syHODL.address, 1)
-                    ).to.be.reverted;
+                    ).to.revertedWith("NftStaking: low amount staked")   
 
                 await expect(
                     nftStaking.connect(Roy).deposit(syDIAMOND.address, 1)
-                    ).to.be.reverted;
+                    ).to.revertedWith("NftStaking: low amount staked")   
          });
 
         it("Should have pending reward zero if user has not deposited in pool", async function () {
@@ -543,7 +543,7 @@ describe("NFTStaking", function () {
 
             await expect(nftStaking.connect(Alice)
             .claim(pools[0],invalidAddress))
-            .to.be.reverted;
+            .to.be.revertedWithCustomError(rewardToken, "ERC20InvalidReceiver");
         });
 
     });
