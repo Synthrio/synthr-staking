@@ -24,15 +24,12 @@ contract SynthrStaking is Ownable, Pausable {
     }
 
     struct LockInfo {
+        bool exist;
+        uint64 lastRewardBlock;
         uint256 maxPoolSize;
         uint256 penalty;
         uint256 coolDownPeriod;
         uint256 totalStaked;
-        bool exist;
-    }
-
-    struct PoolInfo {
-        uint64 lastRewardBlock;
         uint256 rewardPerBlock;
         uint256 accRewardPerShare;
         uint256 epoch;
@@ -47,7 +44,6 @@ contract SynthrStaking is Ownable, Pausable {
 
     uint256 public penaltyAmount;
 
-    PoolInfo public poolInfo;
 
     /// @notice Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
@@ -60,7 +56,11 @@ contract SynthrStaking is Ownable, Pausable {
     event Withdraw(address indexed user, uint256 tokenId);
     event Claimed(address indexed user, uint256 pendingRewardAmount);
     event LogUpdatePool(uint64 lastRewardBlock, uint256 accRewardPerShare);
-    event EpochUpdated(address indexed owner, uint256 rewardPerBlock);
+    event EpochUpdated(
+        address indexed owner,
+        uint256[] lockType,
+        uint256[] rewardPerBlock
+    );
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event PoolAlived(address indexed owner, bool _alive);
     event KillPool(address indexed owner, bool _killed);
@@ -72,7 +72,7 @@ contract SynthrStaking is Ownable, Pausable {
         require(_lockInfo.length == _lockType.length, "SynthrStaking: length not equal");
         REWARD_TOKEN = IERC20(_rewardToken);
 
-        for (uint256 i; i < _lockType.length; i++) {
+        for (uint256 i; i < _lockType.length; ++i) {
             lockInfo[_lockType[i]] = _lockInfo[i];
         }
     }
@@ -157,49 +157,53 @@ contract SynthrStaking is Ownable, Pausable {
     function updateEpoch(
         address _user,
         uint256 _rewardAmount,
-        uint256 _rewardPerBlock
+        uint256[] memory _rewardPerBlock,
+        uint256[] memory _lockType
     ) external whenNotPaused isAlive onlyOwner {
-        PoolInfo memory _poolInfo = poolInfo;
-        _poolInfo.rewardPerBlock = _rewardPerBlock;
-        ++_poolInfo.epoch;
+        require(_rewardPerBlock.length == _lockType.length, "SynthrStaking: length not equal");
 
-        poolInfo = _poolInfo;
+        for (uint256 i; i < _rewardPerBlock.length; ++i) {
+
+            LockInfo memory _lockInfo = lockInfo[_lockType[i]];
+            _lockInfo.rewardPerBlock = _rewardPerBlock[i];
+            ++_lockInfo.epoch;
+
+            lockInfo[_lockType[i]] = _lockInfo;
+        }
 
         REWARD_TOKEN.safeTransferFrom(_user, address(this), _rewardAmount);
-
-        emit EpochUpdated(msg.sender, _rewardPerBlock);
+        emit EpochUpdated(msg.sender, _lockType,_rewardPerBlock);
     }
-
+    
     /// @notice Update reward variables of the pool.
-    function updatePool() public returns (PoolInfo memory _poolInfo) {
-        _poolInfo = poolInfo;
+    function updatePool(uint256 _lockType) public returns (LockInfo memory _lockInfo) {
+        _lockInfo = lockInfo[_lockType];
+        require(_lockInfo.exist, "SynthrStaking: lock type not exist");
         uint256 _lpSupply = totalSupply;
-        if (block.number > _poolInfo.lastRewardBlock) {
+        if (block.number > _lockInfo.lastRewardBlock) {
             if (_lpSupply > 0) {
-                uint256 _blocks = block.number - _poolInfo.lastRewardBlock;
-                uint256 _rewardAmount = (_blocks * _poolInfo.rewardPerBlock);
-                _poolInfo.accRewardPerShare += _calAccPerShare(
+                uint256 _blocks = block.number - _lockInfo.lastRewardBlock;
+                uint256 _rewardAmount = (_blocks * _lockInfo.rewardPerBlock);
+                _lockInfo.accRewardPerShare += _calAccPerShare(
                     _rewardAmount,
                     _lpSupply
                 );
             }
-            _poolInfo.lastRewardBlock = uint64(block.number);
-            poolInfo = _poolInfo;
+            _lockInfo.lastRewardBlock = uint64(block.number);
 
             emit LogUpdatePool(
-                _poolInfo.lastRewardBlock,
-                _poolInfo.accRewardPerShare
+                _lockInfo.lastRewardBlock,
+                _lockInfo.accRewardPerShare
             );
         }
     }
 
     /// @notice Deposit token.
     function deposit(uint256 _amount, uint256 _lockType) external whenNotPaused isAlive {
-        LockInfo memory _lockInfo = lockInfo[_lockType];
-        require(_lockInfo.exist, "SynthrStaking: lock type not exist");
+        LockInfo memory _lockInfo = updatePool(_lockType);
+        
         require(_lockInfo.totalStaked + _amount <= _lockInfo.maxPoolSize, "SynthrStaking: max amount limit exceed");
 
-        PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.unlockEnd == 0 || _user.unlockEnd > block.timestamp, "SynthrStaking: withdraw locked token");
 
@@ -207,7 +211,7 @@ contract SynthrStaking is Ownable, Pausable {
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(
-            _poolInfo.accRewardPerShare,
+            _lockInfo.accRewardPerShare,
             _amount
         );
 
@@ -233,19 +237,20 @@ contract SynthrStaking is Ownable, Pausable {
     /// @notice Claim proceeds for transaction sender to `to`.
     /// @param _to Receiver rewards.
     function claim(address _to) external whenNotPaused {
-        PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
+        LockInfo memory _lockInfo = updatePool(_user.lockType);
 
         (
             int256 accumulatedReward,
             uint256 _pendingReward
         ) = _calAccumaltedAndPendingReward(
-                _poolInfo.accRewardPerShare,
+                _lockInfo.accRewardPerShare,
                 _user.amount,
                 _user.rewardDebt
             );
 
         // Effects
+        lockInfo[_user.lockType] = _lockInfo;
         _user.rewardDebt = accumulatedReward;
         userInfo[msg.sender] = _user;
 
@@ -268,14 +273,14 @@ contract SynthrStaking is Ownable, Pausable {
         uint256 _coolDownPeriod = coolDownPeriod[msg.sender];
         require(_coolDownPeriod != 0, "SynthrStaking: request for withdraw");
         require(_coolDownPeriod < block.timestamp, "SynthrStaking: lock time not end");
-        PoolInfo memory _poolInfo = updatePool();
         UserInfo memory _user = userInfo[msg.sender];
+        LockInfo memory _lockInfo = updatePool(_user.lockType);
 
         (
             ,
             uint256 _pendingReward
         ) = _calAccumaltedAndPendingReward(
-                _poolInfo.accRewardPerShare,
+                _lockInfo.accRewardPerShare,
                 _user.amount,
                 _user.rewardDebt
             );
@@ -288,6 +293,7 @@ contract SynthrStaking is Ownable, Pausable {
             penaltyAmount += _user.amount - _amount;
         }
 
+        lockInfo[_user.lockType] = _lockInfo;
         delete userInfo[msg.sender];
         coolDownPeriod[msg.sender] = 0;
 
@@ -334,11 +340,11 @@ contract SynthrStaking is Ownable, Pausable {
     ) internal view returns (uint256 _pending) {
         uint256 _lpSupply = totalSupply;
         UserInfo memory _userInfo = userInfo[_user];
-        PoolInfo memory _pool = poolInfo;
-        uint256 _accRewardPerShare = _pool.accRewardPerShare;
-        if (_blockNumber > _pool.lastRewardBlock && _lpSupply != 0) {
-            uint256 _blocks = _blockNumber - (_pool.lastRewardBlock);
-            uint256 _rewardAmount = (_blocks * _pool.rewardPerBlock);
+        LockInfo memory _lockInfo = lockInfo[_userInfo.lockType];
+        uint256 _accRewardPerShare = _lockInfo.accRewardPerShare;
+        if (_blockNumber > _lockInfo.lastRewardBlock && _lpSupply != 0) {
+            uint256 _blocks = _blockNumber - (_lockInfo.lastRewardBlock);
+            uint256 _rewardAmount = (_blocks * _lockInfo.rewardPerBlock);
             _accRewardPerShare += (_calAccPerShare(_rewardAmount, _lpSupply));
         }
         _pending = uint256(
