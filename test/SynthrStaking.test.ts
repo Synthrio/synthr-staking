@@ -65,6 +65,47 @@ async function setUp() {
     await synthrStaking.updateEpoch(owner.address, parseUnits("10000000000000000000000000000", 18), parseUnits("100000000000", 18));
 
 }
+async function setUpCustom() {
+    // Contracts are deployed using the first signer/account by default
+    [owner, addr1, addr2, Alice, Bob, Joy, Roy, Matt] = await ethers.getSigners();
+    const RewardToken = await ethers.getContractFactory("MockToken");
+    rewardToken = await RewardToken.deploy()
+
+    let lockValue: any = [{
+        maxPoolSize: parseUnits("1000", 18),
+        penalty: 50,// 50% penalty
+        coolDownPeriod: 60*60, // 1-hr
+        totalStaked: 0,
+        exist: true,
+    }, {
+        maxPoolSize: parseUnits("1000", 18),
+        penalty: 50,
+        coolDownPeriod: 60*60,
+        totalStaked: 0,
+        exist: true,
+    }, {maxPoolSize: parseUnits("1000", 18),
+        penalty: 50,
+        coolDownPeriod: 60*60,
+        totalStaked: 0,
+        exist: true,
+    }, {maxPoolSize: parseUnits("1000", 18),
+        penalty: 50, 
+        coolDownPeriod: 60*60, 
+        totalStaked: 0,
+        exist: true,
+    }];
+    let lockAmount = [60*60*24*30*6, 60*60*24*30*9, 60*60*24*30*12, 60*60*24*30*18];
+
+    const SynthrStaking = await ethers.getContractFactory("SynthrStaking");
+    
+    synthrStaking = await SynthrStaking.deploy(owner.address, rewardToken.address, lockAmount, lockValue);
+
+    await rewardToken.mint(owner.address, parseUnits("10000000000000000000000000000", 18));
+
+    await rewardToken.approve(synthrStaking.address, parseUnits("10000000000000000000000000000", 18))
+    // rewardPerBlock = 5 * 10^18
+    await synthrStaking.updateEpoch(owner.address, parseUnits("10000000000000000000000000000", 18), parseUnits("5", 18));
+}
 
 
 async function depositTx() {
@@ -104,13 +145,14 @@ describe("SynthrStaking", function () {
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
 
-    beforeEach(async () => {
-        await setUp();
-    });
+    // beforeEach(async () => {
+    //     await setUp();
+    // });
 
     describe("Funtions", function () {
 
         it("Should have pending reward zero if user has not deposited in pool", async function () {
+            await setUp();
             const currentTime = await time.latest();
             await time.increaseTo(currentTime + 1000);
             expect(
@@ -128,6 +170,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should deposit user's token", async function () {
+            await setUp();
+
             let txns = await depositTx();
             await expect(txns[0])
                 .to.emit(synthrStaking, "Deposit")
@@ -143,6 +187,8 @@ describe("SynthrStaking", function () {
                 .withArgs(Roy.address, parseUnits("100", 18));
         })
         it("Should update user reward debt after deposits", async function () {
+            await setUp();
+
             mine(10000);
             await rewardToken.mint(Alice.address, parseUnits("100", 18));
 
@@ -169,6 +215,8 @@ describe("SynthrStaking", function () {
         })
 
         it("Should transfer reward amount after user triggered claim", async function () {
+            await setUp();
+
             await depositTx();
             await mine(1000);
             const blockNum = await ethers.provider.getBlockNumber();
@@ -182,6 +230,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should withdraw token to user", async function () {
+            await setUp();
+
             await depositTx();
             await mine(100000000);
             await synthrStaking.connect(Alice).withdrawRequest();
@@ -197,6 +247,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should transfer zero token if claim is triggered without depositing", async function () {
+            await setUp();
+
             await mine(1000);
             const blockNum = await ethers.provider.getBlockNumber();
             let tx = await synthrStaking.connect(Matt).claim(Matt.address);
@@ -209,6 +261,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should claim reward after withdraw is triggged", async function () {
+            await setUp();
+
             await depositTx();
             await mine(100000000);
             await synthrStaking.connect(Alice).withdrawRequest();
@@ -229,8 +283,35 @@ describe("SynthrStaking", function () {
             expect(pendingRewardAfterClaim).to.equal(BigNumber.from(0));
         });
 
+        it("Should claim reward after withdraw is triggged with custom configurations", async function () {
+            await setUpCustom(); //custom config
+
+            await depositTx();
+            await mine(10);
+            await synthrStaking.connect(Alice).withdrawRequest();
+            let latedTime = await time.latest();
+            //increasing the time to bypass the 1 hour cooling period after withdrawRequest()
+            await time.increaseTo(latedTime + 60*60 + 60); // 1-hr + 1 minute
+            const blockNum1 = await ethers.provider.getBlockNumber();
+            let expectedReward = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum1 + 1);
+            let tx = await synthrStaking.connect(Alice).withdraw(Alice.address);
+            let expectedReward2 = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum1 + 1);
+            await expect(tx)
+                .to.emit(synthrStaking, "Withdraw")
+                .withArgs(Alice.address, parseUnits("50", 18).add(expectedReward)); // penalty 50%
+            expect((await synthrStaking.userInfo(Alice.address)).amount).to.equal(0);
+            await mine(10); // 10 blocks are mined after the withdraw is triggged
+            const blockNum = await ethers.provider.getBlockNumber();
+            let pendingRewardBeforeClaim = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum);
+            let claimTx0 = await synthrStaking.connect(Alice).claim(Alice.address);
+            let pendingRewardAfterClaim = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum);
+            expect(pendingRewardAfterClaim).to.equal(BigNumber.from(0));
+        });
+
 
         it("Should update rewardDebt & AccumulatedUnoPerShare as calculated", async function () {
+            await setUp();
+
             await rewardToken.mint(Alice.address, parseUnits("100", 18));
 
             await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
@@ -259,6 +340,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should withdraw to user and claim reward", async function () {
+            await setUp();
+
             await depositTx();
             await mine(100000000);
             await synthrStaking.connect(Alice).withdrawRequest();
@@ -277,6 +360,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should not withdraw without withdraw request", async function () {
+            await setUp();
+
             await depositTx();
             await mine(1000 * 100000);
             
@@ -284,6 +369,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should not recieve full amount if withdraw before unlock time", async function () {
+            await setUp();
+
              await rewardToken.mint(Alice.address, parseUnits("100", 18));
             
             await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
@@ -306,6 +393,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should withdraw penalty amount", async function () {
+            await setUp();
+
             await rewardToken.mint(Alice.address, parseUnits("100", 18));
            
            await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
@@ -328,6 +417,8 @@ describe("SynthrStaking", function () {
        });
 
        it("Should not allow user to deposit if pool is paused", async function () {
+        await setUp();
+
             await synthrStaking.pausePool();
             await rewardToken.mint(Alice.address, parseUnits("100", 18));
             await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
@@ -335,6 +426,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should not allow user to withdraw if pool is paused", async function () {
+            await setUp();
+
             await depositTx();
             await mine(100000000);
             await synthrStaking.pausePool();
@@ -342,6 +435,8 @@ describe("SynthrStaking", function () {
         });
 
         it("Should allow user to withdraw if pool is kiiled", async function () {
+            await setUp();
+
             await depositTx();
             await mine(100000000);
 
