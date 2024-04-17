@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import exp from "constants";
 
 
 let owner: any, addr1: any, addr2: any, Alice: any, Bob: any, Joy: any, Roy: any, Matt: any;
@@ -184,7 +185,7 @@ describe("SynthrStaking", function () {
             let AliceInfo = await synthrStaking.userInfo(Alice.address)
 
             expect(AliceInfo.amount).to.equal(lockAmount.Alice);
-
+            console.log(AliceInfo.lockType," ",AliceInfo.unlockEnd);
             expect(AliceInfo.rewardDebt).to.equal(amt0);
 
         })
@@ -397,5 +398,96 @@ describe("SynthrStaking", function () {
             let tx = await synthrStaking.connect(Alice).withdraw( Alice.address);
         });
 
+        it("Should not allow emergency withdrawals by the user", async function () {
+            // Deposit some tokens for testing
+            await rewardToken.mint(Alice.address, parseUnits("100", 18));
+
+            // Check the user's balance before emergency withdrawal
+            let userBalanceBefore = await rewardToken.balanceOf(Alice.address);
+
+            await rewardToken.connect(Alice).approve(synthrStaking.address, parseUnits("100", 18));
+            await synthrStaking.connect(Alice).deposit(parseUnits("100", 18), 60 * 60 * 24 * 30 * 6);
+        
+        
+            // Check if the EmergencyWithdraw event was emitted
+            await expect(synthrStaking.connect(Alice).emergencyWithdraw())
+                .to.be.revertedWith('SynthrStaking: emergency withdraw not allowed');
+        
+        });
+        
+     it("Should not withdraw token to user before cooldown", async function () {
+            await depositTx();
+            await synthrStaking.connect(Alice).withdrawRequest();
+            let latedTime = await time.latest();
+            // await time.increaseTo(latedTime + 60*60*24);
+            const blockNum = await ethers.provider.getBlockNumber();
+            let expectedReward = await synthrStaking.pendingRewardAtBlock(Alice.address, blockNum + 1);
+          
+            await expect(synthrStaking.connect(Alice)
+                .withdraw(Alice.address))
+                .to.be.revertedWith("SynthrStaking: lock time not end")
+          
+        });  
+
+        it("Should deposit tokens with multiple lock types and verify lock details", async function () {
+            await depositTx();
+
+            // Check user's lock type and unlock end time
+            let userLockType = await synthrStaking.userInfo(Alice.address);
+            let locktype1 =userLockType.lockType;
+            let userLockType2 = await synthrStaking.userInfo(Bob.address);
+            let locktype2 =userLockType2.lockType;
+            let userLockType3 = await synthrStaking.userInfo(Joy.address);
+            let locktype3 =userLockType3.lockType;
+            let userLockType4 = await synthrStaking.userInfo(Roy.address);
+            let locktype4 =userLockType4.lockType;
+
+            expect(locktype1*1.5).to.be.equal(locktype2);
+            expect(locktype1*2).to.be.equal(locktype3);
+            expect(locktype1*3).to.be.equal(locktype4);
+        });
+        
+        it("Should revert on depositing tokens more than max allowed", async function () {
+            await rewardToken.mint(Alice.address, parseUnits("1000001", 18));
+            await rewardToken.connect(Alice)
+                .approve(synthrStaking.address, parseUnits("1000001", 18)
+            );
+
+            // let tx = await synthrStaking.connect(Alice).deposit(parseUnits("1000001", 18), 60*60*24*30*6);
+            
+            await expect(
+                synthrStaking.connect(Alice)
+                    .deposit(parseUnits("1000001", 18), 60*60*24*30*6)
+                ).to.be.revertedWith('SynthrStaking: max amount limit exceed');
+        });
+
+        it("Should allow contract owner to recover tokens sent to the contract address", async function () {
+
+            // Send tokens to the contract address (simulating accidental transfer)
+            await rewardToken.mint(owner.address, parseUnits("100", 18));
+            const tokenAmount = parseUnits("100", 18);
+            await rewardToken.connect(owner).transfer(synthrStaking.address, tokenAmount);
+        
+            // Check the contract's token balance before recovery
+            const contractBalanceBefore = await rewardToken.balanceOf(synthrStaking.address);
+
+            const ownerBalBef = await rewardToken.balanceOf(owner.address);
+            expect(ownerBalBef).to.be.equal(0);
+            // Call the recover function as the contract owner
+            await synthrStaking.connect(owner).recoverToken(rewardToken.address,owner.address,tokenAmount);
+            const ownerBalAft = await rewardToken.balanceOf(owner.address);
+            expect(ownerBalAft).to.be.equal(ethers.utils.parseEther("100"));
+           
+        });
+        
+        it("Should set lock info with a valid lock type, max pool size, penalty, and cooldown period", async function () {
+            await synthrStaking.setLockInfo(1, 2000, 20, 20);
+            const lockInfo = await synthrStaking.lockInfo(1);
+            expect(lockInfo.maxPoolSize).to.equal(2000);
+            expect(lockInfo.penalty).to.equal(20);
+            expect(lockInfo.coolDownPeriod).to.equal(20);
+          });
+        
+           
     });
 });
