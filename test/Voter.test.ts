@@ -10,8 +10,7 @@ interface RewardInfo {
 }
 
 let owner: any, addr1: any, addr2: any, addr3: any, addr4: any, addr5: any;
-let gaugeController: any,
-  votingEscrow: any,
+let votingEscrow: any,
   lpTtoken: any,
   rewardToken: any,
   rewardToken1: any,
@@ -19,9 +18,6 @@ let gaugeController: any,
 async function setUp() {
   // Contracts are deployed using the first signer/account by default
   [owner, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
-
-  const GaugeController = await ethers.getContractFactory("GaugeController");
-  gaugeController = await GaugeController.deploy(owner.address);
 
   const LpToken = await ethers.getContractFactory("MockToken");
   lpTtoken = await LpToken.deploy();
@@ -36,7 +32,6 @@ async function setUp() {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await VotingEscrow.deploy(
     lpTtoken.address,
-    gaugeController.address,
     "vot",
     "vt",
     "v.0.1"
@@ -46,27 +41,7 @@ async function setUp() {
   voter = await Voter.deploy(addr2.address, votingEscrow.address);
 }
 
-async function addPoolFunc() {
-  const epoch = 0;
-
-  let reward: RewardInfo[] = [
-    {
-      token: rewardToken.address,
-      rewardPerBlock: parseUnits("1000", 18),
-      accRewardPerShare: 0,
-    },
-  ];
-
-  let tx = await gaugeController.addPool(
-    lpTtoken.address,
-    votingEscrow.address,
-    reward
-  );
-  return tx;
-}
-
 async function setUpVotingAndGauge() {
-  await addPoolFunc();
 
   await lpTtoken
     .connect(addr1)
@@ -86,9 +61,6 @@ async function setUpVotingAndGauge() {
 
   expect(userLockedInfo.end).to.equal(calUnlockTime);
   expect(userLockedInfo.amount).to.equal(parseUnits("1000", 18));
-  expect(
-    await gaugeController.userInfo(votingEscrow.address, addr1.address)
-  ).to.equal(parseUnits("1000", 18));
 }
 
 describe("Voter", function () {
@@ -103,14 +75,15 @@ describe("Voter", function () {
   describe("Funtions", function () {
     it("Should vote", async function () {
       await setUpVotingAndGauge();
-
+      
+      
       let t = await time.latest();
       await voter.connect(owner).whitelistUser([owner.address], [true]);
       await voter.addPool(1);
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );
@@ -141,7 +114,7 @@ describe("Voter", function () {
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );
@@ -161,8 +134,6 @@ describe("Voter", function () {
     });
 
     it("Should vote for multiple pools", async function () {
-      await addPoolFunc();
-
       await lpTtoken
         .connect(addr1)
         .approve(votingEscrow.address, parseUnits("1000", 18));
@@ -183,9 +154,6 @@ describe("Voter", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(parseUnits("1000", 18));
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, addr1.address)
-      ).to.equal(parseUnits("1000", 18));
 
       let t = await time.latest();
       await voter.connect(owner).whitelistUser([owner.address], [true]);
@@ -198,7 +166,7 @@ describe("Voter", function () {
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );
@@ -236,7 +204,7 @@ describe("Voter", function () {
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );
@@ -272,7 +240,7 @@ describe("Voter", function () {
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );
@@ -293,7 +261,7 @@ describe("Voter", function () {
       const blockNum2 = await ethers.provider.getBlockNumber();
       const block2 = await ethers.provider.getBlock(blockNum2);
       const timestamp2 = block2.timestamp + 1;
-      let voteAmount1 = await votingEscrow.balanceOf(addr1.address, timestamp2);
+      let voteAmount1 = await votingEscrow.balanceOfAtTime(addr1.address, timestamp2);
 
       await expect(voter.connect(addr1).poke())
         .to.emit(voter, "Voted")
@@ -316,7 +284,7 @@ describe("Voter", function () {
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );
@@ -341,7 +309,7 @@ describe("Voter", function () {
       const blockNum1 = await ethers.provider.getBlockNumber();
       const block1 = await ethers.provider.getBlock(blockNum1);
       const timestamp1 = block1.timestamp;
-      let voteAmount = await votingEscrow.balanceOf(
+      let voteAmount = await votingEscrow.balanceOfAtTime(
         addr1.address,
         timestamp1 + 1
       );

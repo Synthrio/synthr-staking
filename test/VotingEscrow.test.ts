@@ -14,17 +14,13 @@ interface RewardInfo {
 }
 
 let owner: any, addr1: any, addr2: any, Alice: any, Bob: any, Joy: any;
-let gaugeController: any,
-  votingEscrow: any,
+let votingEscrow: any,
   lpTtoken: any,
   rewardToken: any,
   rewardToken1: any;
 async function setUp() {
   // Contracts are deployed using the first signer/account by default
   [owner, addr1, addr2, Alice, Bob, Joy] = await ethers.getSigners();
-
-  const GaugeController = await ethers.getContractFactory("GaugeController");
-  gaugeController = await GaugeController.deploy(owner.address);
 
   const LpToken = await ethers.getContractFactory("MockToken");
   lpTtoken = await LpToken.deploy();
@@ -43,37 +39,12 @@ async function setUp() {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await VotingEscrow.deploy(
     lpTtoken.address,
-    gaugeController.address,
     "vot",
     "vt",
     "v.0.1"
   );
 }
 
-async function addPoolFunc() {
-  const epoch = 0;
-
-  let reward: RewardInfo[] = [
-    {
-      token: rewardToken.address,
-      rewardPerBlock: parseUnits("1000", 18),
-      accRewardPerShare: 0,
-    },
-  ];
-
-  let tx = await gaugeController.addPool(
-    lpTtoken.address,
-    votingEscrow.address,
-    reward
-  );
-  await _updateEpochConfigs();
-  return tx;
-}
-
-async function _updateEpochConfigs() {
-  await rewardToken.connect(owner).approve(gaugeController.address, parseUnits("100000000000000000000", 18));
-  let updateEpochTx = await gaugeController.connect(owner).updateEpoch(votingEscrow.address, owner.address, [0], [parseUnits("1000", 18)], [parseUnits("100000000000000000000", 18)]);
-}
 
 async function createLock(_value: BigNumber, _unlockTime: BigNumber, signer: any) {
   let txn = await votingEscrow
@@ -93,7 +64,6 @@ describe("VotingEscrow", function () {
 
   describe("Funtions", function () {
     it("Should create lock", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(addr1)
@@ -115,13 +85,9 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(parseUnits("1000", 18));
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, addr1.address)
-      ).to.equal(parseUnits("1000", 18));
     });
 
     it("Should create lock & increase lock amount", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -146,9 +112,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
 
       await lpTtoken
         .connect(Alice)
@@ -163,7 +126,6 @@ describe("VotingEscrow", function () {
     });
 
     it("Should create lock & increase lock time", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -188,9 +150,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
 
       let newUnlockTime = unlockTime.add(BigNumber.from(1000000));
       let calUnlockTime2 = BigNumber.from(newUnlockTime)
@@ -203,7 +162,6 @@ describe("VotingEscrow", function () {
 
     });
     it("Should create lock & withdraw lp tokens", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -228,9 +186,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
       mine(1000000); // mining 1000000 blocks after deposit so that to pass lock time
       let withdrawTxn = await votingEscrow.connect(Alice).withdraw();
       let withdrawTS = (await ethers.provider.getBlock(withdrawTxn.blockNumber)).timestamp;
@@ -241,59 +196,7 @@ describe("VotingEscrow", function () {
 
     });
 
-    it("Should claim reward after sometime of create lock", async function () {
-      await addPoolFunc();
-
-      await lpTtoken
-        .connect(Alice)
-        .approve(votingEscrow.address, parseUnits("1000", 18));
-      let balanceBeforeLock = await lpTtoken.balanceOf(Alice.address);
-      const blockNum = await ethers.provider.getBlockNumber();
-      const block = await ethers.provider.getBlock(blockNum);
-      const timestamp = block.timestamp;
-      let unlockTime = BigNumber.from(timestamp + 1000000);
-      let _value = parseUnits("1000", 18);
-
-      let createLockTxn = await createLock(_value, unlockTime, Alice)
-      let createLockTS = (await ethers.provider.getBlock(createLockTxn.blockNumber)).timestamp;
-
-
-      let calUnlockTime = BigNumber.from(unlockTime)
-        .div(BigNumber.from(604800))
-        .mul(BigNumber.from(604800));
-      let userLockedInfo = await votingEscrow.locked(Alice.address);
-
-      expect(createLockTxn).to.emit(votingEscrow, "Deposited").withArgs(Alice.address, _value, calUnlockTime, 1, createLockTS)
-
-      expect(userLockedInfo.end).to.equal(calUnlockTime);
-      expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
-      mine(1000000); // mining 1000000 blocks after deposit so that to pass lock time
-
-      let rewardBalanceBeforeClaim = await rewardToken.balanceOf(Alice.address);
-      const blockNumAtClaim = await ethers.provider.getBlockNumber() + 1;
-      let expectedRewardAmount = await gaugeController.pendingRewardAtBlock(votingEscrow.address, Alice.address, blockNumAtClaim);
-      let claimTxn = await gaugeController.connect(Alice).claim(votingEscrow.address, Alice.address);
-      await expect(claimTxn).to.emit(gaugeController, "Claimed").withArgs(Alice.address, votingEscrow.address, expectedRewardAmount)
-      let rewardBalanceAfterClaim = await rewardToken.balanceOf(Alice.address);
-      expect(expectedRewardAmount).to.equal(rewardBalanceAfterClaim);
-
-    });
-
-    it("Should claim zero reward if triggered before create lock", async function () {
-      await addPoolFunc();
-      let rewardBalanceBeforeClaim = await rewardToken.balanceOf(Alice.address);
-      let claimTxn = await gaugeController.connect(Alice).claim(votingEscrow.address, Alice.address);
-      await expect(claimTxn).to.emit(gaugeController, "Claimed").withArgs(Alice.address, votingEscrow.address, 0)
-      let rewardBalanceAfterClaim = await rewardToken.balanceOf(Alice.address);
-      expect(rewardBalanceBeforeClaim).to.equal(rewardBalanceAfterClaim);
-    });
-
-
     it("Should revert if increase lock time is less than current lock time", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -319,9 +222,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
 
       let newFaultyUnlockTime = unlockTime.sub(BigNumber.from(1000));
       let calUnlockTime2 = BigNumber.from(newFaultyUnlockTime)
@@ -332,7 +232,6 @@ describe("VotingEscrow", function () {
     });
 
     it("Should revert if increase lock time is more than MAXTIME limit", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -357,9 +256,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
 
       const blockNum1 = await ethers.provider.getBlockNumber();
       const blockTS = (await ethers.provider.getBlock(blockNum1)).timestamp;
@@ -371,7 +267,6 @@ describe("VotingEscrow", function () {
 
 
     it("Should revert if create lock & increase lock time with different account", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -396,9 +291,7 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
+
       let newUnlockTime = unlockTime.add(BigNumber.from(1000000));
       let calUnlockTime2 = BigNumber.from(newUnlockTime)
         .div(BigNumber.from(604800))
@@ -409,7 +302,6 @@ describe("VotingEscrow", function () {
     });
 
     it("Should revert if create lock & increase lock amount with other account", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(Alice)
@@ -434,9 +326,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime);
       expect(userLockedInfo.amount).to.equal(_value);
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, Alice.address)
-      ).to.equal(_value);
 
       await lpTtoken
         .connect(Bob)
@@ -448,7 +337,6 @@ describe("VotingEscrow", function () {
     });
 
     it("Should increase lock amount and unlock time", async function () {
-      await addPoolFunc();
 
       await lpTtoken
         .connect(addr1)
@@ -472,9 +360,6 @@ describe("VotingEscrow", function () {
         calUnlockTime
       );
 
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, addr1.address)
-      ).to.equal(parseUnits("1000", 18));
       await votingEscrow
         .connect(addr1)
         .increaseAmountAndUnlockTime(parseUnits("1000", 18), time1 + 1000000);
@@ -487,9 +372,6 @@ describe("VotingEscrow", function () {
 
       expect(userLockedInfo.end).to.equal(calUnlockTime1);
       expect(userLockedInfo.amount).to.equal(parseUnits("2000", 18));
-      expect(
-        await gaugeController.userInfo(votingEscrow.address, addr1.address)
-      ).to.equal(parseUnits("2000", 18));
     });
 
 

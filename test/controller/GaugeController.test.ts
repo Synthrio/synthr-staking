@@ -35,13 +35,13 @@ async function setUp() {
   await rewardToken.mint(addr2.address, parseUnits("1000000000", 18));
   await rewardToken1.mint(addr2.address, parseUnits("1000000000", 18));
 
-  const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
+  const VotingEscrow = await ethers.getContractFactory("MockPool");
   votingEscrow = await VotingEscrow.deploy(
     lpTtoken.address,
     gaugeController.address,
     "vot",
     "vt",
-    "v.0.1"
+    "v.0.1",
   );
 }
 

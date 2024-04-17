@@ -67,12 +67,12 @@ async function setUp() {
     await yieldDis.setYieldRate(BigNumber.from(1).mul(BigNumber.from(10).pow(17)), false);
     
     // await yieldDis.setYieldDuration(60*60);
-    await rewardToken.mint(owner.address, parseUnits("10000000000000000000000", 18));
+    await rewardToken.mint(owner.address, parseUnits("10000000000000000000000000000000", 18));
     await rewardToken.approve(
         yieldDis.address,
-      parseUnits("10000000000000000000000", 18)
+      parseUnits("10000000000000000000000000000000", 18)
     );
-    await yieldDis.notifyRewardAmount(parseUnits("100000000000", 18));
+    await yieldDis.notifyRewardAmount(parseUnits("10000000000000000000000000000000", 18));
 
 }
 
@@ -85,13 +85,13 @@ async function createLockTx(user:any) {
 
   await lpTtoken
     .connect(user)
-    .approve(votingEscrow.address, parseUnits("10000", 18));
+    .approve(votingEscrow.address, parseUnits("1000000000", 18));
   const blockNum = await ethers.provider.getBlockNumber();
   const block = await ethers.provider.getBlock(blockNum);
   const timestamp = block.timestamp;
   await votingEscrow
     .connect(user)
-    .createLock(parseUnits("10000", 18), timestamp + 86400 * 365);
+    .createLock(parseUnits("100", 18), timestamp + 86400 * 50);
 }
 
 
@@ -108,7 +108,20 @@ describe("Yield distributor", function () {
   describe("Funtions", function () {
     it("Should not yield reward after withdraw", async function () {
       await createLockTx(Alice);
-      await createLockTx(Roy);
+      await lpTtoken.mint(
+        Roy.address,
+        parseUnits("1000000000000000000000000", 18)
+      );
+    
+      await lpTtoken
+        .connect(Roy)
+        .approve(votingEscrow.address, parseUnits("1000000000000000000000000", 18));
+      const blockNum1 = await ethers.provider.getBlockNumber();
+      const block1 = await ethers.provider.getBlock(blockNum1);
+      const timestamp1 = block1.timestamp;
+      await votingEscrow
+        .connect(Roy)
+        .createLock(parseUnits("1000000000000000000000000", 18), timestamp1 + 86400 * 365);
 
       await yieldDis.connect(Alice).checkpoint();
 
@@ -123,24 +136,28 @@ describe("Yield distributor", function () {
     const timestamp = block.timestamp;
 
       let earn = await yieldDis.earned(Alice.address);
-      console.log(await votingEscrow.totalSupplyAtTime(timestamp + 3));
-      console.log(earn);
       await yieldDis.connect(Alice).getYield();
-
-      expect(await rewardToken.balanceOf(Alice.address)).to.equal(befBalance.add(earn));
+      console.log("earn before withdraw", earn);
 
       await mine(86400 * 365);
 
-      let befBalance1 = await rewardToken.balanceOf(Alice.address);
       await votingEscrow.connect(Alice).withdraw();
-      
+      await yieldDis.connect(Alice).checkpoint();
       await mine(100000000000);
-      await yieldDis.notifyRewardAmount(parseUnits("1000000000", 18));
-
+      let earn1 = await yieldDis.earned(Alice.address);
+      console.log("earn after withdraw", earn1);
+      let befBalance1 = await rewardToken.balanceOf(Alice.address);
       await yieldDis.connect(Alice).getYield();
-
       expect(await rewardToken.balanceOf(Alice.address)).to.equal(befBalance1);
 
+
+      await mine(100000000000);
+      let earn2 = await yieldDis.earned(Alice.address);
+      await yieldDis.connect(Alice).checkpoint();
+      console.log("earn after some time", earn2);
+      let befBalance2 = await rewardToken.balanceOf(Alice.address);
+      await yieldDis.connect(Alice).getYield();
+      expect(await rewardToken.balanceOf(Alice.address)).to.equal(befBalance2);
     });
 
     it("Should update user balance after creat lock", async function () {

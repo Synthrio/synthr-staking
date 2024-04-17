@@ -75,7 +75,8 @@ describe("DerivedDexLpFarming", function () {
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       let log = await this.chef.deposit(getBigNumber(1));
-      await time.increaseTo(30000000282);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
 
       let log2 = await this.chef.updatePool();
 
@@ -104,7 +105,8 @@ describe("DerivedDexLpFarming", function () {
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
 
       let log = await this.chef.deposit(getBigNumber(1));
-      await time.increaseTo(30000001280);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       let log2 = await this.chef.updatePool();
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
       let block = (await ethers.provider.getBlock(log.blockNumber)).number;
@@ -130,7 +132,8 @@ describe("DerivedDexLpFarming", function () {
     it("Should emit event LogUpdatePool", async function () {
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       let lpSupply = await this.nativeToken.balanceOf(addr1.address);
-      await time.increaseTo(30000011280);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       await expect(this.chef.updatePool())
         .to.emit(this.chef, "LogUpdatePool")
         .withArgs(
@@ -236,7 +239,8 @@ describe("DerivedDexLpFarming", function () {
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
         this.chef.address
       );
-      await time.increaseTo(30000021280);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
 
       let precision = await this.chef.ACC_REWARD_PRECISION();
       let log2 = await this.chef.withdraw(getBigNumber(1));
@@ -283,7 +287,8 @@ describe("DerivedDexLpFarming", function () {
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
         this.chef.address
       );
-      await time.increaseTo(30000121280);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       let log2 = await this.chef.withdraw(getBigNumber(1));
       expect(await this.tokenTracker.ownerOf(getBigNumber(1))).to.equal(
         owner.address
@@ -317,7 +322,8 @@ describe("DerivedDexLpFarming", function () {
       this.nativeToken.mint(addr1.address, parseUnits("10000", 18));
       await this.tokenTracker.approve(this.chef.address, getBigNumber(1));
       let log = await this.chef.deposit(getBigNumber(1));
-      await time.increaseTo(30000121310);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
 
       let beforeBalance = await this.rewardToken.balanceOf(owner.address);
       expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
