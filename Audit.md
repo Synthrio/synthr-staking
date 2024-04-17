@@ -113,15 +113,10 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 
 | Type | File   | Logic Contracts | Interfaces | Lines | nLines | nSLOC | Comment Lines | Complex. Score | Capabilities |
 | ---- | ------ | --------------- | ---------- | ----- | ------ | ----- | ------------- | -------------- | ------------ | 
-| 📝 | ./VotingEscrow.sol | 1 | 1 | 563 | ? | ? | ? | 
-| 📝 | ./controller/GuageContoller.sol | 1 | **** | 367 | ? | ? | ? | ? | **** |
-| 📝 | ./apps/VeYieldDistributor.sol | 1 | 2 | 333 | ? | ? | ? | ? | **** |
-| 📚 | ./farming/BaseDexLpFarming.sol | 1 | **** | 195 | ? | ? | ? | ? | **** |
-| 📝 | ./farming/DerivedDexLpFarming.sol | 1 | 1 | 173 | ? | ? | ? | ? | **** |
 | 📝 | ./NFT-Staking/SynthNFT.sol | 1 | **** | 56 | ? | 10 | ? | 9 | **** |
 | 📝 | ./NFT-Staking/NftStaking.sol | 1 | 2 | 440 | ? | ? | ? | 9 | **** |
 | 📝 | ./SynthrStaking.sol | 1 | **** | 384 | ? | ? | ? | ? | **** |
-| 📝 | ./Voter.sol | 1 | 2 | 256 | ? | ? | ? | ? | **** |
+| 📝 | ./SynthrToken.sol | 1 | **** | 25 | ? | ? | ? | ? | **** |
 | 📝📚🔍 | **Totals** | **?** | **?** | **?**  | **?** | **?** | **?** | **?** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
 
 
@@ -129,6 +124,12 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 
 | Type | File   | Logic Contracts | Interfaces | Lines | nLines | nSLOC | Comment Lines | Complex. Score | Capabilities |
 | ---- | ------ | --------------- | ---------- | ----- | ------ | ----- | ------------- | -------------- | ------------ | 
+| 📝 | ./VotingEscrow.sol | 1 | 1 | 563 | ? | ? | ? | 
+| 📝 | ./controller/GuageContoller.sol | 1 | **** | 367 | ? | ? | ? | ? | **** |
+| 📝 | ./apps/VeYieldDistributor.sol | 1 | 2 | 333 | ? | ? | ? | ? | **** |
+| 📚 | ./farming/BaseDexLpFarming.sol | 1 | **** | 195 | ? | ? | ? | ? | **** |
+| 📝 | ./farming/DerivedDexLpFarming.sol | 1 | 1 | 173 | ? | ? | ? | ? | **** |
+| 📝 | ./Voter.sol | 1 | 2 | 256 | ? | ? | ? | ? | **** |
 | 📝 | **Totals** | **?** | **?** | **?**  | **?** | **?** | **?** | **?** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
 
 
