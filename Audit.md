@@ -6,7 +6,12 @@ Users deposit Uno tokens in this contract and get voting power on the basis of d
 https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
 
 #### Changes in Vote Escrow Contract
-* Add createLockTs mapping to store user create lock timestamp
+- Add createLockTs mapping to store timestamp when user execute create lock
+- refactore functiona name:
+    - balanceOf(address _user, uint256 _t) to balanceOfAtTime(uint256 _t)
+    - balanceOfAt(address _user,  uint256 _block) to balanceOfAtBlock(address _user, uint256 _block)
+    - totalSupply(uint256 _t) to totalSuppltAtTime(uint256 _t)
+    - totalSupplyAt(uint256 _block) to totalSupplyAtBlock(uint256 _block)
 
 ### DerivedDexLpFarming
 
