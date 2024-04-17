@@ -178,7 +178,7 @@ describe("NFTStaking", function () {
         expect(await nftStaking.totalLockAmount()).to.equal(totalLockAmount);
     });
 
-    describe.only("Funtions", function () {
+    describe("Funtions", function () {
         it("Should add pool in nftStaking", async function () {
             let txns = await addPoolFunc();
             expect(txns[0])
