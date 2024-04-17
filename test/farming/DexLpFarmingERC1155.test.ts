@@ -94,7 +94,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("100", 18)
       );
 
-      await time.increaseTo(30000122335);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       let log2 = await this.chef.updatePool();
 
       let block2 = (await ethers.provider.getBlock(log2.blockNumber)).number;
@@ -142,7 +143,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
       expect(await this.lbPair.balanceOf(this.chef.address, 1)).to.equal(
         parseUnits("100", 18)
       );
-      await time.increaseTo(30000123348);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       let accPerShare = (await this.chef.pool()).accRewardPerShare;
       let log2 = await this.chef.updatePool();
 
@@ -180,7 +182,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("12000", 18),
         parseUnits("13000", 18)
       );
-      await time.increaseTo(30000124368);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       await expect(this.chef.updatePool())
         .to.emit(this.chef, "LogUpdatePool")
         .withArgs(
@@ -264,7 +267,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
         parseUnits("1500", 18)
       );
 
-      await time.increaseTo(30000125431);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
 
       let befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
       let befAcc = (await this.chef.pool()).accRewardPerShare;
@@ -422,8 +426,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
       let log = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
       let befAcc = (await this.chef.pool()).accRewardPerShare;
       let befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
-      let x = await time.latest();
-      await time.increaseTo(x + 10);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       let reserveX = (await this.lbPair.getBin(1))[0];
       let reserveY = (await this.lbPair.getBin(1))[1];
       let amountInBin = await this.lbPair.balanceOf(owner.address, 1);
@@ -496,8 +500,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
       let log = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
       let befAcc = (await this.chef.pool()).accRewardPerShare;
       let befRewardDebt = (await this.chef.userInfo(owner.address)).rewardDebt;
-      let x = await time.latest();
-      await time.increaseTo(x + 10);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
       let reserveX = (await this.lbPair.getBin(1))[0];
       let reserveY = (await this.lbPair.getBin(1))[1];
       let amountInBin = await this.lbPair.balanceOf(owner.address, 1);
@@ -560,7 +564,8 @@ describe("DerivedDexLpFarmingERC1155", function () {
       );
       await this.lbPair.approveForAll(this.chef.address, true);
       let log = await this.chef.depositBatch([1], [parseUnits("100", 18)]);
-      await time.increaseTo(30000131295);
+      let lastedTime = await time.latest();
+      await time.increaseTo(lastedTime + 3000282);
 
       let beforeBalance = await this.rewardToken.balanceOf(owner.address);
       expect(await this.rewardToken.balanceOf(this.chef.address)).to.be.equal(
