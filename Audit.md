@@ -165,12 +165,12 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 - Time
 
 
-These are already audited smart contracts and we are keeping it out of scope of current audit.
+### References
 
 VotingEscrow
-- Repository: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy 
-- Audit report: https://github.com/mixbytes/audits_public/blob/master/Curve%20Finance/DAO%20Voting/Curve%20Finance%20DAO%20Voting%20Security%20Audit%20Report.pdf 
+- Repository: [VotingEscrow.vy](https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy) 
+- Audit report: [Curve Finance - DAO Voting]( https://github.com/mixbytes/audits_public/blob/master/Curve%20Finance/DAO%20Voting/Curve%20Finance%20DAO%20Voting%20Security%20Audit%20Report.pdf) 
 
 MasterChefV2
-- repository: https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
+- Repository: [MiniChefV2](https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol)
 
