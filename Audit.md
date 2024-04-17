@@ -139,6 +139,32 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 - secondPerBlock in NftStaking: this is approximately time required to confirm block after execution of transaction
     - used to convert time difference into block difference betweeen unlock time and curent time
 
+
+### Cli Commands
+
+#### deploy commands
+
+- npx hardhat deploy --network {NETWORK}
+- DexLpFarming: npx hardhat run --network {NETWORK} scripts/DexLPFarming.deploy.ts
+- GaugeController: npx hardhat run --network {NETWORK} scripts/GaugeController.deploy.ts
+ 
+### Openzeppelin contracts used
+
+- SafeERC20
+- AccessControl
+- Ownable2Step, Ownable
+- ReentrancyGuard
+- IERC721Receiver
+- Pausable
+- ERC20Burnable
+
+### Others contracts  
+
+- TransferHelper
+- Math
+- Time
+
+
 These are already audited smart contracts and we are keeping it out of scope of current audit.
 
 VotingEscrow
