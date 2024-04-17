@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.24;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {ERC20Burnable, ERC20} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {ERC20Pausable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
 contract SynthToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable2Step {
-    constructor(address _owner, address _reciever, uint256 _totalSupply) ERC20("SynthrToken ", "SYNTH") Ownable(_owner) {
+    constructor(address _owner, address _reciever, uint256 _totalSupply) ERC20("SYNTHR", "SYNTH") Ownable(_owner) {
         require(_totalSupply > 0, "Synthr: amount must be non zero");
         _mint(_reciever, _totalSupply);
     }
