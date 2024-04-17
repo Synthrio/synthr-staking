@@ -30,7 +30,6 @@ contract NftStaking is IERC721Receiver, Ownable {
         uint64 lastRewardBlock;
         uint256 accRewardPerShare;
         uint256 rewardPerBlock;
-        uint256 currentEpoch;
         uint256 epoch;
     }
 
