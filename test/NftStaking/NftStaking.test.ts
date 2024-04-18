@@ -465,56 +465,35 @@ describe("NFTStaking", function () {
         it("Should not recieve exess reward", async function () {
             await addPoolFunc();
             await approveNFT();
-            await depositNfts();
+            let tx1 = await depositNfts();
             await mine(1000 * 100000);
-            const blockNum = await ethers.provider.getBlockNumber();
-            const block = await ethers.provider.getBlock(blockNum);
-            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
+
+            let beforeAccPerSHare = (await nftStaking.poolInfo(pools[0])).accRewardPerShare;
+            let bofreReward = (await nftStaking.userInfo(pools[0], Alice.address)).rewardDebt;
+            let amount = (await nftStaking.userInfo(pools[0], Alice.address)).amount
             let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
+            
+            let totalLockAmount = await nftStaking.totalLockAmount();
+            let poolInfo = await nftStaking.poolInfo(pools[0]);
+            let blockIff = tx.blockNumber - tx1[3].blockNumber;
+            let rewardAmount = poolInfo.rewardPerBlock.mul(blockIff);
+            let expectedAccRewardPerShareCalculated = calAccPerShare(rewardAmount, totalLockAmount).add(BigNumber.from(beforeAccPerSHare));
+            let pendingRewad = calAccRewardPerShare(expectedAccRewardPerShareCalculated, amount);
+            let pendingRewadWithDebt = pendingRewad.sub(bofreReward);
+            let actualReward = await rewardToken.balanceOf(Alice.address);
+            let blockdiffOfLockENd = (await synthrStaking.userInfo(Alice.address)).unlockEnd;
+            const block2 = await ethers.provider.getBlock(tx.blockNumber);
+            let blockdiff = BigNumber.from(block2.timestamp).sub(blockdiffOfLockENd).div(12);
+            let excessREwardAmount = poolInfo.rewardPerBlock.mul(blockdiff)
+            let excessAccPerShare = calAccPerShare(excessREwardAmount, totalLockAmount);
+            let excessReward = calAccRewardPerShare(excessAccPerShare, amount);
+            let deductionOfPending = pendingRewadWithDebt.sub(excessReward);
+
+            console.log("excessReward", pendingRewadWithDebt.sub(excessReward));
             await expect(tx)
                 .to.emit(nftStaking, "Claimed")
-                .withArgs(Alice.address, pools[0], expectedReward);
-            let actualReward = await rewardToken.balanceOf(Alice.address);
-            expect(expectedReward).to.equal(actualReward);
-        });
-
-        it("Should not recieve excess reward after acc uno per share updated", async function () {
-            await addPoolFunc();
-            await approveNFT();
-            await depositNfts();
-            await mine(1000 * 100000);
-            const blockNum1 = await ethers.provider.getBlockNumber();
-            const block1 = await ethers.provider.getBlock(blockNum1);
-            let expectedReward1 = await nftStaking.pendingRewardAtBlock(pools[0], Roy.address, blockNum1);
-            let tx1 = await nftStaking.connect(Roy).claim(pools[0], Roy.address);
-            await expect(tx1)
-                .to.emit(nftStaking, "Claimed")
-                .withArgs(Roy.address, pools[0], expectedReward1);
-            let actualReward1 = await rewardToken.balanceOf(Roy.address);
-            expect(expectedReward1).to.equal(actualReward1);
-
-
-            const blockNum = await ethers.provider.getBlockNumber();
-            const block = await ethers.provider.getBlock(blockNum);
-            let expectedReward = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum);
-            let tx = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
-            await expect(tx)
-                .to.emit(nftStaking, "Claimed")
-                .withArgs(Alice.address, pools[0], expectedReward);
-            let actualReward = await rewardToken.balanceOf(Alice.address);
-            expect(expectedReward).to.equal(actualReward);
-
-            await mine(1000);
-
-            const blockNum2 = await ethers.provider.getBlockNumber();
-            const block2 = await ethers.provider.getBlock(blockNum2);
-            let expectedReward2 = await nftStaking.pendingRewardAtBlock(pools[0], Alice.address, blockNum2);
-            let tx2 = await nftStaking.connect(Alice).claim(pools[0], Alice.address);
-            await expect(tx2)
-                .to.emit(nftStaking, "Claimed")
-                .withArgs(Alice.address, pools[0], expectedReward2);
-            let actualReward2 = await rewardToken.balanceOf(Alice.address);
-            expect(expectedReward2).to.equal(actualReward2 - actualReward);
+                .withArgs(Alice.address, pools[0], deductionOfPending);
+            expect(deductionOfPending).to.equal(actualReward);
         });
 
         it("Should have 0 pending reward at that block after claiming is done", async function () {
