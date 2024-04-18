@@ -103,39 +103,39 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 
 ### Latest deployed contracts
 
-- SynthToken: 
-- SynthrStaking: 
-- NftStaking: 
+- SynthToken: 0x1D2c289687a5c7f6a16Ac7801D73563B7f8d7bEe
+- SynthrStaking: 0x1D7DE9D77d0d45A27a8BBdAC31D04E2eEc58e963
+- NftStaking: 0x431B27b835b1fDf3002c6dbe80a477cFE5aE2B83
 
 #### NFT pools: 
-- SyCHAD: 
-- SyMAXI: 
-- SyDIAMOND: 
-- SyBULL:
+- stCRUSADER: 0x34366C5a31ca47215d4adb358128CbAe14b490c8
+- stWIZARD: 0x5550EA964470dF67c877329Af5173fA8b06Fa31d
+- stLEGEND: 0x6aA35dB34C3784f555e7BeeFbD29504C06C32514
+- stIMMORTAL: 0x39aFd7d34Fa5193381f3fE58F593f6B5eC2A850a
 
 
 ## Contracts in scope (commit: )
 
-| Type | File   | Logic Contracts | Interfaces | Lines | nLines | nSLOC | Comment Lines | Complex. Score | Capabilities |
-| ---- | ------ | --------------- | ---------- | ----- | ------ | ----- | ------------- | -------------- | ------------ | 
-| 📝 | ./NFT-Staking/SynthNFT.sol | 1 | **** | 56 | ? | 10 | ? | 9 | **** |
-| 📝 | ./NFT-Staking/NftStaking.sol | 1 | 2 | 440 | ? | ? | ? | 9 | **** |
-| 📝 | ./SynthrStaking.sol | 1 | **** | 384 | ? | ? | ? | ? | **** |
-| 📝 | ./SynthrToken.sol | 1 | **** | 25 | ? | ? | ? | ? | **** |
-| 📝📚🔍 | **Totals** | **?** | **?** | **?**  | **?** | **?** | **?** | **?** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
+| Type | File   | Logic Contracts | Interfaces | Lines |
+| ---- | ------ | --------------- | ---------- | ----- |
+| 📝 | ./NFT-Staking/SynthNFT.sol | 1 | **** | 56 |
+| 📝 | ./NFT-Staking/NftStaking.sol | 1 | 2 | 442 |
+| 📝 | ./SynthrStaking.sol | 1 | **** | 384 |
+| 📝 | ./SynthrToken.sol | 1 | **** | 25 |
+| 📝📚🔍 | **Totals** | **4** | **2** | **907**  | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
 
 
 ## Contracts not in scope for audit (commit: )
 
-| Type | File   | Logic Contracts | Interfaces | Lines | nLines | nSLOC | Comment Lines | Complex. Score | Capabilities |
-| ---- | ------ | --------------- | ---------- | ----- | ------ | ----- | ------------- | -------------- | ------------ | 
-| 📝 | ./VotingEscrow.sol | 1 | 1 | 563 | ? | ? | ? | 
-| 📝 | ./controller/GuageContoller.sol | 1 | **** | 367 | ? | ? | ? | ? | **** |
-| 📝 | ./apps/VeYieldDistributor.sol | 1 | 2 | 333 | ? | ? | ? | ? | **** |
-| 📚 | ./farming/BaseDexLpFarming.sol | 1 | **** | 195 | ? | ? | ? | ? | **** |
-| 📝 | ./farming/DerivedDexLpFarming.sol | 1 | 1 | 173 | ? | ? | ? | ? | **** |
-| 📝 | ./Voter.sol | 1 | 2 | 256 | ? | ? | ? | ? | **** |
-| 📝 | **Totals** | **?** | **?** | **?**  | **?** | **?** | **?** | **?** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
+| Type | File   | Logic Contracts | Interfaces | Lines |
+| ---- | ------ | --------------- | ---------- | ----- | 
+| 📝 | ./VotingEscrow.sol | 1 | 1 | 563 |
+| 📝 | ./controller/GuageContoller.sol | 1 | **** | 367 |
+| 📝 | ./apps/VeYieldDistributor.sol | 1 | 2 | 333 |
+| 📚 | ./farming/BaseDexLpFarming.sol | 1 | **** | 195 |
+| 📝 | ./farming/DerivedDexLpFarming.sol | 1 | 1 | 173 |
+| 📝 | ./Voter.sol | 1 | 2 | 256 |
+| 📝 | **Totals** | **6** | **6** | **1887**  | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
 
 
 ### Special Attention to code

@@ -9,10 +9,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     let owner = deployer;
 
-    await deploy('stIMMORTAL', {
+    await deploy('stLEGEND', {
         from: deployer,
         contract: 'SynthrNFT',
-        args: ['stIMMORTAL', 'stIMMORTAL', owner],
+        args: ['stLEGEND', 'stLEGEND', owner],
         log: true,
         autoMine: true, // speed up deployment on local network (ganache, hardhat), no effect on live networks
     });
