@@ -103,40 +103,55 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 
 ### Latest deployed contracts
 
-- SynthToken: 
-- SynthrStaking: 
-- NftStaking: 
+- SynthToken: 0x1D2c289687a5c7f6a16Ac7801D73563B7f8d7bEe
+- SynthrStaking: 0x1D7DE9D77d0d45A27a8BBdAC31D04E2eEc58e963
+- NftStaking: 0x3AF314eD4207271a408cCA6422a1Ca49143B1671
 
 #### NFT pools: 
-- SyCHAD: 
-- SyMAXI: 
-- SyDIAMOND: 
-- SyBULL:
+- stCRUSADER: 0x34366C5a31ca47215d4adb358128CbAe14b490c8
+- stWIZARD: 0x5550EA964470dF67c877329Af5173fA8b06Fa31d
+- stLEGEND: 0x6aA35dB34C3784f555e7BeeFbD29504C06C32514
+- stIMMORTAL: 0x39aFd7d34Fa5193381f3fE58F593f6B5eC2A850a
 
 
 ## Contracts in scope (commit: )
 
 | Type | File   | Logic Contracts | Interfaces | Lines | nLines | nSLOC | Comment Lines | Complex. Score | Capabilities |
 | ---- | ------ | --------------- | ---------- | ----- | ------ | ----- | ------------- | -------------- | ------------ | 
-| 📝 | ./NFT-Staking/SynthNFT.sol | 1 | **** | 56 | ? | 10 | ? | 9 | **** |
-| 📝 | ./NFT-Staking/NftStaking.sol | 1 | 2 | 440 | ? | ? | ? | 9 | **** |
-| 📝 | ./SynthrStaking.sol | 1 | **** | 384 | ? | ? | ? | ? | **** |
-| 📝 | ./SynthrToken.sol | 1 | **** | 25 | ? | ? | ? | ? | **** |
-| 📝📚🔍 | **Totals** | **?** | **?** | **?**  | **?** | **?** | **?** | **?** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
+| 📝 | contracts/NFT-Staking/SynthrNFT.sol | 1 | **** | 56 | 56 | 24 | 24 | 26 | **** |
+| 📝 | contracts/NFT-Staking/NftStaking.sol | 1 | **** | 440 | 394 | 275 | 44 | 132 | **** |
+| 📝 | contracts/SynthrStaking.sol | 1 | **** | 384 | 357 | 245 | 39 | 144 | **** |
+| 📝 | contracts/SynthToken.sol | 1 | **** | 25 | 25 | 19 | 1 | 21 | **** |
+| 📝📚🔍 | **Totals** | **4** | **** | **905**  | **832** | **563** | **108** | **323** | **** |
 
 
 ## Contracts not in scope for audit (commit: )
 
 | Type | File   | Logic Contracts | Interfaces | Lines | nLines | nSLOC | Comment Lines | Complex. Score | Capabilities |
 | ---- | ------ | --------------- | ---------- | ----- | ------ | ----- | ------------- | -------------- | ------------ | 
-| 📝 | ./VotingEscrow.sol | 1 | 1 | 563 | ? | ? | ? | 
-| 📝 | ./controller/GuageContoller.sol | 1 | **** | 367 | ? | ? | ? | ? | **** |
-| 📝 | ./apps/VeYieldDistributor.sol | 1 | 2 | 333 | ? | ? | ? | ? | **** |
-| 📚 | ./farming/BaseDexLpFarming.sol | 1 | **** | 195 | ? | ? | ? | ? | **** |
-| 📝 | ./farming/DerivedDexLpFarming.sol | 1 | 1 | 173 | ? | ? | ? | ? | **** |
-| 📝 | ./Voter.sol | 1 | 2 | 256 | ? | ? | ? | ? | **** |
-| 📝 | **Totals** | **?** | **?** | **?**  | **?** | **?** | **?** | **?** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Payable Functions'>💰</abbr><abbr title='Initiates ETH Value Transfer'>📤</abbr><abbr title='DelegateCall'>👥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Handles Signatures: ecrecover'>🔖</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
-
+| 📝 | contracts/VotingEscrow.sol | 1 | **** | 563 | 557 | 459 | 37 | 249 | **<abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
+| 🔍 | contracts/interfaces/IVoter.sol | **** | 1 | 82 | 50 | 39 | 26 | 15 | **** |
+| 🔍 | contracts/interfaces/ILBPair.sol | **** | 1 | 14 | 5 | 3 | 1 | 11 | **** |
+| 🔍 | contracts/interfaces/IGaugeController.sol | **** | 1 | 8 | 5 | 3 | 1 | 5 | **** |
+| 🔍 | contracts/interfaces/ISmartWalletChecker.sol | **** | 1 | 6 | 5 | 3 | 1 | 3 | **** |
+| 🔍 | contracts/interfaces/ISynthrNFT.sol | **** | 1 | 10 | 6 | 3 | 1 | 9 | **** |
+| 🔍 | contracts/interfaces/ISynthrStaking.sol | **** | 1 | 13 | 12 | 9 | 1 | 3 | **** |
+| 🔍 | contracts/interfaces/IVotingEscrow.sol | **** | 1 | 16 | 10 | 7 | 1 | 13 | **** |
+| 🔍 | contracts/interfaces/ITokenTracker.sol | **** | 1 | 24 | 5 | 3 | 1 | 5 | **** |
+| 📝 | contracts/Voter.sol | 1 | **** | 256 | 252 | 184 | 7 | 190 | **** |
+| 📝 | contracts/farming/DerivedDexLpFarming.sol | 1 | **** | 173 | 173 | 106 | 31 | 121 | **** |
+| 📝 | contracts/farming/DexLpFarming.sol | 1 | **** | 298 | 292 | 181 | 64 | 127 | **** |
+| 📝 | contracts/farming/DerivedFarmingERC1155.sol | 1 | **** | 175 | 171 | 114 | 25 | 122 | **** |
+| 📝 | contracts/farming/BaseDexLpFarming.sol | 1 | **** | 195 | 180 | 119 | 27 | 48 | **** |
+| 📚 | contracts/libraries/TransferHelper.sol | 1 | **** | 28 | 28 | 19 | 5 | 26 | **** |
+| 📚 | contracts/libraries/Math.sol | 1 | **** | 44 | 44 | 24 | 16 | 6 | **** |
+| 📚 | contracts/libraries/BinHelper.sol | 1 | **** | 47 | 43 | 22 | 13 | 9 | **** |
+| 📚 | contracts/libraries/Uint256x256Math.sol | 1 | **** | 237 | 233 | 79 | 139 | 101 | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
+| 📚 | contracts/libraries/PackedUint128Math.sol | 1 | **** | 131 | 131 | 46 | 75 | 72 | **<abbr title='Uses Assembly'>🖥</abbr>** |
+| 📚 | contracts/libraries/Time.sol | 1 | **** | 34 | 34 | 24 | 5 | 2 | **<abbr title='Unchecked Blocks'>Σ</abbr>** |
+| 📝 | contracts/controller/VeYieldDistributor.sol | 1 | **** | 332 | 332 | 219 | 49 | 122 | **** |
+| 📝 | contracts/controller/GaugeController.sol | 1 | **** | 366 | 325 | 223 | 54 | 145 | **<abbr title='Uses Hash-Functions'>🧮</abbr>** |
+| 📝📚🔍 | **Totals** | **14** | **8** | **3052**  | **2893** | **1889** | **580** | **1404** | **<abbr title='Uses Assembly'>🖥</abbr><abbr title='Uses Hash-Functions'>🧮</abbr><abbr title='Unchecked Blocks'>Σ</abbr>** |
 
 ### Special Attention to code
 - excess reward calculation in NftStaking contract(_pendingRewardDeduction) 

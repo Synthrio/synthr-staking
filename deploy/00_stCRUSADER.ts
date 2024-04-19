@@ -9,13 +9,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     let owner = deployer;
 
-    await deploy('syBULL', {
+    await deploy('stCRUSADER', {
         from: deployer,
         contract: 'SynthrNFT',
-        args: ['syBULL', 'syBULL', owner],
+        args: ['stCRUSADER', 'stCRUSADER', owner],
         log: true,
         autoMine: true, // speed up deployment on local network (ganache, hardhat), no effect on live networks
     });
 };
 export default func;
-func.tags = ['syBULL', 'synthrNFTs'];
+func.tags = ['stCRUSADER', 'synthrNFTs'];
