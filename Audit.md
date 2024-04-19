@@ -2,7 +2,7 @@
 
 ### Vote Escrow Contract 
 
-Users deposit Uno tokens in this contract and get voting power on the basis of deposit amount and lock period.
+Users deposit SYNTH tokens in this contract and get voting power on the basis of deposit amount and lock period.
 https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
 
 #### Changes in Vote Escrow Contract
