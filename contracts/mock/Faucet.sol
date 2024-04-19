@@ -12,7 +12,7 @@ contract Faucet is Ownable{
 
     mapping (address => uint256) public claimedAmount;
 
-    event CLaimed(address indexed user, uint256 amount);
+    event Claimed(address indexed user, uint256 amount);
     event RecoveredSynth(address indexed owner, uint256 amount);
     event LogUpdateSynth(address indexed owner, address indexed synth);
     event LogUpdateFaucetAmount(address indexed owner, uint256 amount);
@@ -47,7 +47,7 @@ contract Faucet is Ownable{
             emit LowBalance(msg.sender, balanceOfContract);
         }
 
-        emit CLaimed(msg.sender, _amount);
+        emit Claimed(msg.sender, _amount);
     }
 
     function recoverSynth(uint256 _amount) external onlyOwner {
