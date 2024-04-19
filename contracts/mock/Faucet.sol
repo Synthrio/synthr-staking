@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Faucet is Ownable{
     
-    address public SYNTH;
+    IERC20 public SYNTH;
 
     uint256 public faucetAmount = 10000 * 1e18;
 
@@ -19,11 +19,11 @@ contract Faucet is Ownable{
     event LowBalance(address lastUser,uint256 amount);
  
     constructor(address _owner, address _synth) Ownable(_owner) {
-        SYNTH = _synth;
+        SYNTH = IERC20(_synth);
     }
 
     function setSynthToken(address _synth) external onlyOwner {
-        SYNTH = _synth;
+        SYNTH = IERC20(_synth);
 
         emit LogUpdateSynth(msg.sender, _synth);
     }
@@ -39,9 +39,9 @@ contract Faucet is Ownable{
 
         claimedAmount[msg.sender] += _amount;
 
-        IERC20(SYNTH).transfer(msg.sender, _amount);
+        SYNTH.transfer(msg.sender, _amount);
 
-        uint256 balanceOfContract = IERC20(SYNTH).balanceOf(address(this));
+        uint256 balanceOfContract = SYNTH.balanceOf(address(this));
 
         if (balanceOfContract <= faucetAmount * 2) {
             emit LowBalance(msg.sender, balanceOfContract);
@@ -51,7 +51,7 @@ contract Faucet is Ownable{
     }
 
     function recoverSynth(uint256 _amount) external onlyOwner {
-        IERC20(SYNTH).transfer(msg.sender, _amount);
+        SYNTH.transfer(msg.sender, _amount);
 
         emit RecoveredSynth(msg.sender, _amount);
     }
