@@ -288,6 +288,7 @@ contract SynthrStaking is Ownable, Pausable {
 
         uint256 _amount = _user.amount;
         totalSupply -= _amount;
+        _lockInfo.totalStaked -= _amount;
         if (_user.unlockEnd > block.timestamp) {
             uint256 _lockType = _user.lockType;
             _amount = (_amount * (100 - lockInfo[_lockType].penalty)) / 100;
@@ -309,6 +310,9 @@ contract SynthrStaking is Ownable, Pausable {
         UserInfo memory _user = userInfo[msg.sender];
         uint256 _amount = _user.amount;
 
+        LockInfo memory _lockInfo = lockInfo[_user.lockType];
+        _lockInfo.totalStaked -= _amount;
+        lockInfo[_user.lockType] = _lockInfo;
         delete userInfo[msg.sender];
 
         totalSupply -= _amount;
