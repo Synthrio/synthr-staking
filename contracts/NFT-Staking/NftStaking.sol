@@ -4,10 +4,11 @@ pragma solidity =0.8.24;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../interfaces/ISynthrNFT.sol";
 import "../interfaces/ISynthrStaking.sol";
 
-contract NftStaking is IERC721Receiver, Ownable2Step{
+contract NftStaking is IERC721Receiver, Ownable2Step, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
     /// @notice Address of reward token contract.
@@ -15,8 +16,8 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
 
     uint256 public constant ACC_REWARD_PRECISION = 1e18;
 
-    /// @notice Info of each gauge controller user.
-    /// `amount` LP token amount the user has provided.
+    /// @notice Info of user.
+    /// `amount` SYNTH token amount the user has provided.
     /// `rewardDebt` The amount of reward token entitled to the user.
     struct UserInfo {
         uint256 amount;
@@ -24,7 +25,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
         int256 rewardDebt;
     }
 
-    /// @notice Info of each gauge pool.
+    /// @notice Info of each pool.
     struct NFTPoolInfo {
         bool exist;
         uint64 lastRewardBlock;
@@ -36,7 +37,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
     uint256 public stakeAmount = 1000 * 1e18;
     uint256 public secondPerBlock = 12;
 
-    /// @notice Total lock amount of users in VotingEscrow
+    /// @notice Total lock amount of users in SynthrStaking
     uint256 public totalLockAmount;
 
     /// @notice synthr staking instance
@@ -45,7 +46,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
     /// @notice Info of each pool.
     mapping(address => NFTPoolInfo) public poolInfo;
 
-    /// @notice Info of each user that stakes LP tokens.
+    /// @notice Info of each user that stakes NFT.
     mapping(address => mapping(address => UserInfo)) public userInfo;
 
     event Deposit(address indexed pool, address indexed user, uint256 tokenId);
@@ -166,7 +167,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
         uint256 _rewardAmount,
         address[] memory _pool,
         uint256[] memory _rewardPerBlock
-    ) external onlyOwner {
+    ) external nonReentrant onlyOwner {
         require(
             _rewardPerBlock.length == _pool.length,
             "NftStaking: length of array doesn't mach"
@@ -216,7 +217,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
 
     /// @notice Deposit NFT token.
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
-    function deposit(address _pool, uint256 _tokenId) external {
+    function deposit(address _pool, uint256 _tokenId) external nonReentrant{
         uint256 _amount = _checkStakeAmountAndLockEnd();
 
         UserInfo memory _user = userInfo[_pool][msg.sender];
@@ -265,7 +266,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
         emit IncreaseDeposit(_pool, msg.sender, _updatedAmount);
     }
 
-    function withdraw(address _pool) external {
+    function withdraw(address _pool) external nonReentrant{
         NFTPoolInfo memory _poolInfo = _updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
@@ -294,8 +295,8 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
 
     /// @notice Claim proceeds for transaction sender to `to`.
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
-    /// @param _to Receiver rewards.
-    function claim(address _pool, address _to) external {
+    /// @param _to Receiver SYNTH rewards.
+    function claim(address _pool, address _to) external nonReentrant{
         NFTPoolInfo memory _poolInfo = _updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
@@ -324,8 +325,8 @@ contract NftStaking is IERC721Receiver, Ownable2Step{
 
     /// @notice Withdraw NFT token from pool and claim proceeds for transaction sender to `to`.
     /// @param _pool address of the pool. See `NFTPoolInfo`.
-    /// @param _to Receiver of the LP tokens and syUSD rewards.
-    function withdrawAndClaim(address _pool, address _to) external {
+    /// @param _to Receiver of the NFT and SYNTH token rewards.
+    function withdrawAndClaim(address _pool, address _to) external nonReentrant{
         NFTPoolInfo memory _poolInfo = _updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 

@@ -4,8 +4,9 @@ pragma solidity =0.8.24;
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract SynthrStaking is Ownable2Step, Pausable {
+contract SynthrStaking is Ownable2Step, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Address of reward token contract.
@@ -154,7 +155,7 @@ contract SynthrStaking is Ownable2Step, Pausable {
         uint256 _rewardAmount,
         uint256[] memory _rewardPerBlock,
         uint256[] memory _lockType
-    ) external whenNotPaused isAlive onlyOwner {
+    ) external nonReentrant whenNotPaused isAlive onlyOwner {
         require(_rewardPerBlock.length == _lockType.length, "SynthrStaking: length not equal");
 
         for (uint256 i; i < _rewardPerBlock.length; ++i) {
@@ -170,7 +171,7 @@ contract SynthrStaking is Ownable2Step, Pausable {
     }
 
     /// @notice Deposit token.
-    function deposit(uint256 _amount, uint256 _lockType) external whenNotPaused isAlive {
+    function deposit(uint256 _amount, uint256 _lockType) external nonReentrant whenNotPaused isAlive {
         LockInfo memory _lockInfo = _updatePool(_lockType);
 
         require(_lockInfo.totalStaked + _amount <= _lockInfo.maxPoolSize, "SynthrStaking: max amount limit exceed");
@@ -202,8 +203,8 @@ contract SynthrStaking is Ownable2Step, Pausable {
     }
 
     /// @notice Claim proceeds for transaction sender to `to`.
-    /// @param _to Receiver rewards.
-    function claim(address _to) external whenNotPaused {
+    /// @param _to Receiver receives SYNTH token as reward.
+    function claim(address _to) external nonReentrant whenNotPaused {
         UserInfo memory _user = userInfo[msg.sender];
         require(_user.unlockEnd < block.timestamp, "SynthrStaking: claim after lock end");
         LockInfo memory _lockInfo = _updatePool(_user.lockType);
@@ -230,8 +231,8 @@ contract SynthrStaking is Ownable2Step, Pausable {
     }
 
     /// @notice Withdraw  token from pool and claim proceeds for transaction sender to `to`.
-    /// @param _to Receiver of the SYNTH tokens with pending reward(in SYNTHs).
-    function withdraw(address _to) external whenNotPaused {
+    /// @param _to Receiver of the SYNTH tokens with their pending reward(in SYNTHs).
+    function withdraw(address _to) external nonReentrant whenNotPaused {
         uint256 _coolDownPeriod = coolDownPeriod[msg.sender];
         require(_coolDownPeriod != 0, "SynthrStaking: request for withdraw");
         require(_coolDownPeriod < block.timestamp, "SynthrStaking: lock time not end");
@@ -260,7 +261,7 @@ contract SynthrStaking is Ownable2Step, Pausable {
         emit Withdraw(msg.sender, _to, _pendingReward + _amount);
     }
 
-    function emergencyWithdraw() public whenNotPaused {
+    function emergencyWithdraw() public nonReentrant whenNotPaused {
         require(emergencyWithdrawAllowed, "SynthrStaking: emergency withdraw not allowed");
         UserInfo memory _user = userInfo[msg.sender];
         uint256 _amount = _user.amount;
@@ -279,7 +280,7 @@ contract SynthrStaking is Ownable2Step, Pausable {
         emit EmergencyWithdraw(msg.sender, _amount);
     }
 
-    function recoverToken(address _token, address _to, uint256 _amount) external onlyOwner whenNotPaused {
+    function recoverToken(address _token, address _to, uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
         if (_token == address(SYNTH)) {
             require(
                 IERC20(_token).balanceOf(address(this)) - _amount >= totalSupply,
@@ -291,7 +292,7 @@ contract SynthrStaking is Ownable2Step, Pausable {
         emit RecoveredToken(msg.sender, _token, _amount);
     }
 
-    function withdrawPenalty(address _to) external onlyOwner whenNotPaused {
+    function withdrawPenalty(address _to) external onlyOwner nonReentrant whenNotPaused {
         uint256 oldPenaltyAmount = penaltyAmount;
         penaltyAmount = 0;
         emit WithdrawPenalty(msg.sender, _to, oldPenaltyAmount);
