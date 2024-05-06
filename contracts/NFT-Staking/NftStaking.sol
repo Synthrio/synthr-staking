@@ -167,7 +167,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step, ReentrancyGuard{
         uint256 _rewardAmount,
         address[] memory _pool,
         uint256[] memory _rewardPerBlock
-    ) external nonReentrant onlyOwner {
+    ) external onlyOwner {
         require(
             _rewardPerBlock.length == _pool.length,
             "NftStaking: length of array doesn't mach"
@@ -217,7 +217,7 @@ contract NftStaking is IERC721Receiver, Ownable2Step, ReentrancyGuard{
 
     /// @notice Deposit NFT token.
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
-    function deposit(address _pool, uint256 _tokenId) external nonReentrant{
+    function deposit(address _pool, uint256 _tokenId) external{
         uint256 _amount = _checkStakeAmountAndLockEnd();
 
         UserInfo memory _user = userInfo[_pool][msg.sender];

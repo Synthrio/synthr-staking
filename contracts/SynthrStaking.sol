@@ -155,7 +155,7 @@ contract SynthrStaking is Ownable2Step, Pausable, ReentrancyGuard {
         uint256 _rewardAmount,
         uint256[] memory _rewardPerBlock,
         uint256[] memory _lockType
-    ) external nonReentrant whenNotPaused isAlive onlyOwner {
+    ) external whenNotPaused isAlive onlyOwner {
         require(_rewardPerBlock.length == _lockType.length, "SynthrStaking: length not equal");
 
         for (uint256 i; i < _rewardPerBlock.length; ++i) {
@@ -171,7 +171,7 @@ contract SynthrStaking is Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     /// @notice Deposit token.
-    function deposit(uint256 _amount, uint256 _lockType) external nonReentrant whenNotPaused isAlive {
+    function deposit(uint256 _amount, uint256 _lockType) external whenNotPaused isAlive {
         LockInfo memory _lockInfo = _updatePool(_lockType);
 
         require(_lockInfo.totalStaked + _amount <= _lockInfo.maxPoolSize, "SynthrStaking: max amount limit exceed");
