@@ -151,11 +151,12 @@ contract SynthrStaking is Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     /// @notice update epoch of pool
-    function updateEpoch(
-        uint256 _rewardAmount,
-        uint256[] memory _rewardPerBlock,
-        uint256[] memory _lockType
-    ) external whenNotPaused isAlive onlyOwner {
+    function updateEpoch(uint256 _rewardAmount, uint256[] memory _rewardPerBlock, uint256[] memory _lockType)
+        external
+        whenNotPaused
+        isAlive
+        onlyOwner
+    {
         require(_rewardPerBlock.length == _lockType.length, "SynthrStaking: length not equal");
 
         for (uint256 i; i < _rewardPerBlock.length; ++i) {
