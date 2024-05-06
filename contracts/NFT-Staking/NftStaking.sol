@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "../interfaces/ISynthrNFT.sol";
 import "../interfaces/ISynthrStaking.sol";
 
-contract NftStaking is IERC721Receiver, Ownable {
+contract NftStaking is IERC721Receiver, Ownable2Step{
     using SafeERC20 for IERC20;
 
     /// @notice Address of reward token contract.
@@ -54,17 +54,15 @@ contract NftStaking is IERC721Receiver, Ownable {
     event Claimed(
         address indexed pool,
         address indexed user,
+        address indexed to,
         uint256 pendingRewardAmount
     );
     event WithdrawAndClaim(
         address indexed pool,
         address indexed user,
-        uint256 pendingRewardAmount
-    );
-    event WithdrawPendingRewardAmount(
-        address indexed pool,
-        address indexed user,
-        uint256 pendingRewardAmount
+        address indexed to,
+        uint256 pendingRewardAmount,
+        uint256 tokenId
     );
     event LogPoolAddition(address indexed owner, address[] pool);
     event LogUpdatePool(
@@ -85,7 +83,7 @@ contract NftStaking is IERC721Receiver, Ownable {
         synthrStaking = ISynthrStaking(_synthrStaking);
     }
 
-    /// @dev retuen user reward debt
+    /// @dev return user reward debt
     /// @param _pool address of pool
     /// @param _user address of user
     function userRewardsDebt(
@@ -165,7 +163,6 @@ contract NftStaking is IERC721Receiver, Ownable {
     /// @param _pool addresses of pool to be updated.
     /// @param _rewardPerBlock array of rewardPerBlock
     function updateEpoch(
-        address _user,
         uint256 _rewardAmount,
         address[] memory _pool,
         uint256[] memory _rewardPerBlock
@@ -184,7 +181,7 @@ contract NftStaking is IERC721Receiver, Ownable {
             poolInfo[_pool[i]] = _poolInfo;
         }
 
-        SYNTH.safeTransferFrom(_user, address(this), _rewardAmount);
+        SYNTH.safeTransferFrom(msg.sender, address(this), _rewardAmount);
 
         emit EpochUpdated(msg.sender, _pool, _rewardPerBlock);
     }
@@ -192,9 +189,9 @@ contract NftStaking is IERC721Receiver, Ownable {
     /// @notice Update reward variables of the given pool.
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
     /// @return _poolInfo Returns the pool that was updated.
-    function updatePool(
+    function _updatePool(
         address _pool
-    ) public returns (NFTPoolInfo memory _poolInfo) {
+    ) internal returns (NFTPoolInfo memory _poolInfo) {
         _poolInfo = poolInfo[_pool];
         require(_poolInfo.exist, "NftStaking: pool not exist");
         uint256 _lpSupply = totalLockAmount;
@@ -225,7 +222,7 @@ contract NftStaking is IERC721Receiver, Ownable {
         UserInfo memory _user = userInfo[_pool][msg.sender];
         require(_user.tokenId == 0, "NftStaking: already exist");
 
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        NFTPoolInfo memory _poolInfo = _updatePool(_pool);
 
         // Effects
         int256 _calRewardDebt = _calAccRewardPerShare(
@@ -250,7 +247,7 @@ contract NftStaking is IERC721Receiver, Ownable {
         UserInfo memory _user = userInfo[_pool][msg.sender];
         require(_user.tokenId != 0, "NftStaking: token not deposit");
 
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        NFTPoolInfo memory _poolInfo = _updatePool(_pool);
 
         uint256 _updatedAmount = _amount - _user.amount;
 
@@ -269,7 +266,7 @@ contract NftStaking is IERC721Receiver, Ownable {
     }
 
     function withdraw(address _pool) external {
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        NFTPoolInfo memory _poolInfo = _updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
         int256 _calRewardDebt = _calAccRewardPerShare(
@@ -299,13 +296,13 @@ contract NftStaking is IERC721Receiver, Ownable {
     /// @param _pool The address of the pool. See `NFTPoolInfo`.
     /// @param _to Receiver rewards.
     function claim(address _pool, address _to) external {
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        NFTPoolInfo memory _poolInfo = _updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
         (
             int256 accumulatedReward,
             uint256 _pendingReward
-        ) = _calAccumaltedAndPendingReward(
+        ) = _calAccumulatedAndPendingReward(
                 _poolInfo.accRewardPerShare,
                 _user.amount,
                 _user.rewardDebt
@@ -322,20 +319,20 @@ contract NftStaking is IERC721Receiver, Ownable {
             SYNTH.safeTransfer(_to, _pendingReward);
         }
 
-        emit Claimed(msg.sender, _pool, _pendingReward);
+        emit Claimed(_pool, msg.sender, _to, _pendingReward);
     }
 
     /// @notice Withdraw NFT token from pool and claim proceeds for transaction sender to `to`.
     /// @param _pool address of the pool. See `NFTPoolInfo`.
     /// @param _to Receiver of the LP tokens and syUSD rewards.
     function withdrawAndClaim(address _pool, address _to) external {
-        NFTPoolInfo memory _poolInfo = updatePool(_pool);
+        NFTPoolInfo memory _poolInfo = _updatePool(_pool);
         UserInfo memory _user = userInfo[_pool][msg.sender];
 
         (
             ,
             uint256 _pendingReward
-        ) = _calAccumaltedAndPendingReward(
+        ) = _calAccumulatedAndPendingReward(
                 _poolInfo.accRewardPerShare,
                 _user.amount,
                 _user.rewardDebt
@@ -358,7 +355,7 @@ contract NftStaking is IERC721Receiver, Ownable {
             _tokenId
         );
 
-        emit WithdrawAndClaim(_pool, msg.sender, _pendingReward);
+        emit WithdrawAndClaim(_pool, msg.sender, _to, _pendingReward, _tokenId);
     }
 
     function _pendingRewardAmount(
@@ -399,7 +396,7 @@ contract NftStaking is IERC721Receiver, Ownable {
         return int256((_amount * _accRewardPerShare) / ACC_REWARD_PRECISION);
     }
 
-    function _calAccumaltedAndPendingReward(
+    function _calAccumulatedAndPendingReward(
         uint256 _accRewardPerShare,
         uint256 _amount,
         int256 _rewardDebt
