@@ -301,7 +301,7 @@ contract SynthrStaking is Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     /// @notice Update reward variables of the pool.
-    function _updatePool(uint256 _lockType) public returns (LockInfo memory _lockInfo) {
+    function _updatePool(uint256 _lockType) internal returns (LockInfo memory _lockInfo) {
         _lockInfo = lockInfo[_lockType];
         require(_lockInfo.exist, "SynthrStaking: lock type not exist");
         uint256 _lpSupply = totalSupply;
