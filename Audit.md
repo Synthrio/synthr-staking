@@ -104,8 +104,8 @@ https://github.com/1coinswap/core/blob/master/contracts/MiniChefV2.sol
 ### Latest deployed contracts
 
 - SynthToken: 0x1D2c289687a5c7f6a16Ac7801D73563B7f8d7bEe
-- SynthrStaking: 0x1D7DE9D77d0d45A27a8BBdAC31D04E2eEc58e963
-- NftStaking: 0x3AF314eD4207271a408cCA6422a1Ca49143B1671
+- SynthrStaking: 0x925089eB5cB7915F88AC10df84fBF43f39B63aB2
+- NftStaking: 0xEF567aa7C61c69761fDc50c38b56797D4dA79d8f
 
 #### NFT pools: 
 - stCRUSADER: 0x34366C5a31ca47215d4adb358128CbAe14b490c8
